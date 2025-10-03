@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Autofac" Version="8.1.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.0.1" />
+    <PackageReference Include="MediatR" Version="13.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.1" />
@@ -19,6 +20,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EcommerceApplication.Domain\EcommerceApplicationWeb.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="EcommerceApplicationWeb\" />
   </ItemGroup>
 
 </Project>

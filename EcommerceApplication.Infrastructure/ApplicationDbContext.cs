@@ -1,12 +1,15 @@
-﻿using EcommerceApplicationWeb.Infrastructure.Entities;
+﻿using EcommerceApplicationWeb.Domain.Entities; // <-- for ApplicationUser
+using EcommerceApplicationWeb.Infrastructure.Entities;
 using EcommerceApplicationWeb.Infrastructure.Seeds;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
 namespace EcommerceApplicationWeb.Infrastructure
 {
-    public class ApplicationDbContext : IdentityDbContext, IApplicationDbContext
+    // Tell Identity to use ApplicationUser + Guid
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>, IApplicationDbContext
     {
         private readonly string _connectionString;
         private readonly string _migrationAssembly;
@@ -27,7 +30,6 @@ namespace EcommerceApplicationWeb.Infrastructure
             }
 
             base.OnConfiguring(optionsBuilder);
-
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -84,7 +86,6 @@ namespace EcommerceApplicationWeb.Infrastructure
                 .HasForeignKey(p => p.CategoryId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-
             SeedData.SeedCategories(modelBuilder);
             SeedData.SeedProducts(modelBuilder);
         }
@@ -92,6 +93,5 @@ namespace EcommerceApplicationWeb.Infrastructure
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
-
     }
 }

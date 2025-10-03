@@ -1,3 +1,12 @@
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.csproj.AssemblyReference.cache
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.AssemblyInfoInputs.cache
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.AssemblyInfo.cs
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.csproj.CoreCompileInputs.cache
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.RazorAssemblyInfo.cache
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.RazorAssemblyInfo.cs
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.sourcelink.json
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debug\net8.0\appsettings.Development.json
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debug\net8.0\appsettings.json
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debug\net8.0\EcommerceApplicationWeb.staticwebassets.runtime.json
@@ -13,6 +22,9 @@ C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debu
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debug\net8.0\Azure.Core.dll
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debug\net8.0\Azure.Identity.dll
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debug\net8.0\Humanizer.dll
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debug\net8.0\MediatR.dll
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debug\net8.0\MediatR.Contracts.dll
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debug\net8.0\MediatR.Extensions.Microsoft.DependencyInjection.dll
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debug\net8.0\Microsoft.AspNetCore.Cryptography.Internal.dll
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debug\net8.0\Microsoft.AspNetCore.Cryptography.KeyDerivation.dll
@@ -269,15 +281,6 @@ C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debu
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debug\net8.0\EcommerceApplicationWeb.Application.pdb
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debug\net8.0\EcommerceApplicationWeb.Infrastructure.pdb
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\bin\Debug\net8.0\EcommerceApplicationWeb.Domain.pdb
-C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.csproj.AssemblyReference.cache
-C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.AssemblyInfoInputs.cache
-C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.AssemblyInfo.cs
-C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.csproj.CoreCompileInputs.cache
-C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.MvcApplicationPartsAssemblyInfo.cs
-C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.MvcApplicationPartsAssemblyInfo.cache
-C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.RazorAssemblyInfo.cache
-C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.RazorAssemblyInfo.cs
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\staticwebassets.build.json
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\staticwebassets.development.json
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\staticwebassets\msbuild.EcommerceApplicationWeb.Microsoft.AspNetCore.StaticWebAssets.props
@@ -295,3 +298,4 @@ C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debu
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.pdb
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.genruntimeconfig.cache
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\ref\EcommerceApplicationWeb.dll
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplicationWeb\obj\Debug\net8.0\EcommerceApplicationWeb.MvcApplicationPartsAssemblyInfo.cs

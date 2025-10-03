@@ -1,9 +1,10 @@
 ﻿using AutoMapper;
 using EcommerceApplicationWeb.Application.DTOs;
-using EcommerceApplicationWeb.Infrastructure;
+using EcommerceApplicationWeb.Application.Features.Products.Commands;
+using EcommerceApplicationWeb.Application.Features.Products.Queries;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace EcommerceApplicationWeb.Web.Api
 {
@@ -12,23 +13,20 @@ namespace EcommerceApplicationWeb.Web.Api
     [ApiController]
     public class ProductController : ControllerBase
     {
-        private readonly IProductService _productService;
-        private readonly IApplicationDbContext _context;
+        private readonly IMediator _mediator;
         private readonly IMapper _mapper;
 
-        public ProductController(IProductService productService, IApplicationDbContext context, IMapper mapper)
+        public ProductController(IMediator mediator, IMapper mapper)
         {
-            _productService = productService;
-            _context = context;
+            _mediator = mediator;
             _mapper = mapper;
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
+            var query = new GetProductByIdQuery(id);
+            var product = await _mediator.Send(query);
 
             if (product == null)
                 return NotFound();
@@ -44,53 +42,69 @@ namespace EcommerceApplicationWeb.Web.Api
             [FromQuery] string? searchText = null,
             [FromQuery] string? sortBy = null)
         {
-            var query = _context.Products
-                .Include(p => p.Category)
-                .Where(p => p.IsActive)
-                .AsQueryable();
+            var query = new GetPagedProductsQuery(pageIndex, pageSize, searchText, sortBy);
+            var pagedResult = await _mediator.Send(query);
 
-            if (!string.IsNullOrWhiteSpace(searchText))
-                query = query.Where(p => p.Title.Contains(searchText) || p.Code.Contains(searchText));
+            var dtoList = _mapper.Map<List<ProductResponseDto>>(pagedResult.Records);
 
-            query = sortBy?.ToLower() switch
+            return Ok(new
             {
-                "price" => query.OrderBy(p => p.Price),
-                "price_desc" => query.OrderByDescending(p => p.Price),
-                _ => query.OrderBy(p => p.Title)
-            };
-
-            var total = await query.CountAsync();
-            var records = await query.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToListAsync();
-
-            var dtoList = _mapper.Map<List<ProductResponseDto>>(records);
-
-            return Ok(new { total, totalDisplay = dtoList.Count, data = dtoList });
+                total = pagedResult.Total,
+                totalDisplay = pagedResult.TotalDisplay,
+                data = dtoList
+            });
         }
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ProductRequestDto dto)
         {
-            var product = _mapper.Map<Product>(dto);
-            await _productService.CreateAsync(product);
+            var command = new CreateProductCommand(
+                dto.Title,
+                dto.Code,
+                dto.ParentId,
+                dto.Metadata?.CategoryId ?? 0, // assuming CategoryId in Metadata
+                dto.Price,
+                dto.Stock,
+                dto.ImageUrl,
+                dto.Metadata?.Description,
+                dto.Metadata?.Color,
+                dto.Metadata?.Warranty
+            );
 
+            var id = await _mediator.Send(command);
+
+            var product = await _mediator.Send(new GetProductByIdQuery(id));
             var response = _mapper.Map<ProductResponseDto>(product);
-            return CreatedAtAction(nameof(Get), new { id = product.Id }, response);
+
+            return CreatedAtAction(nameof(Get), new { id }, response);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] ProductRequestDto dto)
         {
-            var product = _mapper.Map<Product>(dto);
-            product.Id = id;
+            var command = new UpdateProductCommand(
+                id,
+                dto.Title,
+                dto.Code,
+                dto.ParentId,
+                dto.Metadata?.CategoryId ?? 0,
+                dto.Price,
+                dto.Stock,
+                dto.ImageUrl,
+                dto.Metadata?.Description,
+                dto.Metadata?.Color,
+                dto.Metadata?.Warranty
+            );
 
-            await _productService.UpdateAsync(product);
+            await _mediator.Send(command);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> SoftDelete(int id)
         {
-            await _productService.SoftDeleteAsync(id);
+            var command = new SoftDeleteProductCommand(id);
+            await _mediator.Send(command);
             return NoContent();
         }
     }

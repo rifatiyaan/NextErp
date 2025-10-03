@@ -1,11 +1,12 @@
-C:\Users\user\source\repos\EcommerceApplication\EcommerceApplication.Domain\bin\Debug\net8.0\EcommerceApplicationWeb.Domain.deps.json
-C:\Users\user\source\repos\EcommerceApplication\EcommerceApplication.Domain\bin\Debug\net8.0\EcommerceApplicationWeb.Domain.dll
-C:\Users\user\source\repos\EcommerceApplication\EcommerceApplication.Domain\bin\Debug\net8.0\EcommerceApplicationWeb.Domain.pdb
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplication.Domain\obj\Debug\net8.0\EcommerceApplicationWeb.Domain.csproj.AssemblyReference.cache
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplication.Domain\obj\Debug\net8.0\EcommerceApplicationWeb.Domain.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplication.Domain\obj\Debug\net8.0\EcommerceApplicationWeb.Domain.AssemblyInfoInputs.cache
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplication.Domain\obj\Debug\net8.0\EcommerceApplicationWeb.Domain.AssemblyInfo.cs
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplication.Domain\obj\Debug\net8.0\EcommerceApplicationWeb.Domain.csproj.CoreCompileInputs.cache
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplication.Domain\obj\Debug\net8.0\EcommerceApplicationWeb.Domain.sourcelink.json
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplication.Domain\bin\Debug\net8.0\EcommerceApplicationWeb.Domain.deps.json
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplication.Domain\bin\Debug\net8.0\EcommerceApplicationWeb.Domain.dll
+C:\Users\user\source\repos\EcommerceApplication\EcommerceApplication.Domain\bin\Debug\net8.0\EcommerceApplicationWeb.Domain.pdb
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplication.Domain\obj\Debug\net8.0\EcommerceApplicationWeb.Domain.dll
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplication.Domain\obj\Debug\net8.0\refint\EcommerceApplicationWeb.Domain.dll
 C:\Users\user\source\repos\EcommerceApplication\EcommerceApplication.Domain\obj\Debug\net8.0\EcommerceApplicationWeb.Domain.pdb

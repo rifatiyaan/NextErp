@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EcommerceApplicationWeb.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace EcommerceApplicationWeb.Infrastructure
 {

@@ -10,6 +10,7 @@
         public string? ImageUrl { get; set; }
         public ProductMetadataDto Metadata { get; set; } = null!;
         public bool IsActive { get; set; } = true; // 👈 new
+        public int? ParentId { get; internal set; }
     }
 
     public class ProductResponseDto
@@ -31,5 +32,6 @@
         public string? Description { get; set; }
         public string? Color { get; set; }
         public string? Warranty { get; set; }
+        public int? CategoryId { get; internal set; }
     }
 }

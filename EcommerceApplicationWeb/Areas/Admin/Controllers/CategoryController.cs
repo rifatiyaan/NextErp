@@ -1,5 +1,8 @@
 ﻿using AutoMapper;
 using EcommerceApplicationWeb.Application.DTOs;
+using EcommerceApplicationWeb.Application.Features.Categories.Commands;
+using EcommerceApplicationWeb.Application.Features.Categories.Queries;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,25 +13,29 @@ namespace EcommerceApplicationWeb.Web.Api
     [ApiController]
     public class CategoryController : ControllerBase
     {
-        private readonly ICategoryService _categoryService;
+        private readonly IMediator _mediator;
         private readonly IMapper _mapper;
 
-        public CategoryController(ICategoryService categoryService, IMapper mapper)
+        public CategoryController(IMediator mediator, IMapper mapper)
         {
-            _categoryService = categoryService;
+            _mediator = mediator;
             _mapper = mapper;
         }
 
+        // GET api/category/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
-            var category = await _categoryService.GetAsync(id);
+            var query = new GetCategoryByIdQuery(id);
+            var category = await _mediator.Send(query);
+
             if (category == null) return NotFound();
 
             var dto = _mapper.Map<CategoryResponseDto>(category);
             return Ok(dto);
         }
 
+        // GET api/category
         [HttpGet]
         public async Task<IActionResult> GetPaged(
             [FromQuery] int pageIndex = 1,
@@ -36,38 +43,63 @@ namespace EcommerceApplicationWeb.Web.Api
             [FromQuery] string? searchText = null,
             [FromQuery] string? sortBy = null)
         {
-            var (records, total, totalDisplay) =
-                await _categoryService.GetPagedAsync(pageIndex, pageSize, searchText, sortBy);
+            var query = new GetPagedCategoriesQuery(pageIndex, pageSize, searchText, sortBy);
+            var pagedResult = await _mediator.Send(query);
 
-            var dtoList = _mapper.Map<List<CategoryResponseDto>>(records);
+            var dtoList = _mapper.Map<List<CategoryResponseDto>>(pagedResult.Records);
 
-            return Ok(new { total, totalDisplay, data = dtoList });
+            return Ok(new
+            {
+                total = pagedResult.Total,
+                totalDisplay = pagedResult.TotalDisplay,
+                data = dtoList
+            });
         }
 
+        // POST api/category
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CategoryRequestDto dto)
         {
-            var category = _mapper.Map<Category>(dto);
-            await _categoryService.CreateAsync(category);
+            var command = new CreateCategoryCommand(
+                dto.Title,
+                dto.Description,
+                dto.ParentId
+            );
 
-            var response = _mapper.Map<CategoryResponseDto>(category);
-            return CreatedAtAction(nameof(Get), new { id = category.Id }, response);
+            var id = await _mediator.Send(command);
+
+            var response = new CategoryResponseDto
+            {
+                Id = id,
+                Title = dto.Title,
+                Description = dto.Description,
+                ParentId = dto.ParentId
+            };
+
+            return CreatedAtAction(nameof(Get), new { id }, response);
         }
 
+        // PUT api/category/{id}
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] CategoryRequestDto dto)
         {
-            var category = _mapper.Map<Category>(dto);
-            category.Id = id;
+            var command = new UpdateCategoryCommand(
+                id,
+                dto.Title,
+                dto.Description,
+                dto.ParentId
+            );
 
-            await _categoryService.UpdateAsync(category);
+            await _mediator.Send(command);
             return NoContent();
         }
 
+        // DELETE api/category/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> SoftDelete(int id)
         {
-            await _categoryService.SoftDeleteAsync(id);
+            var command = new SoftDeleteCategoryCommand(id);
+            await _mediator.Send(command);
             return NoContent();
         }
     }

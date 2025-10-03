@@ -1,4 +1,5 @@
-﻿using EcommerceApplicationWeb.Domain.Repositories;
+﻿using EcommerceApplicationWeb.Domain.Entities;
+using EcommerceApplicationWeb.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 

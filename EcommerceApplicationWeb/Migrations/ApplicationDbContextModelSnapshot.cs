@@ -22,225 +22,30 @@ namespace EcommerceApplicationWeb.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Category", b =>
+            modelBuilder.Entity("EcommerceApplicationWeb.Domain.Entities.ApplicationUser", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Metadata")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("ParentId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ParentId");
-
-                    b.ToTable("Categories");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3416),
-                            Description = "All electronic devices",
-                            IsActive = true,
-                            Metadata = "{\"ProductCount\":\"50\",\"Department\":\"Tech\"}",
-                            Title = "Electronics"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3449),
-                            Description = "Fashion and apparel",
-                            IsActive = true,
-                            Metadata = "{\"ProductCount\":\"120\",\"Department\":\"Fashion\"}",
-                            Title = "Clothing"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3451),
-                            Description = "All kinds of books",
-                            IsActive = true,
-                            Metadata = "{\"ProductCount\":\"200\",\"Department\":\"Literature\"}",
-                            Title = "Books"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3453),
-                            Description = "Appliances for home",
-                            IsActive = true,
-                            Metadata = "{\"ProductCount\":\"80\",\"Department\":\"Home\"}",
-                            Title = "Home Appliances"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3454),
-                            Description = "Sports equipment",
-                            IsActive = true,
-                            Metadata = "{\"ProductCount\":\"60\",\"Department\":\"Sports\"}",
-                            Title = "Sports"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3456),
-                            Description = "Toys for children",
-                            IsActive = true,
-                            Metadata = "{\"ProductCount\":\"100\",\"Department\":\"Kids\"}",
-                            Title = "Toys"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3458),
-                            Description = "Beauty and personal care",
-                            IsActive = true,
-                            Metadata = "{\"ProductCount\":\"70\",\"Department\":\"Cosmetics\"}",
-                            Title = "Beauty"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3460),
-                            Description = "Car and bike accessories",
-                            IsActive = true,
-                            Metadata = "{\"ProductCount\":\"90\",\"Department\":\"Automotive\"}",
-                            Title = "Automotive"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3462),
-                            Description = "Daily groceries",
-                            IsActive = true,
-                            Metadata = "{\"ProductCount\":\"150\",\"Department\":\"Food\"}",
-                            Title = "Grocery"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3463),
-                            Description = "Home and office furniture",
-                            IsActive = true,
-                            Metadata = "{\"ProductCount\":\"40\",\"Department\":\"Home\"}",
-                            Title = "Furniture"
-                        });
-                });
-
-            modelBuilder.Entity("EcommerceApplicationWeb.Infrastructure.Entities.RefreshToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("ExpiryDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("RefreshTokens");
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex")
-                        .HasFilter("[NormalizedName] IS NOT NULL");
-
-                    b.ToTable("AspNetRoles", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RoleId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("AspNetRoleClaims", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
+                    b.Property<string>("Address")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("AreaId")
+                        .HasColumnType("int");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateOfBirth")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -248,6 +53,14 @@ namespace EcommerceApplicationWeb.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -263,6 +76,9 @@ namespace EcommerceApplicationWeb.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<int>("OrgUnitId")
+                        .HasColumnType("int");
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
 
@@ -272,11 +88,20 @@ namespace EcommerceApplicationWeb.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<string>("Photo")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("SecurityStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Sex")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
@@ -295,7 +120,7 @@ namespace EcommerceApplicationWeb.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+            modelBuilder.Entity("EcommerceApplicationWeb.Domain.Entities.Category", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -303,86 +128,154 @@ namespace EcommerceApplicationWeb.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ClaimType")
+                    b.Property<Guid?>("BranchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
-                    b.Property<string>("UserId")
+                    b.Property<string>("Metadata")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("ParentId");
 
-                    b.ToTable("AspNetUserClaims", (string)null);
+                    b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1757),
+                            Description = "All electronic devices",
+                            IsActive = true,
+                            Metadata = "{\"ProductCount\":\"50\",\"Department\":\"Tech\"}",
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            Title = "Electronics"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1760),
+                            Description = "Fashion and apparel",
+                            IsActive = true,
+                            Metadata = "{\"ProductCount\":\"120\",\"Department\":\"Fashion\"}",
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            Title = "Clothing"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1762),
+                            Description = "All kinds of books",
+                            IsActive = true,
+                            Metadata = "{\"ProductCount\":\"200\",\"Department\":\"Literature\"}",
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            Title = "Books"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1763),
+                            Description = "Appliances for home",
+                            IsActive = true,
+                            Metadata = "{\"ProductCount\":\"80\",\"Department\":\"Home\"}",
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            Title = "Home Appliances"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1765),
+                            Description = "Sports equipment",
+                            IsActive = true,
+                            Metadata = "{\"ProductCount\":\"60\",\"Department\":\"Sports\"}",
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            Title = "Sports"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1767),
+                            Description = "Toys for children",
+                            IsActive = true,
+                            Metadata = "{\"ProductCount\":\"100\",\"Department\":\"Kids\"}",
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            Title = "Toys"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1768),
+                            Description = "Beauty and personal care",
+                            IsActive = true,
+                            Metadata = "{\"ProductCount\":\"70\",\"Department\":\"Cosmetics\"}",
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            Title = "Beauty"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1796),
+                            Description = "Car and bike accessories",
+                            IsActive = true,
+                            Metadata = "{\"ProductCount\":\"90\",\"Department\":\"Automotive\"}",
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            Title = "Automotive"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1798),
+                            Description = "Daily groceries",
+                            IsActive = true,
+                            Metadata = "{\"ProductCount\":\"150\",\"Department\":\"Food\"}",
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            Title = "Grocery"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1800),
+                            Description = "Home and office furniture",
+                            IsActive = true,
+                            Metadata = "{\"ProductCount\":\"40\",\"Department\":\"Home\"}",
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            Title = "Furniture"
+                        });
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
-                {
-                    b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ProviderKey")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ProviderDisplayName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("LoginProvider", "ProviderKey");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("AspNetUserLogins", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("RoleId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("UserId", "RoleId");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("AspNetUserRoles", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Value")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("UserId", "LoginProvider", "Name");
-
-                    b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("Product", b =>
+            modelBuilder.Entity("EcommerceApplicationWeb.Domain.Entities.Product", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("BranchId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
@@ -414,6 +307,9 @@ namespace EcommerceApplicationWeb.Migrations
                     b.Property<int>("Stock")
                         .HasColumnType("int");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -435,12 +331,13 @@ namespace EcommerceApplicationWeb.Migrations
                             Id = 1,
                             CategoryId = 1,
                             Code = "IP15-001",
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3628),
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1954),
                             ImageUrl = "https://example.com/iphone15.jpg",
                             IsActive = true,
                             Metadata = "{\"Description\":\"Latest iPhone\",\"Color\":\"Black\",\"Warranty\":\"2 Years\"}",
                             Price = 1299.99m,
                             Stock = 10,
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
                             Title = "iPhone 15"
                         },
                         new
@@ -448,12 +345,13 @@ namespace EcommerceApplicationWeb.Migrations
                             Id = 2,
                             CategoryId = 1,
                             Code = "TV-002",
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3634),
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1959),
                             ImageUrl = "https://example.com/samsungtv.jpg",
                             IsActive = true,
                             Metadata = "{\"Description\":\"Smart LED TV\",\"Color\":\"Silver\",\"Warranty\":\"3 Years\"}",
                             Price = 899.50m,
                             Stock = 15,
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
                             Title = "Samsung TV"
                         },
                         new
@@ -461,12 +359,13 @@ namespace EcommerceApplicationWeb.Migrations
                             Id = 3,
                             CategoryId = 2,
                             Code = "MJKT-003",
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3637),
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1961),
                             ImageUrl = "https://example.com/jacket.jpg",
                             IsActive = true,
                             Metadata = "{\"Description\":\"Warm winter jacket\",\"Color\":\"Brown\",\"Warranty\":\"1 Year\"}",
                             Price = 199.50m,
                             Stock = 25,
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
                             Title = "Men's Jacket"
                         },
                         new
@@ -474,12 +373,13 @@ namespace EcommerceApplicationWeb.Migrations
                             Id = 4,
                             CategoryId = 3,
                             Code = "BK-004",
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3640),
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1964),
                             ImageUrl = "https://example.com/alchemist.jpg",
                             IsActive = true,
                             Metadata = "{\"Description\":\"Fiction book\",\"Color\":null,\"Warranty\":null}",
                             Price = 12.99m,
                             Stock = 100,
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
                             Title = "Novel: The Alchemist"
                         },
                         new
@@ -487,12 +387,13 @@ namespace EcommerceApplicationWeb.Migrations
                             Id = 5,
                             CategoryId = 4,
                             Code = "MO-005",
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3642),
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1966),
                             ImageUrl = "https://example.com/microwave.jpg",
                             IsActive = true,
                             Metadata = "{\"Description\":\"800W Microwave\",\"Color\":\"White\",\"Warranty\":\"2 Years\"}",
                             Price = 299.00m,
                             Stock = 20,
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
                             Title = "Microwave Oven"
                         },
                         new
@@ -500,12 +401,13 @@ namespace EcommerceApplicationWeb.Migrations
                             Id = 6,
                             CategoryId = 5,
                             Code = "SP-006",
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3646),
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1968),
                             ImageUrl = "https://example.com/football.jpg",
                             IsActive = true,
                             Metadata = "{\"Description\":\"Official size 5 football\",\"Color\":\"White/Black\",\"Warranty\":null}",
                             Price = 29.99m,
                             Stock = 50,
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
                             Title = "Football"
                         },
                         new
@@ -513,12 +415,13 @@ namespace EcommerceApplicationWeb.Migrations
                             Id = 7,
                             CategoryId = 6,
                             Code = "TOY-007",
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3648),
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1970),
                             ImageUrl = "https://example.com/lego.jpg",
                             IsActive = true,
                             Metadata = "{\"Description\":\"Creative Lego set\",\"Color\":\"Multi-color\",\"Warranty\":null}",
                             Price = 59.99m,
                             Stock = 30,
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
                             Title = "Lego Set"
                         },
                         new
@@ -526,12 +429,13 @@ namespace EcommerceApplicationWeb.Migrations
                             Id = 8,
                             CategoryId = 7,
                             Code = "BTY-008",
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3651),
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1972),
                             ImageUrl = "https://example.com/lipstick.jpg",
                             IsActive = true,
                             Metadata = "{\"Description\":\"Matte lipstick\",\"Color\":\"Red\",\"Warranty\":null}",
                             Price = 49.99m,
                             Stock = 40,
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
                             Title = "Lipstick Set"
                         },
                         new
@@ -539,12 +443,13 @@ namespace EcommerceApplicationWeb.Migrations
                             Id = 9,
                             CategoryId = 8,
                             Code = "AUTO-009",
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3654),
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1975),
                             ImageUrl = "https://example.com/carvac.jpg",
                             IsActive = true,
                             Metadata = "{\"Description\":\"Portable vacuum for car\",\"Color\":\"Black\",\"Warranty\":\"6 Months\"}",
                             Price = 79.99m,
                             Stock = 18,
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
                             Title = "Car Vacuum Cleaner"
                         },
                         new
@@ -552,22 +457,250 @@ namespace EcommerceApplicationWeb.Migrations
                             Id = 10,
                             CategoryId = 10,
                             Code = "FUR-010",
-                            CreatedAt = new DateTime(2025, 9, 21, 17, 37, 28, 73, DateTimeKind.Utc).AddTicks(3656),
+                            CreatedAt = new DateTime(2025, 10, 3, 17, 21, 30, 884, DateTimeKind.Utc).AddTicks(1977),
                             ImageUrl = "https://example.com/chair.jpg",
                             IsActive = true,
                             Metadata = "{\"Description\":\"Ergonomic chair\",\"Color\":\"Black\",\"Warranty\":\"1 Year\"}",
                             Price = 149.99m,
                             Stock = 12,
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000000"),
                             Title = "Office Chair"
                         });
                 });
 
-            modelBuilder.Entity("Category", b =>
+            modelBuilder.Entity("EcommerceApplicationWeb.Infrastructure.Entities.RefreshToken", b =>
                 {
-                    b.HasOne("Category", "Parent")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetRoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("IdentityUser");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("EcommerceApplicationWeb.Domain.Entities.Category", b =>
+                {
+                    b.HasOne("EcommerceApplicationWeb.Domain.Entities.Category", "Parent")
                         .WithMany("Children")
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("EcommerceApplicationWeb.Domain.Entities.Product", b =>
+                {
+                    b.HasOne("EcommerceApplicationWeb.Domain.Entities.Category", "Category")
+                        .WithMany("Products")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EcommerceApplicationWeb.Domain.Entities.Product", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Category");
 
                     b.Navigation("Parent");
                 });
@@ -583,83 +716,65 @@ namespace EcommerceApplicationWeb.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    b.HasOne("EcommerceApplicationWeb.Domain.Entities.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    b.HasOne("EcommerceApplicationWeb.Domain.Entities.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    b.HasOne("EcommerceApplicationWeb.Domain.Entities.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    b.HasOne("EcommerceApplicationWeb.Domain.Entities.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Product", b =>
-                {
-                    b.HasOne("Category", "Category")
-                        .WithMany("Products")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Product", "Parent")
-                        .WithMany("Children")
-                        .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("Category", b =>
+            modelBuilder.Entity("EcommerceApplicationWeb.Domain.Entities.Category", b =>
                 {
                     b.Navigation("Children");
 
                     b.Navigation("Products");
                 });
 
-            modelBuilder.Entity("Product", b =>
+            modelBuilder.Entity("EcommerceApplicationWeb.Domain.Entities.Product", b =>
                 {
                     b.Navigation("Children");
                 });

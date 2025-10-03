@@ -1,4 +1,6 @@
-﻿namespace EcommerceApplicationWeb.Domain.Repositories
+﻿using EcommerceApplicationWeb.Domain.Entities;
+
+namespace EcommerceApplicationWeb.Domain.Repositories
 {
     public interface ICategoryRepository : IRepositoryBase<Category, int>
     {

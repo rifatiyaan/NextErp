@@ -6,6 +6,7 @@
         public string? Description { get; set; }
         public CategoryMetadataDto Metadata { get; set; } = null!;
         public bool IsActive { get; set; } = true; // 👈 new
+        public int? ParentId { get; internal set; }
     }
 
     public class CategoryResponseDto
@@ -16,6 +17,7 @@
         public CategoryMetadataDto Metadata { get; set; } = null!;
         public List<ProductResponseDto>? Products { get; set; }
         public bool IsActive { get; set; } // 👈 new
+        public int? ParentId { get; internal set; }
     }
 
     public class CategoryMetadataDto

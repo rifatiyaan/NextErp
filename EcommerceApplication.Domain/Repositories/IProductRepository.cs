@@ -1,4 +1,6 @@
 ﻿
+using EcommerceApplicationWeb.Domain.Entities;
+
 namespace EcommerceApplicationWeb.Domain.Repositories
 {
     public interface IProductRepository : IRepositoryBase<Product, int>

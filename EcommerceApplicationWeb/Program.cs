@@ -3,7 +3,9 @@ using Autofac.Extensions.DependencyInjection;
 using EcommerceApplicationWeb;
 using EcommerceApplicationWeb.Application;
 using EcommerceApplicationWeb.Application.Mappings;
+using EcommerceApplicationWeb.Domain.Entities;
 using EcommerceApplicationWeb.Infrastructure;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -41,12 +43,19 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString, m => m.MigrationsAssembly(migrationAssembly)));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// -------------------- Identity --------------------
-builder.Services.AddDefaultIdentity<IdentityUser>(options =>
+// -------------------- Identity 
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 {
-    options.SignIn.RequireConfirmedAccount = false; // set true in production
+    options.SignIn.RequireConfirmedAccount = false; // true in production
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
 })
-.AddEntityFrameworkStores<ApplicationDbContext>();
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
 
 // -------------------- JWT Authentication --------------------
 builder.Services.AddAuthentication(options =>
@@ -82,6 +91,11 @@ builder.Services.AddControllersWithViews();
 // -------------------- AutoMapper --------------------
 builder.Services.AddAutoMapper(typeof(CategoryProfile).Assembly);
 
+// -------------------- MediatR --------------------
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly));
+
+
 // -------------------- Swagger with JWT --------------------
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -113,9 +127,29 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+//-------------- Add CORS ------------//
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("NextJsCorsPolicy", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // Next.js dev URL
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(opt =>
+    {
+        opt.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
+builder.Services.AddRazorPages(); // <- REQUIRED
+
 
 // -------------------- Build App --------------------
 var app = builder.Build();
+
+app.UseCors("NextJsCorsPolicy");
 
 // -------------------- Middleware Pipeline --------------------
 if (app.Environment.IsDevelopment())
@@ -149,7 +183,10 @@ app.MapControllerRoute(
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapRazorPages();
+
+// -------------------- Controllers & Razor Pages --------------------
+
+
 
 // -------------------- Run --------------------
 try

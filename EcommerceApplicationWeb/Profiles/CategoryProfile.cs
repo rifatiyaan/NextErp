@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using EcommerceApplicationWeb.Application.DTOs;
+using EcommerceApplicationWeb.Domain.Entities;
 
 namespace EcommerceApplicationWeb.Application.Mappings
 {

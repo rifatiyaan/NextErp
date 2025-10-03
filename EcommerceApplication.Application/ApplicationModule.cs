@@ -1,5 +1,5 @@
 ﻿using Autofac;
-using EcommerceApplicationWeb.Application.Features;
+using MediatR;
 
 namespace EcommerceApplicationWeb.Application
 {
@@ -7,12 +7,14 @@ namespace EcommerceApplicationWeb.Application
     {
         protected override void Load(ContainerBuilder builder)
         {
-            //builder.RegisterType<BookService>().As<IBookService>().InstancePerLifetimeScope();
+            builder.RegisterType<Mediator>()
+              .As<IMediator>()
+              .InstancePerLifetimeScope();
 
-
-            builder.RegisterType<ProductService>().As<IProductService>().InstancePerLifetimeScope();
-            builder.RegisterType<CategoryService>().As<ICategoryService>().InstancePerLifetimeScope();
-            builder.RegisterType<UserService>().As<IUserService>().InstancePerLifetimeScope();
+            // ✅ Auto-register all Handlers from this Assembly
+            builder.RegisterAssemblyTypes(typeof(ApplicationAssemblyMarker).Assembly)
+                .AsClosedTypesOf(typeof(IRequestHandler<,>))
+                .InstancePerLifetimeScope();
         }
     }
 }
