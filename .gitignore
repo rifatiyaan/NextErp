@@ -49,3 +49,4 @@ _ReSharper*/
 
 # Entity Framework migrations (optional)
 Migrations/*.Designer.cs
+.vs/EcommerceApplication/v17/.suo
