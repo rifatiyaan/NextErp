@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
+using EcommerceApplicationWeb.Application.Commands;
 using EcommerceApplicationWeb.Application.DTOs;
-using EcommerceApplicationWeb.Application.Features.Products.Commands;
-using EcommerceApplicationWeb.Application.Features.Products.Queries;
+using EcommerceApplicationWeb.Application.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

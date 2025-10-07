@@ -1,13 +1,13 @@
-﻿using EcommerceApplicationWeb.Application.Features.Categories.Queries;
+﻿using EcommerceApplicationWeb.Application.Common;
+using EcommerceApplicationWeb.Application.Queries;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Entities = EcommerceApplicationWeb.Domain.Entities;
-using Queries = EcommerceApplicationWeb.Application.Features.Products.Queries;
 using Repositories = EcommerceApplicationWeb.Domain.Repositories;
 
-namespace EcommerceApplicationWeb.Application.Features.Handlers.Product
+namespace EcommerceApplicationWeb.Application.Handlers.QueryHandlers.Product
 {
-    public class GetPagedProductsHandler : IRequestHandler<Queries.GetPagedProductsQuery, PagedResult<Entities.Product>>
+    public class GetPagedProductsHandler : IRequestHandler<GetPagedProductsQuery, PagedResult<Entities.Product>>
     {
         private readonly Repositories.IProductRepository _productRepo;
 
@@ -17,7 +17,7 @@ namespace EcommerceApplicationWeb.Application.Features.Handlers.Product
         }
 
         public async Task<PagedResult<Entities.Product>> Handle(
-            Queries.GetPagedProductsQuery request,
+            GetPagedProductsQuery request,
             CancellationToken cancellationToken)
         {
             var query = _productRepo.Query().Where(p => p.IsActive);

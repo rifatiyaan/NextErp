@@ -1,12 +1,13 @@
-﻿using MediatR;
+﻿using EcommerceApplicationWeb.Application.Queries;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Entities = EcommerceApplicationWeb.Domain.Entities;
 using Repositories = EcommerceApplicationWeb.Domain.Repositories;
 
-namespace EcommerceApplicationWeb.Application.Features.Categories.Category
+namespace EcommerceApplicationWeb.Application.Handlers.QueryHandlers.Category
 {
     public class GetCategoryByIdHandler
-        : IRequestHandler<Queries.GetCategoryByIdQuery, Entities.Category?>
+        : IRequestHandler<GetCategoryByIdQuery, Entities.Category?>
     {
         private readonly Repositories.ICategoryRepository _categoryRepo;
 
@@ -15,7 +16,7 @@ namespace EcommerceApplicationWeb.Application.Features.Categories.Category
             _categoryRepo = categoryRepo;
         }
 
-        public async Task<Entities.Category?> Handle(Queries.GetCategoryByIdQuery request, CancellationToken cancellationToken)
+        public async Task<Entities.Category?> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken)
         {
             return await _categoryRepo.Query()
                 .Include(c => c.Products)

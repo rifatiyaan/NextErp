@@ -1,14 +1,14 @@
-﻿using EcommerceApplicationWeb.Application.Features.Categories.Queries;
+﻿using EcommerceApplicationWeb.Application.Common;
+using EcommerceApplicationWeb.Application.Queries;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Entities = EcommerceApplicationWeb.Domain.Entities;
-using Queries = EcommerceApplicationWeb.Application.Features.Categories.Queries;
 using Repositories = EcommerceApplicationWeb.Domain.Repositories;
 
-namespace EcommerceApplicationWeb.Application.Features.Handlers.Category
+namespace EcommerceApplicationWeb.Application.Handlers.QueryHandlers.Category
 {
     public class GetPagedCategoriesHandler
-        : IRequestHandler<Queries.GetPagedCategoriesQuery, PagedResult<Entities.Category>>
+        : IRequestHandler<GetPagedCategoriesQuery, PagedResult<Entities.Category>>
     {
         private readonly Repositories.ICategoryRepository _categoryRepo;
 
@@ -18,7 +18,7 @@ namespace EcommerceApplicationWeb.Application.Features.Handlers.Category
         }
 
         public async Task<PagedResult<Entities.Category>> Handle(
-            Queries.GetPagedCategoriesQuery request,
+            GetPagedCategoriesQuery request,
             CancellationToken cancellationToken)
         {
             var query = _categoryRepo.Query().Where(c => c.IsActive);
@@ -31,6 +31,7 @@ namespace EcommerceApplicationWeb.Application.Features.Handlers.Category
             query = request.SortBy?.ToLower() switch
             {
                 "title" => query.OrderBy(c => c.Title),
+                "createdat" => query.OrderBy(c => c.CreatedAt),
                 _ => query.OrderBy(c => c.Id)
             };
 

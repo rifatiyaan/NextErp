@@ -1,10 +1,10 @@
-﻿using MediatR;
-using Commands = EcommerceApplicationWeb.Application.Features.Products.Commands;
+﻿using EcommerceApplicationWeb.Application.Commands;
+using MediatR;
 using Repositories = EcommerceApplicationWeb.Domain.Repositories;
 
-namespace EcommerceApplicationWeb.Application.Features.Handlers.Product
+namespace EcommerceApplicationWeb.Application.Handlers.CommandHandlers.Product
 {
-    public class UpdateProductHandler : IRequestHandler<Commands.UpdateProductCommand, Unit>
+    public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Unit>
     {
         private readonly Repositories.IProductRepository _productRepo;
 
@@ -13,7 +13,7 @@ namespace EcommerceApplicationWeb.Application.Features.Handlers.Product
             _productRepo = productRepo;
         }
 
-        public async Task<Unit> Handle(Commands.UpdateProductCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
         {
             var existing = await _productRepo.GetByIdAsync(request.Id);
             if (existing != null && existing.IsActive)

@@ -1,0 +1,51 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+
+# Build outputs
+bin/
+obj/
+Debug/
+Release/
+[Bb]uild/
+artifacts/
+publish/
+
+# Logs
+*.log
+EcommerceApplicationWeb/Logs/
+
+# Temporary / backup files
+*.tmp
+*.bak
+
+# Generated code
+*.Generated.cs
+
+# Visual Studio indexes / caches
+*.vsidx
+*.cache
+*.db
+
+# .NET / C# binaries
+*.dll
+*.pdb
+*.exe
+*.json.sourcelink
+
+# NuGet packages
+*.nupkg
+packages/
+
+# ReSharper
+_ReSharper*/
+*.DotSettings.user
+
+# Entity Framework migrations (optional)
+Migrations/*.Designer.cs

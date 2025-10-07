@@ -1,11 +1,11 @@
-﻿using MediatR;
-using Commands = EcommerceApplicationWeb.Application.Features.Categories.Commands;
+﻿using EcommerceApplicationWeb.Application.Commands;
+using MediatR;
 using Repositories = EcommerceApplicationWeb.Domain.Repositories;
 
-namespace EcommerceApplicationWeb.Application.Features.Handlers.Category
+namespace EcommerceApplicationWeb.Application.Handlers.CommandHandlers.Category
 {
     public class SoftDeleteCategoryHandler
-        : IRequestHandler<Commands.SoftDeleteCategoryCommand, Unit>
+        : IRequestHandler<SoftDeleteCategoryCommand, Unit>
     {
         private readonly Repositories.ICategoryRepository _categoryRepo;
 
@@ -14,7 +14,7 @@ namespace EcommerceApplicationWeb.Application.Features.Handlers.Category
             _categoryRepo = categoryRepo;
         }
 
-        public async Task<Unit> Handle(Commands.SoftDeleteCategoryCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(SoftDeleteCategoryCommand request, CancellationToken cancellationToken)
         {
             var category = await _categoryRepo.GetByIdAsync(request.Id);
             if (category != null && category.IsActive)

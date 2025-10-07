@@ -1,10 +1,10 @@
-﻿using MediatR;
-using Commands = EcommerceApplicationWeb.Application.Features.Products.Commands;
+﻿using EcommerceApplicationWeb.Application.Commands;
+using MediatR;
 using Repositories = EcommerceApplicationWeb.Domain.Repositories;
 
-namespace EcommerceApplicationWeb.Application.Features.Handlers.Product
+namespace EcommerceApplicationWeb.Application.Handlers.CommandHandlers.Product
 {
-    public class SoftDeleteProductHandler : IRequestHandler<Commands.SoftDeleteProductCommand, Unit>
+    public class SoftDeleteProductHandler : IRequestHandler<SoftDeleteProductCommand, Unit>
     {
         private readonly Repositories.IProductRepository _productRepo;
 
@@ -13,7 +13,7 @@ namespace EcommerceApplicationWeb.Application.Features.Handlers.Product
             _productRepo = productRepo;
         }
 
-        public async Task<Unit> Handle(Commands.SoftDeleteProductCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(SoftDeleteProductCommand request, CancellationToken cancellationToken)
         {
             var product = await _productRepo.GetByIdAsync(request.Id);
             if (product != null && product.IsActive)

@@ -1,11 +1,11 @@
-﻿using MediatR;
-using Commands = EcommerceApplicationWeb.Application.Features.Categories.Commands;
+﻿using EcommerceApplicationWeb.Application.Commands;
+using MediatR;
 using Entities = EcommerceApplicationWeb.Domain.Entities;
 using Repositories = EcommerceApplicationWeb.Domain.Repositories;
 
-namespace EcommerceApplicationWeb.Application.Features.Handlers.Categories
+namespace EcommerceApplicationWeb.Application.Handlers.CommandHandlers.Category
 {
-    public class CreateCategoryHandler : IRequestHandler<Commands.CreateCategoryCommand, int>
+    public class CreateCategoryHandler : IRequestHandler<CreateCategoryCommand, int>
     {
         private readonly Repositories.ICategoryRepository _categoryRepo;
 
@@ -14,7 +14,7 @@ namespace EcommerceApplicationWeb.Application.Features.Handlers.Categories
             _categoryRepo = categoryRepo;
         }
 
-        public async Task<int> Handle(Commands.CreateCategoryCommand request, CancellationToken cancellationToken)
+        public async Task<int> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
         {
             var category = new Entities.Category
             {

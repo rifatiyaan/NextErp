@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace EcommerceApplicationWeb.Application.Features.Categories.Commands
+namespace EcommerceApplicationWeb.Application.Commands
 {
     // Create
     public record CreateCategoryCommand(

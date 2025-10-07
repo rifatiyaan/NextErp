@@ -22,8 +22,4 @@
     <ProjectReference Include="..\EcommerceApplication.Domain\EcommerceApplicationWeb.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="EcommerceApplicationWeb\" />
-  </ItemGroup>
-
 </Project>

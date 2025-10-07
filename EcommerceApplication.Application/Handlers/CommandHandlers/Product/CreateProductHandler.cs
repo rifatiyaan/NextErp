@@ -1,11 +1,11 @@
-﻿using MediatR;
-using Commands = EcommerceApplicationWeb.Application.Features.Products.Commands;
+﻿using EcommerceApplicationWeb.Application.Commands;
+using MediatR;
 using Entities = EcommerceApplicationWeb.Domain.Entities;
 using Repositories = EcommerceApplicationWeb.Domain.Repositories;
 
-namespace EcommerceApplicationWeb.Application.Features.Handlers.Product
+namespace EcommerceApplicationWeb.Application.Handlers.CommandHandlers.Product
 {
-    public class CreateProductHandler : IRequestHandler<Commands.CreateProductCommand, int>
+    public class CreateProductHandler : IRequestHandler<CreateProductCommand, int>
     {
         private readonly Repositories.IProductRepository _productRepo;
 
@@ -14,7 +14,7 @@ namespace EcommerceApplicationWeb.Application.Features.Handlers.Product
             _productRepo = productRepo;
         }
 
-        public async Task<int> Handle(Commands.CreateProductCommand request, CancellationToken cancellationToken)
+        public async Task<int> Handle(CreateProductCommand request, CancellationToken cancellationToken)
         {
             var product = new Entities.Product
             {

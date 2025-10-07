@@ -1,11 +1,11 @@
-﻿using MediatR;
-using Commands = EcommerceApplicationWeb.Application.Features.Categories.Commands;
+﻿using EcommerceApplicationWeb.Application.Commands;
+using MediatR;
 using Repositories = EcommerceApplicationWeb.Domain.Repositories;
 
-namespace EcommerceApplicationWeb.Application.Features.Handlers.Category
+namespace EcommerceApplicationWeb.Application.Handlers.CommandHandlers.Category
 {
     public class UpdateCategoryHandler
-        : IRequestHandler<Commands.UpdateCategoryCommand, Unit>
+        : IRequestHandler<UpdateCategoryCommand, Unit>
     {
         private readonly Repositories.ICategoryRepository _categoryRepo;
 
@@ -14,7 +14,7 @@ namespace EcommerceApplicationWeb.Application.Features.Handlers.Category
             _categoryRepo = categoryRepo;
         }
 
-        public async Task<Unit> Handle(Commands.UpdateCategoryCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken)
         {
             var existing = await _categoryRepo.GetByIdAsync(request.Id);
             if (existing != null && existing.IsActive)
