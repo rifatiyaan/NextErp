@@ -5,6 +5,28 @@
 *.userosscache
 *.sln.docstates
 
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+Debug/
+Release/
+[Bb]uild/
+artifacts/
+
+# Razor generated
+*.rz.scp.css
+
+# Others
+*.vsidx
+
+
 # Rider
 .idea/
 
