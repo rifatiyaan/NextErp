@@ -1,6 +1,6 @@
 # EcommerceApplicationWeb
 
-EcommerceApplicationWeb is a **modular, clean architecture-based e-commerce backend** built on **.NET Core**, using **Entity Framework Core**, **GraphQL**, and **REST APIs**. This project demonstrates modern software engineering practices, including **Domain-Driven Design (DDD)**, **Repository & Unit of Work patterns**, **DTOs with AutoMapper**, and **metadata-based optimization** for reduced data load.
+EcommerceApplicationWeb is a **modular, clean architecture-based e-commerce backend** built on **.NET Core**, using **Entity Framework Core**, and **REST APIs**. This project demonstrates modern software engineering practices, including **Domain-Driven Design (DDD)**, **Repository & Unit of Work patterns**, **DTOs with AutoMapper**, and **metadata-based optimization** for reduced data load.
 
 ---
 
