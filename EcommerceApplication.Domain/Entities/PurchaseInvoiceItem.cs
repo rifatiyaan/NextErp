@@ -13,7 +13,7 @@
         public Product Product { get; set; } = null!;
 
         public Guid? WarehouseId { get; set; }
-        public Warehouse? Warehouse { get; set; }
+        //public Warehouse? Warehouse { get; set; }
 
         public decimal Quantity { get; set; }
         public decimal UnitCost { get; set; }
