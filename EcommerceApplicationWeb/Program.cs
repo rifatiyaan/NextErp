@@ -1,4 +1,6 @@
-﻿using Autofac;
+﻿using System.Reflection;
+using System.Text;
+using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using EcommerceApplicationWeb;
 using EcommerceApplicationWeb.Application;
@@ -12,8 +14,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Events;
-using System.Reflection;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -148,6 +148,8 @@ builder.Services.AddRazorPages(); // <- REQUIRED
 
 // -------------------- Build App --------------------
 var app = builder.Build();
+
+app.UseMyMiddleWarePlease();
 
 app.UseCors("NextJsCorsPolicy");
 

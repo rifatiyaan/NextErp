@@ -13,7 +13,7 @@
 
         public CategoryMetadataClass Metadata { get; set; } = new CategoryMetadataClass();
 
-        public bool IsActive { get; set; } = true;  // 👈 new property
+        public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

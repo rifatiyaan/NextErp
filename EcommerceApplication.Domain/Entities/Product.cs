@@ -17,7 +17,7 @@
         public string? ImageUrl { get; set; }
         public ProductMetadataClass Metadata { get; set; } = new ProductMetadataClass();
 
-        public bool IsActive { get; set; } = true;  // 👈 new property
+        public bool IsActive { get; set; }
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
