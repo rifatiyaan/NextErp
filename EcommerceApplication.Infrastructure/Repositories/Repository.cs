@@ -11,8 +11,8 @@ namespace EcommerceApplicationWeb.Infrastructure.Repositories
         : IRepository<TEntity, TKey> where TKey : IComparable
         where TEntity : class, IEntity<TKey>
     {
-        private DbContext _dbContext;
-        private DbSet<TEntity> _dbSet;
+        protected DbContext _dbContext;
+        protected DbSet<TEntity> _dbSet;
 
         public Repository(DbContext context)
         {

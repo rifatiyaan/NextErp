@@ -10,5 +10,7 @@ namespace EcommerceApplicationWeb.Application
         IProductRepository ProductRepository { get; }
         ICategoryRepository CategoryRepository { get; }
         IUserRepository UserRepository { get; }
+        IMenuItemRepository MenuItemRepository { get; }
+        IModuleRepository ModuleRepository { get; }
     }
 }

@@ -36,55 +36,8 @@ namespace EcommerceApplicationWeb.Infrastructure
         {
             base.OnModelCreating(modelBuilder);
 
-            // Product ↔ Category
-            modelBuilder.Entity<Product>()
-                .HasOne(p => p.Category)
-                .WithMany(c => c.Products)
-                .HasForeignKey(p => p.CategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Category self-referencing (Parent -> Children)
-            modelBuilder.Entity<Category>()
-                .HasOne(c => c.Parent)
-                .WithMany(c => c.Children)
-                .HasForeignKey(c => c.ParentId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Product self-referencing (Parent -> Children)
-            modelBuilder.Entity<Product>()
-                .HasOne(p => p.Parent)
-                .WithMany(p => p.Children)
-                .HasForeignKey(p => p.ParentId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // JSON column for Product.Metadata
-            modelBuilder.Entity<Product>()
-                .Property(p => p.Metadata)
-                .HasConversion(
-                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                    v => JsonSerializer.Deserialize<Product.ProductMetadataClass>(v, (JsonSerializerOptions?)null)!)
-                .HasColumnType("nvarchar(max)")
-                .IsRequired();
-
-            // JSON column for Category.Metadata
-            modelBuilder.Entity<Category>()
-                .Property(c => c.Metadata)
-                .HasConversion(
-                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                    v => JsonSerializer.Deserialize<Category.CategoryMetadataClass>(v, (JsonSerializerOptions?)null)!)
-                .HasColumnType("nvarchar(max)")
-                .IsRequired();
-
-            // Product Price precision
-            modelBuilder.Entity<Product>()
-                .Property(p => p.Price)
-                .HasPrecision(18, 2);
-
-            modelBuilder.Entity<Product>()
-                .HasOne(p => p.Category)
-                .WithMany(c => c.Products)
-                .HasForeignKey(p => p.CategoryId)
-                .OnDelete(DeleteBehavior.Cascade);
+            // Apply all configurations from the current assembly
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
 
             SeedData.SeedCategories(modelBuilder);
             SeedData.SeedProducts(modelBuilder);
@@ -93,5 +46,7 @@ namespace EcommerceApplicationWeb.Infrastructure
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<MenuItem> MenuItems { get; set; }
+        public DbSet<Module> Modules { get; set; }
     }
 }

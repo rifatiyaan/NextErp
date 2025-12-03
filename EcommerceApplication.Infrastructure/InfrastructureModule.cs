@@ -33,6 +33,8 @@ namespace EcommerceApplicationWeb.Infrastructure
             builder.RegisterType<CategoryRepository>().As<ICategoryRepository>().InstancePerLifetimeScope();
             builder.RegisterType<UserRepository>().As<IUserRepository>().InstancePerLifetimeScope();
             builder.RegisterType<ProductRepository>().As<IProductRepository>().InstancePerLifetimeScope();
+            builder.RegisterType<MenuItemRepository>().As<IMenuItemRepository>().InstancePerLifetimeScope();
+            builder.RegisterType<ModuleRepository>().As<IModuleRepository>().InstancePerLifetimeScope();
         }
     }
 }
