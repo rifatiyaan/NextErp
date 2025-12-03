@@ -7,20 +7,14 @@ using Repositories = EcommerceApplicationWeb.Domain.Repositories;
 
 namespace EcommerceApplicationWeb.Application.Handlers.QueryHandlers.Product
 {
-    public class GetPagedProductsHandler : IRequestHandler<GetPagedProductsQuery, PagedResult<Entities.Product>>
+    public class GetPagedProductsHandler(Repositories.IProductRepository productRepo) 
+        : IRequestHandler<GetPagedProductsQuery, PagedResult<Entities.Product>>
     {
-        private readonly Repositories.IProductRepository _productRepo;
-
-        public GetPagedProductsHandler(Repositories.IProductRepository productRepo)
-        {
-            _productRepo = productRepo;
-        }
-
         public async Task<PagedResult<Entities.Product>> Handle(
             GetPagedProductsQuery request,
             CancellationToken cancellationToken)
         {
-            var query = _productRepo.Query().Where(p => p.IsActive);
+            var query = productRepo.Query().Where(p => p.IsActive);
 
             if (!string.IsNullOrWhiteSpace(request.SearchText))
                 query = query.Where(p => p.Title.Contains(request.SearchText));

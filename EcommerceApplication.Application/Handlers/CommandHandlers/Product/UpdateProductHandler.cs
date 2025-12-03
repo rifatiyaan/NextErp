@@ -4,18 +4,12 @@ using Repositories = EcommerceApplicationWeb.Domain.Repositories;
 
 namespace EcommerceApplicationWeb.Application.Handlers.CommandHandlers.Product
 {
-    public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, Unit>
+    public class UpdateProductHandler(Repositories.IProductRepository productRepo)
+        : IRequestHandler<UpdateProductCommand, Unit>
     {
-        private readonly Repositories.IProductRepository _productRepo;
-
-        public UpdateProductHandler(Repositories.IProductRepository productRepo)
-        {
-            _productRepo = productRepo;
-        }
-
         public async Task<Unit> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
         {
-            var existing = await _productRepo.GetByIdAsync(request.Id);
+            var existing = await productRepo.GetByIdAsync(request.Id);
             if (existing != null && existing.IsActive)
             {
                 existing.Title = request.Title;
@@ -25,14 +19,13 @@ namespace EcommerceApplicationWeb.Application.Handlers.CommandHandlers.Product
                 existing.Price = request.Price;
                 existing.Stock = request.Stock;
                 existing.ImageUrl = request.ImageUrl;
-
                 existing.Metadata.Description = request.Description;
                 existing.Metadata.Color = request.Color;
                 existing.Metadata.Warranty = request.Warranty;
 
                 existing.UpdatedAt = DateTime.UtcNow;
 
-                await _productRepo.EditAsync(existing);
+                await productRepo.EditAsync(existing);
             }
 
             return Unit.Value;

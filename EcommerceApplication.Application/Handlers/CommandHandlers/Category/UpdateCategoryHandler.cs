@@ -4,19 +4,12 @@ using Repositories = EcommerceApplicationWeb.Domain.Repositories;
 
 namespace EcommerceApplicationWeb.Application.Handlers.CommandHandlers.Category
 {
-    public class UpdateCategoryHandler
+    public class UpdateCategoryHandler(Repositories.ICategoryRepository categoryRepo)
         : IRequestHandler<UpdateCategoryCommand, Unit>
     {
-        private readonly Repositories.ICategoryRepository _categoryRepo;
-
-        public UpdateCategoryHandler(Repositories.ICategoryRepository categoryRepo)
-        {
-            _categoryRepo = categoryRepo;
-        }
-
         public async Task<Unit> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken)
         {
-            var existing = await _categoryRepo.GetByIdAsync(request.Id);
+            var existing = await categoryRepo.GetByIdAsync(request.Id);
             if (existing != null && existing.IsActive)
             {
                 existing.Title = request.Title;
@@ -24,7 +17,7 @@ namespace EcommerceApplicationWeb.Application.Handlers.CommandHandlers.Category
                 existing.ParentId = request.ParentId;
                 existing.UpdatedAt = DateTime.UtcNow;
 
-                await _categoryRepo.EditAsync(existing);
+                await categoryRepo.EditAsync(existing);
             }
 
             return Unit.Value;

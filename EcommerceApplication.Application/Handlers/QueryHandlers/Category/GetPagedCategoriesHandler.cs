@@ -7,21 +7,14 @@ using Repositories = EcommerceApplicationWeb.Domain.Repositories;
 
 namespace EcommerceApplicationWeb.Application.Handlers.QueryHandlers.Category
 {
-    public class GetPagedCategoriesHandler
+    public class GetPagedCategoriesHandler(Repositories.ICategoryRepository categoryRepo)
         : IRequestHandler<GetPagedCategoriesQuery, PagedResult<Entities.Category>>
     {
-        private readonly Repositories.ICategoryRepository _categoryRepo;
-
-        public GetPagedCategoriesHandler(Repositories.ICategoryRepository categoryRepo)
-        {
-            _categoryRepo = categoryRepo;
-        }
-
         public async Task<PagedResult<Entities.Category>> Handle(
             GetPagedCategoriesQuery request,
             CancellationToken cancellationToken)
         {
-            var query = _categoryRepo.Query().Where(c => c.IsActive);
+            var query = categoryRepo.Query().Where(c => c.IsActive);
 
             if (!string.IsNullOrWhiteSpace(request.SearchText))
                 query = query.Where(c => c.Title.Contains(request.SearchText));

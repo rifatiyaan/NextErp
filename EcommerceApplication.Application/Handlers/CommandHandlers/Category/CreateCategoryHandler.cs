@@ -5,15 +5,9 @@ using Repositories = EcommerceApplicationWeb.Domain.Repositories;
 
 namespace EcommerceApplicationWeb.Application.Handlers.CommandHandlers.Category
 {
-    public class CreateCategoryHandler : IRequestHandler<CreateCategoryCommand, int>
+    public class CreateCategoryHandler(Repositories.ICategoryRepository categoryRepo) 
+        : IRequestHandler<CreateCategoryCommand, int>
     {
-        private readonly Repositories.ICategoryRepository _categoryRepo;
-
-        public CreateCategoryHandler(Repositories.ICategoryRepository categoryRepo)
-        {
-            _categoryRepo = categoryRepo;
-        }
-
         public async Task<int> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
         {
             var category = new Entities.Category
@@ -24,7 +18,7 @@ namespace EcommerceApplicationWeb.Application.Handlers.CommandHandlers.Category
                 CreatedAt = DateTime.UtcNow
             };
 
-            await _categoryRepo.AddAsync(category);
+            await categoryRepo.AddAsync(category);
             return category.Id;
         }
     }

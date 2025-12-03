@@ -5,15 +5,9 @@ using Repositories = EcommerceApplicationWeb.Domain.Repositories;
 
 namespace EcommerceApplicationWeb.Application.Handlers.CommandHandlers.Product
 {
-    public class CreateProductHandler : IRequestHandler<CreateProductCommand, int>
+    public class CreateProductHandler(Repositories.IProductRepository productRepo) 
+        : IRequestHandler<CreateProductCommand, int>
     {
-        private readonly Repositories.IProductRepository _productRepo;
-
-        public CreateProductHandler(Repositories.IProductRepository productRepo)
-        {
-            _productRepo = productRepo;
-        }
-
         public async Task<int> Handle(CreateProductCommand request, CancellationToken cancellationToken)
         {
             var product = new Entities.Product
@@ -35,7 +29,7 @@ namespace EcommerceApplicationWeb.Application.Handlers.CommandHandlers.Product
                 CreatedAt = DateTime.UtcNow
             };
 
-            await _productRepo.AddAsync(product);
+            await productRepo.AddAsync(product);
             return product.Id;
         }
     }
