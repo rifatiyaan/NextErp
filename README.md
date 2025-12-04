@@ -1,6 +1,6 @@
-# EcommerceApplicationWeb
+# NextErp
 
-EcommerceApplicationWeb is a **modular, clean architecture-based e-commerce backend** built on **.NET Core**, using **Entity Framework Core**, and **REST APIs**. This project demonstrates modern software engineering practices, including **Domain-Driven Design (DDD)**, **Repository & Unit of Work patterns**, **DTOs with AutoMapper**, and **metadata-based optimization** for reduced data load.
+NextErp is a **modular, clean architecture-based enterprise resource planning (ERP) backend** built on **.NET 8**, using **Entity Framework Core**, **MediatR**, and **REST APIs**. This project demonstrates modern software engineering practices, including **Domain-Driven Design (DDD)**, **CQRS (Command Query Responsibility Segregation)**, **Repository & Unit of Work patterns**, **DTOs with AutoMapper**, and **metadata-based optimization** for reduced data load.
 
 ---
 
@@ -34,7 +34,9 @@ EcommerceApplicationWeb is a **modular, clean architecture-based e-commerce back
 
 ### API Features
 - RESTful endpoints with **Swagger documentation**.
-- Error handling using try/catch in controllers and services.
+- **CQRS Pattern** using MediatR for clean separation of commands and queries.
+- **AutoMapper** integration for seamless Entity-DTO mapping.
+- Error handling using global exception handling and try/catch blocks.
 - DTO-based request/response separation to avoid overfetching.
 - Pagination, sorting, and search for efficient data retrieval.
 
@@ -44,50 +46,55 @@ EcommerceApplicationWeb is a **modular, clean architecture-based e-commerce back
 
 ### Clean Architecture Layers
 
-1. **Domain Layer**
-   - Entities: `Product`, `Category`.
-   - Interfaces for repositories and services.
-   - Domain logic encapsulated in entities and services.
+1. **NextErp.Domain**
+   - Core Entities: `Product`, `Category`, `Branch`, `Tenant`, etc.
+   - Interfaces for repositories and domain services.
+   - Pure domain logic with no external dependencies.
 
-2. **Application Layer**
-   - Business logic for handling entities.
-   - Service classes: `ProductService`, `CategoryService`.
-   - Uses **Unit of Work** for transaction management.
-   - DTOs for request/response using **AutoMapper**.
-   - `GetSingle` and `GetBulk` base methods for querying efficiently.
+2. **NextErp.Application**
+   - Business logic and use cases.
+   - **CQRS**: Commands (Write) and Queries (Read) handled via MediatR.
+   - **DTOs**: Data Transfer Objects for API communication.
+   - **Mappings**: AutoMapper profiles for converting between Entities and DTOs.
+   - Validators and Application Services.
 
-3. **Infrastructure Layer**
+3. **NextErp.Infrastructure**
    - EF Core `DbContext` implementation.
-   - Repository implementations for each entity.
-   - Metadata JSON column handled with `HasConversion` to reduce DB load.
+   - Repository implementations (`Repository<T>`).
+   - Database migrations and configuration.
+   - Metadata JSON column handling.
 
-4. **Web/API Layer**
-   - Controllers for Products and Categories.
-   - Try/catch for error handling and clear response messages.
-   - Optional **IncludeWhen/ThenIncludeWhen** extensions for conditional eager loading.
+4. **NextErp.API** (Web Layer)
+   - REST API Controllers.
+   - Dependency Injection configuration.
+   - Middleware (Error handling, Authentication).
+   - Swagger/OpenAPI configuration.
 
 ---
 
 ### Key Patterns Used
-- **Repository Pattern** – abstracts data access logic.  
-- **Unit of Work Pattern** – manages transaction across multiple repositories.  
-- **DTO Pattern** – separates request/response objects from domain entities.  
-- **AutoMapper** – simplifies mapping between entities and DTOs.  
-- **Self-referencing Entities** – categories and products can have parent-child relationships.  
-- **Metadata JSON Column** – stores additional entity data dynamically to reduce joins and queries.  
+- **Clean Architecture** – Separation of concerns into Domain, Application, Infrastructure, and API.
+- **CQRS (Command Query Responsibility Segregation)** – Separates read and write operations using MediatR.
+- **Repository Pattern** – Abstracts data access logic.  
+- **Unit of Work Pattern** – Manages transactions across multiple repositories.  
+- **DTO Pattern** – Separates request/response objects from domain entities.  
+- **AutoMapper** – Simplifies mapping between entities and DTOs.  
+- **Self-referencing Entities** – Categories and products can have parent-child relationships.  
+- **Metadata JSON Column** – Stores additional entity data dynamically to reduce joins and queries.  
 
 ---
 
 ## Tech Stack & Tools
 
-- **Backend**: .NET 8/9 Core, C#  
-- **ORM**: Entity Framework Core  
+- **Backend**: .NET 8 Core, C#  
+- **ORM**: Entity Framework Core 8
+- **Mediator**: MediatR
+- **Mapping**: AutoMapper
 - **Database**: SQL Server (LocalDB or SQL Express)  
-- **Authentication**: ASP.NET Identity  
+- **Authentication**: ASP.NET Identity (JWT)
 - **Logging**: Serilog (File-based)  
 - **API Documentation**: Swagger / Swashbuckle  
-- **Object Mapping**: AutoMapper  
-- **Frontend (optional)**: React + Next.js for consuming APIs  
+- **Frontend**: Razor Pages (Admin Area) with Bootstrap 5 (AdminLTE removed for simplicity)
 
 ---
 
@@ -109,28 +116,54 @@ EcommerceApplicationWeb is a **modular, clean architecture-based e-commerce back
 
 ## Services & Controllers
 
-### ProductService
-- Handles CRUD for products.
-- Updates category product count automatically.
-- Uses `Query()` from repository for LINQ queries.
-- Supports Include/ThenInclude for category and parent-child relations.
-
-### CategoryService
-- Handles CRUD for categories.
-- Uses dynamic filtering and paging.
-- Updates metadata like `ProductCount`.
+### Application Services (CQRS)
+- **Commands**: `CreateProductCommand`, `UpdateCategoryCommand`, etc. encapsulate write logic.
+- **Queries**: `GetProductByIdQuery`, `GetAllCategoriesQuery` encapsulate read logic.
+- **Handlers**: MediatR handlers execute the logic for each command/query.
 
 ### Controllers
-- REST API with try/catch error handling.
-- Include joins via EF Core `Include()` and conditional `IncludeWhen()`.
+- Thin controllers that delegate work to MediatR.
+- Return standard HTTP responses (200 OK, 201 Created, 400 Bad Request, 404 Not Found).
 
 ---
 
 ## Setup & Migration
 
-1. Update `appsettings.json` with your connection string:
+1. **Prerequisites**:
+   - .NET 8 SDK
+   - SQL Server (LocalDB or Express)
 
-```json
-"ConnectionStrings": {
-  "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=EcommerceApp;Integrated Security=True;TrustServerCertificate=True;"
-}
+2. **Configuration**:
+   Update `appsettings.json` in `NextErp.API` with your connection string:
+
+   ```json
+   "ConnectionStrings": {
+     "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=NextErpDb;Integrated Security=True;TrustServerCertificate=True;"
+   }
+   ```
+
+3. **Database Migration**:
+   Open a terminal in the solution root and run:
+   ```bash
+   dotnet ef database update --project NextErp.Infrastructure --startup-project NextErp.API
+   ```
+
+4. **Run Application**:
+   ```bash
+   dotnet run --project NextErp.API
+   ```
+   Access Swagger at `https://localhost:7245/swagger` (port may vary).
+
+---
+
+## Usage
+
+- **API**: Use Swagger UI to test endpoints.
+- **Admin Panel**: Access `/Admin` for the web interface (if configured).
+
+## Future Improvements
+
+- [ ] Implement comprehensive Unit Tests (xUnit/NUnit).
+- [ ] Add Redis caching for high-performance reads.
+- [ ] Implement real-time notifications using SignalR.
+- [ ] Containerization with Docker.
