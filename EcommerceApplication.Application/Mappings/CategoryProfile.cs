@@ -37,6 +37,7 @@ namespace EcommerceApplicationWeb.Application.Mappings
                 ));
 
             CreateMap<CategoryRequestDto, UpdateCategoryCommand>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ConstructUsing((dto, ctx) =>
                 {
                     var id = ctx.Items.ContainsKey("Id") ? (int)ctx.Items["Id"] : 0;

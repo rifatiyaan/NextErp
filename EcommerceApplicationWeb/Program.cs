@@ -89,10 +89,7 @@ builder.Services.AddControllers()
 builder.Services.AddControllersWithViews();
 
 // -------------------- AutoMapper --------------------
-builder.Services.AddAutoMapper(cfg =>
-{
-    cfg.AddMaps(typeof(ApplicationAssemblyMarker).Assembly);
-}, typeof(ApplicationAssemblyMarker).Assembly);
+builder.Services.AddAutoMapper(typeof(ApplicationAssemblyMarker).Assembly);
 
 // -------------------- MediatR --------------------
 builder.Services.AddMediatR(cfg =>
@@ -157,8 +154,16 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var mapper = scope.ServiceProvider.GetRequiredService<AutoMapper.IMapper>();
-    mapper.ConfigurationProvider.AssertConfigurationIsValid();
-    Log.Information("AutoMapper configuration validated successfully");
+    try
+    {
+        mapper.ConfigurationProvider.AssertConfigurationIsValid();
+        Log.Information("AutoMapper configuration validated successfully");
+    }
+    catch (AutoMapper.AutoMapperConfigurationException ex)
+    {
+        Log.Error(ex, "AutoMapper configuration is invalid");
+        throw;
+    }
 }
 #endif
 

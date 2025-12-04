@@ -28,10 +28,14 @@ namespace EcommerceApplicationWeb.Application.Mappings
 
             // Metadata mappings
             CreateMap<Product.ProductMetadataClass, ProductMetadataDto>()
+                .ForMember(dest => dest.CategoryId, opt => opt.Ignore())
                 .ReverseMap();
 
             // Request DTO -> Commands
             CreateMap<ProductRequestDto, CreateProductCommand>()
+                .ForMember(dest => dest.Description, opt => opt.Ignore())
+                .ForMember(dest => dest.Color, opt => opt.Ignore())
+                .ForMember(dest => dest.Warranty, opt => opt.Ignore())
                 .ConstructUsing(dto => new CreateProductCommand(
                     dto.Title,
                     dto.Code,
@@ -46,6 +50,10 @@ namespace EcommerceApplicationWeb.Application.Mappings
                 ));
 
             CreateMap<ProductRequestDto, UpdateProductCommand>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.Description, opt => opt.Ignore())
+                .ForMember(dest => dest.Color, opt => opt.Ignore())
+                .ForMember(dest => dest.Warranty, opt => opt.Ignore())
                 .ConstructUsing((dto, ctx) =>
                 {
                     var id = ctx.Items.ContainsKey("Id") ? (int)ctx.Items["Id"] : 0;

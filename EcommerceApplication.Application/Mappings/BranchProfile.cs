@@ -25,6 +25,7 @@ namespace EcommerceApplicationWeb.Application.Mappings
 
             // Metadata mappings
             CreateMap<Branch.BranchMetadata, BranchMetadataDto>()
+                .ForMember(dest => dest.Email, opt => opt.Ignore())
                 .ReverseMap();
         }
     }
