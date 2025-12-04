@@ -58,19 +58,7 @@ namespace EcommerceApplicationWeb.Web.Api
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ProductRequestDto dto)
         {
-            var command = new CreateProductCommand(
-                dto.Title,
-                dto.Code,
-                dto.ParentId,
-                dto.Metadata?.CategoryId ?? 0, // assuming CategoryId in Metadata
-                dto.Price,
-                dto.Stock,
-                dto.ImageUrl,
-                dto.Metadata?.Description,
-                dto.Metadata?.Color,
-                dto.Metadata?.Warranty
-            );
-
+            var command = _mapper.Map<CreateProductCommand>(dto);
             var id = await _mediator.Send(command);
 
             var product = await _mediator.Send(new GetProductByIdQuery(id));
@@ -82,20 +70,7 @@ namespace EcommerceApplicationWeb.Web.Api
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] ProductRequestDto dto)
         {
-            var command = new UpdateProductCommand(
-                id,
-                dto.Title,
-                dto.Code,
-                dto.ParentId,
-                dto.Metadata?.CategoryId ?? 0,
-                dto.Price,
-                dto.Stock,
-                dto.ImageUrl,
-                dto.Metadata?.Description,
-                dto.Metadata?.Color,
-                dto.Metadata?.Warranty
-            );
-
+            var command = _mapper.Map<UpdateProductCommand>(dto, opts => opts.Items["Id"] = id);
             await _mediator.Send(command);
             return NoContent();
         }

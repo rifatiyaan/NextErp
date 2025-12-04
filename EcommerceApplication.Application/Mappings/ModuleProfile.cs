@@ -8,23 +8,22 @@ namespace EcommerceApplicationWeb.Application.Mappings
     {
         public ModuleProfile()
         {
+            // Entity <-> Response DTO
             CreateMap<Module, ModuleResponseDto>()
-                .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new ModuleMetadataDto
-                {
-                    Author = src.Metadata.Author,
-                    Website = src.Metadata.Website,
-                    Dependencies = src.Metadata.Dependencies,
-                    ConfigurationUrl = src.Metadata.ConfigurationUrl
-                }));
+                .ReverseMap();
 
+            // Request DTO -> Entity
             CreateMap<ModuleRequestDto, Module>()
-                .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new Module.ModuleMetadata
-                {
-                    Author = src.Metadata.Author,
-                    Website = src.Metadata.Website,
-                    Dependencies = src.Metadata.Dependencies,
-                    ConfigurationUrl = src.Metadata.ConfigurationUrl
-                }));
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.TenantId, opt => opt.Ignore())
+                .ForMember(dest => dest.MenuItems, opt => opt.Ignore())
+                .ForMember(dest => dest.InstalledAt, opt => opt.Ignore())
+                .ForMember(dest => dest.IconUrl, opt => opt.Ignore());
+
+            // Metadata mappings
+            CreateMap<Module.ModuleMetadata, ModuleMetadataDto>()
+                .ReverseMap();
         }
     }
 }

@@ -89,7 +89,10 @@ builder.Services.AddControllers()
 builder.Services.AddControllersWithViews();
 
 // -------------------- AutoMapper --------------------
-builder.Services.AddAutoMapper(typeof(CategoryProfile).Assembly);
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddMaps(typeof(ApplicationAssemblyMarker).Assembly);
+}, typeof(ApplicationAssemblyMarker).Assembly);
 
 // -------------------- MediatR --------------------
 builder.Services.AddMediatR(cfg =>
@@ -148,6 +151,16 @@ builder.Services.AddRazorPages(); // <- REQUIRED
 
 // -------------------- Build App --------------------
 var app = builder.Build();
+
+// -------------------- Validate AutoMapper Configuration --------------------
+#if DEBUG
+using (var scope = app.Services.CreateScope())
+{
+    var mapper = scope.ServiceProvider.GetRequiredService<AutoMapper.IMapper>();
+    mapper.ConfigurationProvider.AssertConfigurationIsValid();
+    Log.Information("AutoMapper configuration validated successfully");
+}
+#endif
 
 //app.UseMyMiddleWarePlease();
 
