@@ -116,6 +116,14 @@ namespace NextErp.API.Web.Api
             return NoContent();
         }
 
+        [HttpPost("bulk")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<List<int>>> BulkCreate([FromBody] List<BulkModuleDto> modules)
+        {
+            var result = await _mediator.Send(new BulkCreateModuleCommand { Modules = modules });
+            return Ok(result);
+        }
+
         /// <summary>
         /// Delete a module/menu item
         /// </summary>

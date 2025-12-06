@@ -12,7 +12,7 @@ namespace NextErp.Domain.Entities
         public string Title { get; set; } = null!;
         public string? Icon { get; set; }
         public string? Url { get; set; }
-        
+
         // Hierarchy - self-referencing
         public int? ParentId { get; set; }
         public Module? Parent { get; set; }
