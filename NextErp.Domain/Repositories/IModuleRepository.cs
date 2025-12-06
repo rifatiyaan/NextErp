@@ -2,11 +2,13 @@ using NextErp.Domain.Entities;
 
 namespace NextErp.Domain.Repositories
 {
-    public interface IModuleRepository : IRepositoryBase<Module, Guid>
+    public interface IModuleRepository : IRepositoryBase<Module, int>
     {
-        Task<IEnumerable<Module>> GetInstalledModulesAsync(Guid tenantId);
-        Task<IEnumerable<Module>> GetEnabledModulesAsync(Guid tenantId);
-        Task<Module?> GetByNameAsync(string name, Guid tenantId);
+        Task<IEnumerable<Module>> GetMenuByUserRolesAsync(string[] roles, Guid tenantId);
+        Task<IEnumerable<Module>> GetModulesAsync(Guid tenantId);
+        Task<IEnumerable<Module>> GetMenuLinksAsync(Guid tenantId);
+        Task<Module?> GetByUrlAsync(string url, Guid tenantId);
+        Task<IEnumerable<Module>> GetRootItemsAsync(Guid tenantId);
         IQueryable<Module> Query();
     }
 }

@@ -15,11 +15,28 @@ namespace NextErp.Infrastructure.Configurations
                 .IsRequired()
                 .HasMaxLength(100);
 
-            builder.Property(x => x.Description)
+            builder.Property(x => x.Icon)
+                .HasMaxLength(50);
+
+            builder.Property(x => x.Url)
                 .HasMaxLength(500);
+
+            builder.Property(x => x.Description)
+                .HasMaxLength(1000);
 
             builder.Property(x => x.Version)
                 .HasMaxLength(20);
+
+            // Type enum
+            builder.Property(x => x.Type)
+                .IsRequired()
+                .HasConversion<int>();
+
+            // Self-referencing relationship
+            builder.HasOne(x => x.Parent)
+                .WithMany(x => x.Children)
+                .HasForeignKey(x => x.ParentId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // JSON Metadata
             builder.Property(x => x.Metadata)
@@ -27,6 +44,11 @@ namespace NextErp.Infrastructure.Configurations
                     v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                     v => JsonSerializer.Deserialize<Module.ModuleMetadata>(v, (JsonSerializerOptions?)null)!)
                 .HasColumnType("nvarchar(max)");
+
+            // Indexes for common queries
+            builder.HasIndex(x => x.Type);
+            builder.HasIndex(x => x.ParentId);
+            builder.HasIndex(x => new { x.TenantId, x.IsActive });
         }
     }
 }
