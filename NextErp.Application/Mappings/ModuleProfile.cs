@@ -9,8 +9,7 @@ namespace NextErp.Application.Mappings
         public ModuleProfile()
         {
             // Entity <-> Response DTO
-            CreateMap<Module, ModuleResponseDto>()
-                .ReverseMap();
+            CreateMap<Module, ModuleResponseDto>();
 
             // Request DTO -> Entity
             CreateMap<ModuleRequestDto, Module>()
@@ -23,6 +22,8 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Parent, opt => opt.Ignore())
                 .ForMember(dest => dest.Children, opt => opt.Ignore());
 
+
+
             // Bulk DTO -> Entity
             CreateMap<BulkModuleDto, Module>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -30,11 +31,9 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.TenantId, opt => opt.Ignore())
                 .ForMember(dest => dest.BranchId, opt => opt.Ignore())
-                .ForMember(dest => dest.ParentId, opt => opt.Ignore()) 
+                .ForMember(dest => dest.ParentId, opt => opt.Ignore())
                 .ForMember(dest => dest.Parent, opt => opt.Ignore())
                 .ForMember(dest => dest.Children, opt => opt.Ignore());
-
-
 
             // Metadata mappings
             CreateMap<Module.ModuleMetadata, ModuleMetadataDto>()

@@ -10,8 +10,7 @@ namespace NextErp.Application.Mappings
         public CategoryProfile()
         {
             // Entity <-> Response DTO
-            CreateMap<Category, CategoryResponseDto>()
-                .ReverseMap();
+            CreateMap<Category, CategoryResponseDto>();
 
             // Request DTO -> Entity
             CreateMap<CategoryRequestDto, Category>()

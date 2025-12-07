@@ -6,7 +6,7 @@ namespace NextErp.Infrastructure.Repositories
 {
     public class ModuleRepository : Repository<Module, int>, IModuleRepository
     {
-        public ModuleRepository(ApplicationDbContext context) : base(context)
+        public ModuleRepository(IApplicationDbContext context) : base((DbContext)context)
         {
         }
 

@@ -10,9 +10,7 @@ namespace NextErp.Application.Mappings
         {
             // Entity <-> Response DTO
             CreateMap<Branch, BranchResponseDto>()
-                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Title))
-                .ReverseMap()
-                .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Name));
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Title));
 
             // Request DTO -> Entity
             CreateMap<BranchRequestDto, Branch>()

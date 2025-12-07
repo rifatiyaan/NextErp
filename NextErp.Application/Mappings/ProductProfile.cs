@@ -11,8 +11,7 @@ namespace NextErp.Application.Mappings
         {
             // Entity <-> Response DTO
             CreateMap<Product, ProductResponseDto>()
-                .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId))
-                .ReverseMap();
+                .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId));
 
             // Request DTO -> Entity
             CreateMap<ProductRequestDto, Product>()
