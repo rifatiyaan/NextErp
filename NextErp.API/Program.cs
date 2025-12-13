@@ -40,7 +40,17 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 
 // -------------------- DbContext --------------------
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString, m => m.MigrationsAssembly(migrationAssembly)));
+{
+    var dbProvider = builder.Configuration["DatabaseProvider"] ?? "SqlServer";
+    if (dbProvider.Equals("Postgres", StringComparison.OrdinalIgnoreCase))
+    {
+        options.UseNpgsql(connectionString, m => m.MigrationsAssembly(migrationAssembly));
+    }
+    else
+    {
+        options.UseSqlServer(connectionString, m => m.MigrationsAssembly(migrationAssembly));
+    }
+});
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // -------------------- Identity 
