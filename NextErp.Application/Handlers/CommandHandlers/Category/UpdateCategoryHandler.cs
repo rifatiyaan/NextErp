@@ -6,19 +6,20 @@ using Repositories = NextErp.Domain.Repositories;
 namespace NextErp.Application.Handlers.CommandHandlers.Category
 {
     public class UpdateCategoryHandler(
-        Repositories.ICategoryRepository categoryRepo,
+        IApplicationUnitOfWork unitOfWork,
         IMapper mapper)
         : IRequestHandler<UpdateCategoryCommand, Unit>
     {
         public async Task<Unit> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken)
         {
-            var existing = await categoryRepo.GetByIdAsync(request.Id);
+            var existing = await unitOfWork.CategoryRepository.GetByIdAsync(request.Id);
             if (existing != null && existing.IsActive)
             {
                 mapper.Map(request, existing);
                 existing.UpdatedAt = DateTime.UtcNow;
 
-                await categoryRepo.EditAsync(existing);
+                await unitOfWork.CategoryRepository.EditAsync(existing);
+                await unitOfWork.SaveAsync();
             }
 
             return Unit.Value;

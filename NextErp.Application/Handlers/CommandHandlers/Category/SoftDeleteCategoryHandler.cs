@@ -4,17 +4,18 @@ using Repositories = NextErp.Domain.Repositories;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Category
 {
-    public class SoftDeleteCategoryHandler(Repositories.ICategoryRepository categoryRepo)
+    public class SoftDeleteCategoryHandler(IApplicationUnitOfWork unitOfWork)
         : IRequestHandler<SoftDeleteCategoryCommand, Unit>
     {
         public async Task<Unit> Handle(SoftDeleteCategoryCommand request, CancellationToken cancellationToken)
         {
-            var category = await categoryRepo.GetByIdAsync(request.Id);
+            var category = await unitOfWork.CategoryRepository.GetByIdAsync(request.Id);
             if (category != null && category.IsActive)
             {
                 category.IsActive = false;
                 category.UpdatedAt = DateTime.UtcNow;
-                await categoryRepo.EditAsync(category);
+                await unitOfWork.CategoryRepository.EditAsync(category);
+                await unitOfWork.SaveAsync();
             }
             return Unit.Value;
         }

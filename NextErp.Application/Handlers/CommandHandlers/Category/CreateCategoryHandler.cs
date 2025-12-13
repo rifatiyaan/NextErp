@@ -7,7 +7,7 @@ using Repositories = NextErp.Domain.Repositories;
 namespace NextErp.Application.Handlers.CommandHandlers.Category
 {
     public class CreateCategoryHandler(
-        Repositories.ICategoryRepository categoryRepo,
+        IApplicationUnitOfWork unitOfWork,
         IMapper mapper) 
         : IRequestHandler<CreateCategoryCommand, int>
     {
@@ -16,7 +16,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Category
             var category = mapper.Map<Entities.Category>(request);
             category.CreatedAt = DateTime.UtcNow;
 
-            await categoryRepo.AddAsync(category);
+            await unitOfWork.CategoryRepository.AddAsync(category);
+            await unitOfWork.SaveAsync();
             return category.Id;
         }
     }

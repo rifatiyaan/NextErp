@@ -7,7 +7,7 @@ using Repositories = NextErp.Domain.Repositories;
 namespace NextErp.Application.Handlers.CommandHandlers.Product
 {
     public class CreateProductHandler(
-        Repositories.IProductRepository productRepo,
+        IApplicationUnitOfWork unitOfWork,
         IMapper mapper) 
         : IRequestHandler<CreateProductCommand, int>
     {
@@ -17,7 +17,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
             product.IsActive = true;
             product.CreatedAt = DateTime.UtcNow;
 
-            await productRepo.AddAsync(product);
+            await unitOfWork.ProductRepository.AddAsync(product);
+            await unitOfWork.SaveAsync();
             return product.Id;
         }
     }

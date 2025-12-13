@@ -4,17 +4,18 @@ using Repositories = NextErp.Domain.Repositories;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Product
 {
-    public class SoftDeleteProductHandler(Repositories.IProductRepository productRepo) 
+    public class SoftDeleteProductHandler(IApplicationUnitOfWork unitOfWork) 
         : IRequestHandler<SoftDeleteProductCommand, Unit>
     {
         public async Task<Unit> Handle(SoftDeleteProductCommand request, CancellationToken cancellationToken)
         {
-            var product = await productRepo.GetByIdAsync(request.Id);
+            var product = await unitOfWork.ProductRepository.GetByIdAsync(request.Id);
             if (product != null && product.IsActive)
             {
                 product.IsActive = false;
                 product.UpdatedAt = DateTime.UtcNow;
-                await productRepo.EditAsync(product);
+                await unitOfWork.ProductRepository.EditAsync(product);
+                await unitOfWork.SaveAsync();
             }
 
             return Unit.Value;
