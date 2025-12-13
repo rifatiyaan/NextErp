@@ -25,7 +25,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Product
             {
                 "title" => query.OrderBy(p => p.Title),
                 "price" => query.OrderBy(p => p.Price),
-                _ => query.OrderBy(p => p.Id)
+                _ => query.OrderByDescending(p => p.CreatedAt)
             };
 
             var records = await query

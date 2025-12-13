@@ -49,7 +49,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Module
         {
             var items = await unitOfWork.ModuleRepository.Query()
                 .Where(x => x.TenantId == request.TenantId)
-                .OrderBy(x => x.Order)
+                .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync(cancellationToken);
 
             return mapper.Map<List<ModuleResponseDto>>(items);
@@ -73,7 +73,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Module
         {
             var items = await unitOfWork.ModuleRepository.Query()
                 .Where(x => x.TenantId == request.TenantId && x.Type == (ModuleType)request.Type)
-                .OrderBy(x => x.Order)
+                .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync(cancellationToken);
 
             return mapper.Map<List<ModuleResponseDto>>(items);
