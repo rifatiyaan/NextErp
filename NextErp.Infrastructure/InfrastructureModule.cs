@@ -41,6 +41,17 @@ namespace NextErp.Infrastructure
             .InstancePerLifetimeScope();
 
             // Register other infrastructure services here
+            builder.RegisterType<ApplicationUnitOfWork>()
+                .As<IApplicationUnitOfWork>()
+                .InstancePerLifetimeScope();
+            
+            // Register Repositories
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            
+            builder.RegisterAssemblyTypes(assembly)
+                .Where(t => t.Name.EndsWith("Repository"))
+                .AsImplementedInterfaces()
+                .InstancePerLifetimeScope();
         }
     }
 }
