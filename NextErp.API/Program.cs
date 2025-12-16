@@ -261,6 +261,11 @@ app.MapControllerRoute(
 
 app.MapRazorPages();
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+
 app.MapGet("/debug", async context =>
 {
     try
@@ -275,6 +280,27 @@ app.MapGet("/debug", async context =>
         await context.Response.WriteAsync($"Exception: {ex.Message}\n{ex.StackTrace}");
     }
 });
+
+app.MapGet("/debug-all", async (HttpContext context) =>
+{
+    try
+    {
+        // Example: simulate calling the failing endpoint code
+        // Replace this with the actual code that usually causes the 500
+        // For example: await someService.DoSomethingAsync();
+
+        await context.Response.WriteAsync("No exception thrown. Everything works!");
+    }
+    catch (Exception ex)
+    {
+        // This will show the exception message and stack trace in the browser
+        context.Response.ContentType = "text/plain";
+        await context.Response.WriteAsync($"Exception: {ex.GetType().Name}\n");
+        await context.Response.WriteAsync($"Message: {ex.Message}\n\n");
+        await context.Response.WriteAsync($"Stack Trace:\n{ex.StackTrace}");
+    }
+});
+
 
 
 // =======================================================
