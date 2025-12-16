@@ -1,4 +1,4 @@
-using Autofac;
+﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -15,51 +15,77 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// -------------------- Serilog Setup --------------------
+// =======================================================
+// 🔹 RENDER PORT BINDING (CRITICAL FIX)
+// =======================================================
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+{
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        options.ListenAnyIP(int.Parse(port));
+    });
+}
+
+// =======================================================
+// 🔹 SERILOG
+// =======================================================
 builder.Host.UseSerilog((ctx, lc) => lc
     .MinimumLevel.Debug()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
     .Enrich.FromLogContext()
     .ReadFrom.Configuration(builder.Configuration));
 
-// -------------------- Database Configuration --------------------
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+// =======================================================
+// 🔹 DATABASE CONFIG
+// =======================================================
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection")
     ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-var migrationAssembly = Environment.GetEnvironmentVariable("MigrationAssembly")
+var migrationAssembly =
+    Environment.GetEnvironmentVariable("MigrationAssembly")
     ?? typeof(ApplicationDbContext).Assembly.FullName;
 
-var dbProvider = builder.Configuration["DatabaseProvider"] ?? "SqlServer";
+var dbProvider =
+    builder.Configuration["DatabaseProvider"] ?? "SqlServer";
 
-
-// -------------------- Autofac --------------------
+// =======================================================
+// 🔹 AUTOFAC
+// =======================================================
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 {
-    // Register Infrastructure Module with the correct provider
-    containerBuilder.RegisterModule(new InfrastructureModule(connectionString, migrationAssembly, dbProvider));
-    
-    // Register Application Module
+    containerBuilder.RegisterModule(
+        new InfrastructureModule(connectionString, migrationAssembly, dbProvider));
+
     containerBuilder.RegisterModule(new ApplicationModule());
     containerBuilder.RegisterModule(new WebModule());
 });
 
-// -------------------- DbContext --------------------
+// =======================================================
+// 🔹 DB CONTEXT
+// =======================================================
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     if (dbProvider.Equals("Postgres", StringComparison.OrdinalIgnoreCase))
     {
-        options.UseNpgsql(connectionString, m => m.MigrationsAssembly("NextErp.Infrastructure"));
+        options.UseNpgsql(connectionString,
+            m => m.MigrationsAssembly("NextErp.Infrastructure"));
     }
     else
     {
-        options.UseSqlServer(connectionString, m => m.MigrationsAssembly(migrationAssembly));
+        options.UseSqlServer(connectionString,
+            m => m.MigrationsAssembly(migrationAssembly));
     }
 });
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// -------------------- Identity --------------------
+// =======================================================
+// 🔹 IDENTITY
+// =======================================================
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
@@ -72,7 +98,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// -------------------- JWT Authentication --------------------
+// =======================================================
+// 🔹 JWT AUTH
+// =======================================================
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -89,60 +117,80 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
     };
 });
 
 builder.Services.AddAuthorization();
 
-// -------------------- Controllers --------------------
+// =======================================================
+// 🔹 MVC / CONTROLLERS
+// =======================================================
 builder.Services.AddControllers()
     .AddJsonOptions(opt =>
     {
-        opt.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        opt.JsonSerializerOptions.ReferenceHandler =
+            System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
-builder.Services.AddControllersWithViews();
 
-// -------------------- AutoMapper --------------------
+builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
+
+// =======================================================
+// 🔹 AUTOMAPPER
+// =======================================================
 builder.Services.AddAutoMapper(typeof(ApplicationAssemblyMarker).Assembly);
 
-// -------------------- MediatR --------------------
+// =======================================================
+// 🔹 MEDIATR
+// =======================================================
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly));
 
-// -------------------- Swagger with JWT --------------------
+// =======================================================
+// 🔹 SWAGGER
+// =======================================================
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "My API", Version = "v1" });
-
-    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Please insert JWT token into field",
-        Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT"
-    });
-
-    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-    {
+    c.SwaggerDoc("v1",
+        new Microsoft.OpenApi.Models.OpenApiInfo
         {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            Title = "NextERP API",
+            Version = "v1"
+        });
+
+    c.AddSecurityDefinition("Bearer",
+        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+        {
+            In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+            Description = "JWT Authorization header using the Bearer scheme",
+            Name = "Authorization",
+            Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT"
+        });
+
+    c.AddSecurityRequirement(
+        new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+        {
             {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                new Microsoft.OpenApi.Models.OpenApiSecurityScheme
                 {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[] {}
-        }
-    });
+                    Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                    {
+                        Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                Array.Empty<string>()
+            }
+        });
 });
 
-// -------------------- CORS --------------------
+// =======================================================
+// 🔹 CORS
+// =======================================================
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("NextJsCorsPolicy", policy =>
@@ -153,43 +201,33 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddControllersWithViews()
-    .AddJsonOptions(opt =>
-    {
-        opt.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-    });
-builder.Services.AddRazorPages();
-
-// -------------------- Build App --------------------
+// =======================================================
+// 🔹 BUILD APP
+// =======================================================
 var app = builder.Build();
 
-// -------------------- AutoMapper Validation (Development Only) --------------------
+// =======================================================
+// 🔹 AUTOMAPPER VALIDATION (DEBUG ONLY)
+// =======================================================
 #if DEBUG
 using (var scope = app.Services.CreateScope())
 {
     var mapper = scope.ServiceProvider.GetRequiredService<AutoMapper.IMapper>();
-    try
-    {
-        mapper.ConfigurationProvider.AssertConfigurationIsValid();
-        Log.Information("AutoMapper configuration validated successfully");
-    }
-    catch (AutoMapper.AutoMapperConfigurationException ex)
-    {
-        Log.Error(ex, "AutoMapper configuration is invalid");
-        throw;
-    }
+    mapper.ConfigurationProvider.AssertConfigurationIsValid();
 }
 #endif
 
+// =======================================================
+// 🔹 MIDDLEWARE PIPELINE
+// =======================================================
 app.UseCors("NextJsCorsPolicy");
 
-// -------------------- Middleware Pipeline --------------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "NextERP API V1");
         c.RoutePrefix = string.Empty;
     });
 }
@@ -199,30 +237,41 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// 🔹 IMPORTANT: Disable HTTPS redirect in production (Render)
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// -------------------- Routes --------------------
+// =======================================================
+// 🔹 ROUTES
+// =======================================================
 app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
 app.MapRazorPages();
 
-// -------------------- Run --------------------
+// =======================================================
+// 🔹 RUN
+// =======================================================
 try
 {
-    Log.Information("Application Starting...");
+    Log.Information("Application starting...");
     app.Run();
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "Failed to start application");
+    Log.Fatal(ex, "Application failed to start");
 }
 finally
 {
