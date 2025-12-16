@@ -1,15 +1,14 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using NextErp.API;
-using NextErp.Application;
-using NextErp.Application.Mappings;
-using NextErp.Domain.Entities;
-using NextErp.Infrastructure;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using NextErp.API;
+using NextErp.Application;
+using NextErp.Domain.Entities;
+using NextErp.Infrastructure;
 using Serilog;
 using Serilog.Events;
 using System.Reflection;
@@ -26,6 +25,7 @@ builder.Host.UseSerilog((ctx, lc) => lc
 
 // -------------------- Connection String --------------------
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 var migrationAssembly = Assembly.GetExecutingAssembly().FullName;
 
