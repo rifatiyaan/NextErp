@@ -261,6 +261,22 @@ app.MapControllerRoute(
 
 app.MapRazorPages();
 
+app.MapGet("/debug", async context =>
+{
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await db.Database.CanConnectAsync();
+        await context.Response.WriteAsync("Database connected successfully");
+    }
+    catch (Exception ex)
+    {
+        await context.Response.WriteAsync($"Exception: {ex.Message}\n{ex.StackTrace}");
+    }
+});
+
+
 // =======================================================
 // 🔹 RUN
 // =======================================================
