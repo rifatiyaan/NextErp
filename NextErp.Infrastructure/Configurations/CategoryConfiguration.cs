@@ -15,13 +15,11 @@ namespace NextErp.Infrastructure.Configurations
                 .HasForeignKey(c => c.ParentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // JSON column for Category.Metadata
-            builder.Property(c => c.Metadata)
-                .HasConversion(
-                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                    v => JsonSerializer.Deserialize<Category.CategoryMetadataClass>(v, (JsonSerializerOptions?)null)!)
-                .HasColumnType("nvarchar(max)")
-                .IsRequired();
+            // JSON column for Category.Metadata (EF Core 8+ syntax)
+            builder.OwnsOne(c => c.Metadata, meta =>
+            {
+                meta.ToJson();
+            });
         }
     }
 }

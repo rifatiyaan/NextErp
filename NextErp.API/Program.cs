@@ -11,7 +11,6 @@ using NextErp.Domain.Entities;
 using NextErp.Infrastructure;
 using Serilog;
 using Serilog.Events;
-using System.Reflection;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,28 +22,35 @@ builder.Host.UseSerilog((ctx, lc) => lc
     .Enrich.FromLogContext()
     .ReadFrom.Configuration(builder.Configuration));
 
-// -------------------- Connection String --------------------
+// -------------------- Database Configuration --------------------
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-var migrationAssembly = Assembly.GetExecutingAssembly().FullName;
+
+var migrationAssembly = Environment.GetEnvironmentVariable("MigrationAssembly")
+    ?? typeof(ApplicationDbContext).Assembly.FullName;
+
+var dbProvider = builder.Configuration["DatabaseProvider"] ?? "SqlServer";
+
 
 // -------------------- Autofac --------------------
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 {
+    // Register Infrastructure Module with the correct provider
+    containerBuilder.RegisterModule(new InfrastructureModule(connectionString, migrationAssembly, dbProvider));
+    
+    // Register Application Module
     containerBuilder.RegisterModule(new ApplicationModule());
-    containerBuilder.RegisterModule(new InfrastructureModule(connectionString, migrationAssembly));
     containerBuilder.RegisterModule(new WebModule());
 });
 
 // -------------------- DbContext --------------------
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    var dbProvider = builder.Configuration["DatabaseProvider"] ?? "SqlServer";
     if (dbProvider.Equals("Postgres", StringComparison.OrdinalIgnoreCase))
     {
-        options.UseNpgsql(connectionString, m => m.MigrationsAssembly(migrationAssembly));
+        options.UseNpgsql(connectionString, m => m.MigrationsAssembly("NextErp.Infrastructure"));
     }
     else
     {
@@ -53,11 +59,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// -------------------- Identity 
-
+// -------------------- Identity --------------------
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 {
-    options.SignIn.RequireConfirmedAccount = false; // true in production
+    options.SignIn.RequireConfirmedAccount = false;
     options.Password.RequireDigit = false;
     options.Password.RequireLowercase = false;
     options.Password.RequireUppercase = false;
@@ -105,7 +110,6 @@ builder.Services.AddAutoMapper(typeof(ApplicationAssemblyMarker).Assembly);
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly));
 
-
 // -------------------- Swagger with JWT --------------------
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -137,12 +141,13 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-//-------------- Add CORS ------------//
+
+// -------------------- CORS --------------------
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("NextJsCorsPolicy", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // Next.js dev URL
+        policy.WithOrigins("http://localhost:3000")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -153,13 +158,12 @@ builder.Services.AddControllersWithViews()
     {
         opt.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
-builder.Services.AddRazorPages(); // <- REQUIRED
-
+builder.Services.AddRazorPages();
 
 // -------------------- Build App --------------------
 var app = builder.Build();
 
-// -------------------- Validate AutoMapper Configuration --------------------
+// -------------------- AutoMapper Validation (Development Only) --------------------
 #if DEBUG
 using (var scope = app.Services.CreateScope())
 {
@@ -176,8 +180,6 @@ using (var scope = app.Services.CreateScope())
     }
 }
 #endif
-
-//app.UseMyMiddleWarePlease();
 
 app.UseCors("NextJsCorsPolicy");
 
@@ -199,10 +201,7 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
-// ? Authentication must come before Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -213,10 +212,7 @@ app.MapControllerRoute(
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-
-// -------------------- Controllers & Razor Pages --------------------
-
-
+app.MapRazorPages();
 
 // -------------------- Run --------------------
 try

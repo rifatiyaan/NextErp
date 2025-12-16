@@ -39,11 +39,10 @@ namespace NextErp.Infrastructure.Configurations
                 .OnDelete(DeleteBehavior.Restrict);
 
             // JSON Metadata
-            builder.Property(x => x.Metadata)
-                .HasConversion(
-                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                    v => JsonSerializer.Deserialize<Module.ModuleMetadata>(v, (JsonSerializerOptions?)null)!)
-                .HasColumnType("nvarchar(max)");
+            builder.OwnsOne(x => x.Metadata, meta =>
+            {
+                meta.ToJson();
+            });
 
             // Indexes for common queries
             builder.HasIndex(x => x.Type);

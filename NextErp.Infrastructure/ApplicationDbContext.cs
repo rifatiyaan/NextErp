@@ -1,51 +1,27 @@
-using NextErp.Domain.Entities; // <-- for ApplicationUser
-using NextErp.Infrastructure.Entities;
-using NextErp.Infrastructure.Seeds;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
+using NextErp.Domain.Entities;
+using NextErp.Infrastructure.Entities;
 
 namespace NextErp.Infrastructure
 {
-    // Tell Identity to use ApplicationUser + Guid
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>, IApplicationDbContext
     {
-        private readonly string _connectionString;
-        private readonly string _migrationAssembly;
-
-        public ApplicationDbContext(string connectionString, string migrationAssembly)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options)
         {
-            _connectionString = connectionString;
-            _migrationAssembly = migrationAssembly;
-        }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-                optionsBuilder.UseSqlServer(
-                    _connectionString,
-                    x => x.MigrationsAssembly(_migrationAssembly));
-            }
-
-            base.OnConfiguring(optionsBuilder);
-        }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
-
-            // Apply all configurations from the current assembly
-            modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
-
-            SeedData.SeedCategories(modelBuilder);
-            SeedData.SeedProducts(modelBuilder);
         }
 
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<Module> Modules { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+            builder.ApplyConfigurationsFromAssembly(System.Reflection.Assembly.GetExecutingAssembly());
+        }
     }
 }

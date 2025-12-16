@@ -25,12 +25,10 @@ namespace NextErp.Infrastructure.Configurations
                 .OnDelete(DeleteBehavior.Restrict);
 
             // JSON column for Product.Metadata
-            builder.Property(p => p.Metadata)
-                .HasConversion(
-                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                    v => JsonSerializer.Deserialize<Product.ProductMetadataClass>(v, (JsonSerializerOptions?)null)!)
-                .HasColumnType("nvarchar(max)")
-                .IsRequired();
+            builder.OwnsOne(p => p.Metadata, meta =>
+            {
+                meta.ToJson();
+            });
         }
     }
 }

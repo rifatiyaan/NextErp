@@ -1,7 +1,5 @@
 using Autofac;
-using NextErp.Application;
-using NextErp.Domain.Repositories;
-using NextErp.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace NextErp.Infrastructure
 {
@@ -9,31 +7,40 @@ namespace NextErp.Infrastructure
     {
         private readonly string _connectionString;
         private readonly string _migrationAssembly;
+        private readonly string _databaseProvider;
 
-        public InfrastructureModule(string connectionString, string migrationAssembly)
+        public InfrastructureModule(string connectionString, string migrationAssembly, string databaseProvider = "SqlServer")
         {
             _connectionString = connectionString;
             _migrationAssembly = migrationAssembly;
+            _databaseProvider = databaseProvider;
         }
+
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<ApplicationDbContext>().AsSelf()
-                .WithParameter("connectionString", _connectionString)
-                .WithParameter("migrationAssembly", _migrationAssembly)
-                .InstancePerLifetimeScope();
+            // Register DbContext
+            builder.Register(context =>
+            {
+                var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
 
-            builder.RegisterType<ApplicationDbContext>().As<IApplicationDbContext>()
-               .WithParameter("connectionString", _connectionString)
-               .WithParameter("migrationAssembly", _migrationAssembly)
-               .InstancePerLifetimeScope();
+                if (_databaseProvider.Equals("Postgres", StringComparison.OrdinalIgnoreCase))
+                {
+                    optionsBuilder.UseNpgsql(_connectionString,
+                        npgsqlOptions => npgsqlOptions.MigrationsAssembly(_migrationAssembly));
+                }
+                else
+                {
+                    optionsBuilder.UseSqlServer(_connectionString,
+                        sqlOptions => sqlOptions.MigrationsAssembly(_migrationAssembly));
+                }
 
-            builder.RegisterType<ApplicationUnitOfWork>().As<IApplicationUnitOfWork>().InstancePerLifetimeScope();
-            //builder.RegisterType<BookRepository>().As<IBookRepository>().InstancePerLifetimeScope();
+                return new ApplicationDbContext(optionsBuilder.Options);
+            })
+            .As<IApplicationDbContext>()
+            .AsSelf()
+            .InstancePerLifetimeScope();
 
-            builder.RegisterType<CategoryRepository>().As<ICategoryRepository>().InstancePerLifetimeScope();
-            builder.RegisterType<UserRepository>().As<IUserRepository>().InstancePerLifetimeScope();
-            builder.RegisterType<ProductRepository>().As<IProductRepository>().InstancePerLifetimeScope();
-            builder.RegisterType<ModuleRepository>().As<IModuleRepository>().InstancePerLifetimeScope();
+            // Register other infrastructure services here
         }
     }
 }
