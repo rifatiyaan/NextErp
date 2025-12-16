@@ -1,5 +1,6 @@
 using Autofac;
 using Microsoft.EntityFrameworkCore;
+using NextErp.Application;
 
 namespace NextErp.Infrastructure
 {
@@ -44,10 +45,10 @@ namespace NextErp.Infrastructure
             builder.RegisterType<ApplicationUnitOfWork>()
                 .As<IApplicationUnitOfWork>()
                 .InstancePerLifetimeScope();
-            
+
             // Register Repositories
             var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-            
+
             builder.RegisterAssemblyTypes(assembly)
                 .Where(t => t.Name.EndsWith("Repository"))
                 .AsImplementedInterfaces()
