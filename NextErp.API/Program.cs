@@ -193,9 +193,9 @@ builder.Services.AddSwaggerGen(c =>
 // =======================================================
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("NextJsCorsPolicy", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.AllowAnyOrigin()
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -220,7 +220,7 @@ using (var scope = app.Services.CreateScope())
 // =======================================================
 // 🔹 MIDDLEWARE PIPELINE
 // =======================================================
-app.UseCors("NextJsCorsPolicy");
+// app.UseCors("AllowFrontend"); // Moved downstream
 
 if (app.Environment.IsDevelopment())
 {
@@ -245,6 +245,7 @@ if (!app.Environment.IsProduction())
 
 app.UseStaticFiles();
 app.UseRouting();
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
