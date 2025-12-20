@@ -9,12 +9,10 @@ namespace NextErp.Application.Mappings
     {
         public ProductProfile()
         {
-            // Entity <-> Response DTO
-            CreateMap<Product, ProductResponseDto>()
-                .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId));
-
-            // Request DTO -> Entity
-            CreateMap<ProductRequestDto, Product>()
+            // ===== Request DTOs to Entity =====
+            
+            // Create Request -> Entity
+            CreateMap<NextErp.Application.DTOs.Product.Request.Create.Single, NextErp.Domain.Entities.Product>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
@@ -25,16 +23,43 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Category, opt => opt.Ignore())
                 .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId ?? 0));
 
-            // Metadata mappings
-            CreateMap<Product.ProductMetadataClass, ProductMetadataDto>()
+            // Update Request -> Entity
+            CreateMap<NextErp.Application.DTOs.Product.Request.Update.Single, NextErp.Domain.Entities.Product>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.TenantId, opt => opt.Ignore())
+                .ForMember(dest => dest.BranchId, opt => opt.Ignore())
+                .ForMember(dest => dest.Parent, opt => opt.Ignore())
+                .ForMember(dest => dest.Children, opt => opt.Ignore())
+                .ForMember(dest => dest.Category, opt => opt.Ignore())
+                .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId ?? 0));
+
+            // ===== Entity to Response DTOs =====
+            
+            // Entity -> Get Single Response
+            CreateMap<NextErp.Domain.Entities.Product, NextErp.Application.DTOs.Product.Response.Get.Single>()
+                .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId))
+                .MaxDepth(1);
+
+            // Entity -> Create Single Response
+            CreateMap<NextErp.Domain.Entities.Product, NextErp.Application.DTOs.Product.Response.Create.Single>();
+
+            // Entity -> Update Single Response
+            CreateMap<NextErp.Domain.Entities.Product, NextErp.Application.DTOs.Product.Response.Update.Single>();
+
+            // ===== Metadata Mappings =====
+            
+            CreateMap<NextErp.Domain.Entities.Product.ProductMetadataClass, NextErp.Application.DTOs.Product.Request.Metadata>()
                 .ForMember(dest => dest.CategoryId, opt => opt.Ignore())
                 .ReverseMap();
 
-            // Request DTO -> Commands
-            CreateMap<ProductRequestDto, CreateProductCommand>()
-                .ForMember(dest => dest.Description, opt => opt.Ignore())
-                .ForMember(dest => dest.Color, opt => opt.Ignore())
-                .ForMember(dest => dest.Warranty, opt => opt.Ignore())
+            // ===== Legacy Mappings (for backward compatibility during transition) =====
+            
+            // Request DTO -> Commands (keeping for existing handlers)
+            CreateMap<NextErp.Application.DTOs.Product.Request.Create.Single, CreateProductCommand>()
+                .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Metadata.Description))
+                .ForMember(dest => dest.Color, opt => opt.MapFrom(src => src.Metadata.Color))
+                .ForMember(dest => dest.Warranty, opt => opt.MapFrom(src => src.Metadata.Warranty))
                 .ConstructUsing(dto => new CreateProductCommand(
                     dto.Title,
                     dto.Code,
@@ -42,37 +67,34 @@ namespace NextErp.Application.Mappings
                     dto.Metadata != null && dto.Metadata.CategoryId.HasValue ? dto.Metadata.CategoryId.Value : (dto.CategoryId ?? 0),
                     dto.Price,
                     dto.Stock,
+                    dto.IsActive,
                     dto.ImageUrl,
                     dto.Metadata != null ? dto.Metadata.Description : null,
                     dto.Metadata != null ? dto.Metadata.Color : null,
                     dto.Metadata != null ? dto.Metadata.Warranty : null
                 ));
 
-            CreateMap<ProductRequestDto, UpdateProductCommand>()
-                .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.Description, opt => opt.Ignore())
-                .ForMember(dest => dest.Color, opt => opt.Ignore())
-                .ForMember(dest => dest.Warranty, opt => opt.Ignore())
-                .ConstructUsing((dto, ctx) =>
-                {
-                    var id = ctx.Items.ContainsKey("Id") ? (int)ctx.Items["Id"] : 0;
-                    return new UpdateProductCommand(
-                        id,
-                        dto.Title,
-                        dto.Code,
-                        dto.ParentId,
-                        dto.Metadata != null && dto.Metadata.CategoryId.HasValue ? dto.Metadata.CategoryId.Value : (dto.CategoryId ?? 0),
-                        dto.Price,
-                        dto.Stock,
-                        dto.ImageUrl,
-                        dto.Metadata != null ? dto.Metadata.Description : null,
-                        dto.Metadata != null ? dto.Metadata.Color : null,
-                        dto.Metadata != null ? dto.Metadata.Warranty : null
-                    );
-                });
+            CreateMap<NextErp.Application.DTOs.Product.Request.Update.Single, UpdateProductCommand>()
+                .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Metadata.Description))
+                .ForMember(dest => dest.Color, opt => opt.MapFrom(src => src.Metadata.Color))
+                .ForMember(dest => dest.Warranty, opt => opt.MapFrom(src => src.Metadata.Warranty))
+                .ConstructUsing(dto => new UpdateProductCommand(
+                    dto.Id,
+                    dto.Title,
+                    dto.Code,
+                    dto.ParentId,
+                    dto.Metadata != null && dto.Metadata.CategoryId.HasValue ? dto.Metadata.CategoryId.Value : (dto.CategoryId ?? 0),
+                    dto.Price,
+                    dto.Stock,
+                    dto.IsActive,
+                    dto.ImageUrl,
+                    dto.Metadata != null ? dto.Metadata.Description : null,
+                    dto.Metadata != null ? dto.Metadata.Color : null,
+                    dto.Metadata != null ? dto.Metadata.Warranty : null
+                ));
 
             // Command -> Entity (for handlers)
-            CreateMap<CreateProductCommand, Product>()
+            CreateMap<CreateProductCommand, NextErp.Domain.Entities.Product>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
@@ -82,14 +104,14 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Children, opt => opt.Ignore())
                 .ForMember(dest => dest.Category, opt => opt.Ignore())
                 .ForMember(dest => dest.IsActive, opt => opt.Ignore())
-                .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new Product.ProductMetadataClass
+                .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new NextErp.Domain.Entities.Product.ProductMetadataClass
                 {
                     Description = src.Description,
                     Color = src.Color,
                     Warranty = src.Warranty
                 }));
 
-            CreateMap<UpdateProductCommand, Product>()
+            CreateMap<UpdateProductCommand, NextErp.Domain.Entities.Product>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.TenantId, opt => opt.Ignore())
@@ -98,7 +120,7 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Children, opt => opt.Ignore())
                 .ForMember(dest => dest.Category, opt => opt.Ignore())
                 .ForMember(dest => dest.IsActive, opt => opt.Ignore())
-                .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new Product.ProductMetadataClass
+                .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new NextErp.Domain.Entities.Product.ProductMetadataClass
                 {
                     Description = src.Description,
                     Color = src.Color,

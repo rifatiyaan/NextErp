@@ -6,7 +6,8 @@ namespace NextErp.Application.Commands
     public record CreateCategoryCommand(
         string Title,
         string? Description,
-        int? ParentId
+        int? ParentId,
+        bool IsActive = true
     ) : IRequest<int>; // Returns Id of created category
 
     // Update
@@ -14,7 +15,8 @@ namespace NextErp.Application.Commands
         int Id,
         string Title,
         string? Description,
-        int? ParentId
+        int? ParentId,
+        bool IsActive = true
     ) : IRequest<Unit>; // No return
 
     // Soft Delete

@@ -186,6 +186,9 @@ builder.Services.AddSwaggerGen(c =>
                 Array.Empty<string>()
             }
         });
+
+    // Handle nested DTO classes (e.g., Category+Request+Create+Single) to avoid schema ID collisions
+    c.CustomSchemaIds(type => type.FullName?.Replace("+", "."));
 });
 
 // =======================================================

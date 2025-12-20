@@ -31,7 +31,7 @@ namespace NextErp.API.Web.Api
             if (product == null)
                 return NotFound();
 
-            var dto = _mapper.Map<ProductResponseDto>(product);
+            var dto = _mapper.Map<Product.Response.Get.Single>(product);
             return Ok(dto);
         }
 
@@ -45,7 +45,7 @@ namespace NextErp.API.Web.Api
             var query = new GetPagedProductsQuery(pageIndex, pageSize, searchText, sortBy);
             var pagedResult = await _mediator.Send(query);
 
-            var dtoList = _mapper.Map<List<ProductResponseDto>>(pagedResult.Records);
+            var dtoList = _mapper.Map<List<Product.Response.Get.Single>>(pagedResult.Records);
 
             return Ok(new
             {
@@ -56,19 +56,19 @@ namespace NextErp.API.Web.Api
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ProductRequestDto dto)
+        public async Task<IActionResult> Create([FromBody] Product.Request.Create.Single dto)
         {
             var command = _mapper.Map<CreateProductCommand>(dto);
             var id = await _mediator.Send(command);
 
             var product = await _mediator.Send(new GetProductByIdQuery(id));
-            var response = _mapper.Map<ProductResponseDto>(product);
+            var response = _mapper.Map<Product.Response.Get.Single>(product);
 
             return CreatedAtAction(nameof(Get), new { id }, response);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] ProductRequestDto dto)
+        public async Task<IActionResult> Update(int id, [FromBody] Product.Request.Update.Single dto)
         {
             var command = _mapper.Map<UpdateProductCommand>(dto, opts => opts.Items["Id"] = id);
             await _mediator.Send(command);

@@ -3,11 +3,11 @@ using MediatR;
 
 namespace NextErp.Application.Queries.Module
 {
-    public record GetMenuByUserQuery(string[] Roles, Guid TenantId) : IRequest<List<ModuleResponseDto>>;
+    public record GetModuleByIdQuery(int Id) : IRequest<DTOs.Module.Response.Get.Single?>;
 
-    public record GetAllModulesQuery(Guid TenantId) : IRequest<List<ModuleResponseDto>>;
+    public record GetAllModulesQuery() : IRequest<List<DTOs.Module.Response.Get.Single>>;
 
-    public record GetModuleByIdQuery(int Id) : IRequest<ModuleResponseDto?>;
-    
-    public record GetModulesByTypeQuery(int Type, Guid TenantId) : IRequest<List<ModuleResponseDto>>;
+    public record GetModulesByTypeQuery(int Type) : IRequest<List<DTOs.Module.Response.Get.Single>>;
+
+    public record GetMenuByUserQuery(Guid UserId, Guid TenantId) : IRequest<List<DTOs.Module.Response.Get.Single>>;
 }

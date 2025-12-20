@@ -1,10 +1,10 @@
 using AutoMapper;
-using NextErp.Application.Commands.Module;
-using NextErp.Application.DTOs;
-using NextErp.Application.Queries.Module;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NextErp.Application.Commands.Module;
+using NextErp.Application.DTOs;
+using NextErp.Application.Queries.Module;
 using System.Security.Claims;
 
 namespace NextErp.API.Web.Api
@@ -29,21 +29,21 @@ namespace NextErp.API.Web.Api
         [HttpGet("user-menu")]
         public async Task<IActionResult> GetUserMenu()
         {
-            // Extract user roles from claims
-            var roles = User.Claims
-                .Where(c => c.Type == ClaimTypes.Role)
-                .Select(c => c.Value)
-                .ToArray();
+            // Get user ID from claims
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized("User ID not found in claims");
+            }
 
-            // Extract tenant ID from claims (adjust claim type as needed)
+            // Extract tenant ID from claims
             var tenantIdClaim = User.Claims.FirstOrDefault(c => c.Type == "TenantId")?.Value;
             if (string.IsNullOrEmpty(tenantIdClaim) || !Guid.TryParse(tenantIdClaim, out var tenantId))
             {
-                // Default tenant or return error based on your requirements
                 tenantId = Guid.Empty;
             }
 
-            var query = new GetMenuByUserQuery(roles, tenantId);
+            var query = new GetMenuByUserQuery(userId, tenantId);
             var menuItems = await _mediator.Send(query);
 
             return Ok(menuItems);
@@ -56,8 +56,8 @@ namespace NextErp.API.Web.Api
         public async Task<IActionResult> GetAll([FromQuery] Guid? tenantId = null)
         {
             var effectiveTenantId = tenantId ?? Guid.Empty;
-            
-            var query = new GetAllModulesQuery(effectiveTenantId);
+
+            var query = new GetAllModulesQuery();
             var modules = await _mediator.Send(query);
 
             return Ok(modules);
@@ -70,8 +70,8 @@ namespace NextErp.API.Web.Api
         public async Task<IActionResult> GetByType(int type, [FromQuery] Guid? tenantId = null)
         {
             var effectiveTenantId = tenantId ?? Guid.Empty;
-            
-            var query = new GetModulesByTypeQuery(type, effectiveTenantId);
+
+            var query = new GetModulesByTypeQuery(type);
             var modules = await _mediator.Send(query);
 
             return Ok(modules);
@@ -96,7 +96,7 @@ namespace NextErp.API.Web.Api
         /// Create a new module/menu item
         /// </summary>
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ModuleRequestDto dto)
+        public async Task<IActionResult> Create([FromBody] Module.Request.Create.Single dto)
         {
             var command = new CreateModuleCommand(dto);
             var id = await _mediator.Send(command);
@@ -109,20 +109,13 @@ namespace NextErp.API.Web.Api
         /// Update an existing module/menu item
         /// </summary>
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] ModuleRequestDto dto)
+        public async Task<IActionResult> Update(int id, [FromBody] Module.Request.Update.Single dto)
         {
             var command = new UpdateModuleCommand(id, dto);
             await _mediator.Send(command);
             return NoContent();
         }
 
-        [HttpPost("bulk")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<List<int>>> BulkCreate([FromBody] List<BulkModuleDto> modules)
-        {
-            var result = await _mediator.Send(new BulkCreateModuleCommand { Modules = modules });
-            return Ok(result);
-        }
 
         /// <summary>
         /// Delete a module/menu item

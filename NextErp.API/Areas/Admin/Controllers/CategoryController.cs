@@ -1,10 +1,10 @@
 using AutoMapper;
-using NextErp.Application.Commands;
-using NextErp.Application.DTOs;
-using NextErp.Application.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NextErp.Application.Commands;
+using NextErp.Application.DTOs;
+using NextErp.Application.Queries;
 
 namespace NextErp.API.Web.Api
 {
@@ -31,7 +31,7 @@ namespace NextErp.API.Web.Api
 
             if (category == null) return NotFound();
 
-            var dto = _mapper.Map<CategoryResponseDto>(category);
+            var dto = _mapper.Map<Category.Response.Get.Single>(category);
             return Ok(dto);
         }
 
@@ -46,7 +46,7 @@ namespace NextErp.API.Web.Api
             var query = new GetPagedCategoriesQuery(pageIndex, pageSize, searchText, sortBy);
             var pagedResult = await _mediator.Send(query);
 
-            var dtoList = _mapper.Map<List<CategoryResponseDto>>(pagedResult.Records);
+            var dtoList = _mapper.Map<List<Category.Response.Get.Single>>(pagedResult.Records);
 
             return Ok(new
             {
@@ -58,20 +58,20 @@ namespace NextErp.API.Web.Api
 
         // POST api/category
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CategoryRequestDto dto)
+        public async Task<IActionResult> Create([FromBody] Category.Request.Create.Single dto)
         {
             var command = _mapper.Map<CreateCategoryCommand>(dto);
             var id = await _mediator.Send(command);
 
             var category = await _mediator.Send(new GetCategoryByIdQuery(id));
-            var response = _mapper.Map<CategoryResponseDto>(category);
+            var response = _mapper.Map<Category.Response.Get.Single>(category);
 
             return CreatedAtAction(nameof(Get), new { id }, response);
         }
 
         // PUT api/category/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] CategoryRequestDto dto)
+        public async Task<IActionResult> Update(int id, [FromBody] Category.Request.Update.Single dto)
         {
             var command = _mapper.Map<UpdateCategoryCommand>(dto, opts => opts.Items["Id"] = id);
             await _mediator.Send(command);
