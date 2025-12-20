@@ -11,26 +11,23 @@ NextErp is a **modular, clean architecture-based enterprise resource planning (E
 3. [Tech Stack & Tools](#tech-stack--tools)  
 4. [Database & Metadata Handling](#database--metadata-handling)  
 5. [Services & Controllers](#services--controllers)  
-6. [Setup & Migration](#setup--migration)  
-7. [Usage](#usage)  
-8. [Future Improvements](#future-improvements)  
+6. [API Gateway (YARP)](#api-gateway-yarp)
+7. [Setup & Migration](#setup--migration)  
+8. [Usage](#usage)  
+9. [Future Improvements](#future-improvements)  
 
 ---
 
 ## Features
 
 ### Product Module
-- Create, update, delete, and retrieve products.
-- Paging, sorting, and filtering (by price, category, etc.).
-- Each product is linked to a category.
-- Metadata JSON column to store dynamic attributes without schema changes.
-- Automatic update of category product count when products are added, updated, or deleted.
-- Includes parent-child relationships (for product variations) and category hierarchies.
+- Full CRUD with paging, sorting, and filtering.
+- Automatic category product count updates.
+- Metadata JSON for dynamic attributes and parent-child variations.
 
 ### Category Module
-- CRUD operations for categories.
-- Self-referencing for parent-child relationships.
-- Metadata JSON column to store additional info like product counts.
+- CRUD with self-referencing for hierarchies.
+- Metadata JSON for product counting and dynamic info.
 
 ### API Features
 - RESTful endpoints with **Swagger documentation**.
@@ -70,6 +67,12 @@ NextErp is a **modular, clean architecture-based enterprise resource planning (E
    - Middleware (Error handling, Authentication).
    - Swagger/OpenAPI configuration.
 
+5. **NextErp.Gateway** (API Gateway)
+   - Built with **YARP (Yet Another Reverse Proxy)**.
+   - Programmatic route and cluster configuration via `IGatewayConfigProvider`.
+   - Custom middleware and transformations for request routing.
+   - Central entry point for all client requests.
+
 ---
 
 ### Key Patterns Used
@@ -94,6 +97,7 @@ NextErp is a **modular, clean architecture-based enterprise resource planning (E
 - **Authentication**: ASP.NET Identity (JWT)
 - **Logging**: Serilog (File-based)  
 - **API Documentation**: Swagger / Swashbuckle  
+- **API Gateway**: YARP (Yet Another Reverse Proxy)
 - **Frontend**: Razor Pages (Admin Area) with Bootstrap 5 (AdminLTE removed for simplicity)
 
 ---
@@ -127,6 +131,35 @@ NextErp is a **modular, clean architecture-based enterprise resource planning (E
 
 ---
 
+## API Gateway (YARP)
+
+NextErp uses **YARP** as a high-performance API Gateway. It is designed to handle cross-cutting concerns like authentication, rate limiting, and request routing across multiple microservices (or modules).
+
+- **Dynamic Configuration**: Routes and clusters can be updated at runtime without restarting the gateway.
+- **Middleware Integration**: Seamlessly integrates with ASP.NET Core middleware for custom logic.
+- **Service Discovery**: Abstracts the underlying service locations, allowing for easy scaling and failover.
+
+The Gateway is configured in `NextErp.Gateway/Program.cs` and can be extended with custom transforms.
+
+### Middleware Pipeline Flow
+
+```mermaid
+graph TD
+    Client[Client Request] --> Gateway[NextErp.Gateway \n YARP]
+    Gateway --> API[NextErp.API]
+    subgraph "ASP.NET Core Pipeline"
+        API --> Serilog[Logging]
+        Serilog --> Routing[Routing]
+        Routing --> CORS[CORS]
+        CORS --> Auth[Authentication & Authorization]
+        Auth --> Controllers[Controllers/Endpoints]
+        Controllers --> MediatR[MediatR Handlers]
+        MediatR --> DB[(Database)]
+    end
+```
+
+---
+
 ## Setup & Migration
 
 1. **Prerequisites**:
@@ -148,11 +181,13 @@ NextErp is a **modular, clean architecture-based enterprise resource planning (E
    dotnet ef database update --project NextErp.Infrastructure --startup-project NextErp.API
    ```
 
-4. **Run Application**:
+4. **Run API Gateway**:
    ```bash
-   dotnet run --project NextErp.API
+   dotnet run --project NextErp.Gateway
    ```
-   Access Swagger at `https://localhost:7245/swagger` (port may vary).
+   The gateway typically listens on `https://localhost:7000` (port may vary) and forwards requests to `NextErp.API`.
+
+Access Swagger at `https://localhost:7245/swagger` (Direct API) or via Gateway if configured.
 
 ---
 
