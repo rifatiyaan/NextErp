@@ -15,11 +15,13 @@ namespace NextErp.API.Web.Api
     {
         private readonly IMediator _mediator;
         private readonly IMapper _mapper;
+        private readonly NextErp.Application.Interfaces.IImageService _imageService;
 
-        public ProductController(IMediator mediator, IMapper mapper)
+        public ProductController(IMediator mediator, IMapper mapper, NextErp.Application.Interfaces.IImageService imageService)
         {
             _mediator = mediator;
             _mapper = mapper;
+            _imageService = imageService;
         }
 
         [HttpGet("{id}")]
@@ -56,8 +58,13 @@ namespace NextErp.API.Web.Api
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Product.Request.Create.Single dto)
+        public async Task<IActionResult> Create([FromForm] Product.Request.Create.Single dto)
         {
+            if (dto.Image != null)
+            {
+                dto.ImageUrl = await _imageService.UploadImageAsync(dto.Image);
+            }
+
             var command = _mapper.Map<CreateProductCommand>(dto);
             var id = await _mediator.Send(command);
 
@@ -68,8 +75,13 @@ namespace NextErp.API.Web.Api
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Product.Request.Update.Single dto)
+        public async Task<IActionResult> Update(int id, [FromForm] Product.Request.Update.Single dto)
         {
+            if (dto.Image != null)
+            {
+                dto.ImageUrl = await _imageService.UploadImageAsync(dto.Image);
+            }
+
             var command = _mapper.Map<UpdateProductCommand>(dto, opts => opts.Items["Id"] = id);
             await _mediator.Send(command);
             return NoContent();

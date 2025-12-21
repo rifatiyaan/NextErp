@@ -1,6 +1,7 @@
 using Autofac;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application;
+using NextErp.Application.Interfaces;
 
 namespace NextErp.Infrastructure
 {
@@ -44,6 +45,10 @@ namespace NextErp.Infrastructure
             // Register other infrastructure services here
             builder.RegisterType<ApplicationUnitOfWork>()
                 .As<IApplicationUnitOfWork>()
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<Services.CloudinaryService>()
+                .As<IImageService>()
                 .InstancePerLifetimeScope();
 
             // Register Repositories

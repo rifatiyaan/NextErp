@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace NextErp.Application.DTOs
 {
     /// <summary>
@@ -18,6 +20,7 @@ namespace NextErp.Application.DTOs
                 public int Stock { get; set; }
                 public int? CategoryId { get; set; }
                 public string? ImageUrl { get; set; }
+                public IFormFile? Image { get; set; }
                 public int? ParentId { get; set; }
                 public Metadata Metadata { get; set; } = new();
             }
