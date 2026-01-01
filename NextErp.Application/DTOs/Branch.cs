@@ -1,15 +1,9 @@
 namespace NextErp.Application.DTOs
 {
-    /// <summary>
-    /// Branch DTO hierarchy using nested partial classes
-    /// </summary>
     public partial class Branch
     {
         public partial class Request
         {
-            /// <summary>
-            /// Base request properties for Branch
-            /// </summary>
             public abstract class Base
             {
                 public string Name { get; set; } = null!;
@@ -19,17 +13,11 @@ namespace NextErp.Application.DTOs
 
             public partial class Get
             {
-                /// <summary>
-                /// Request to get a single branch by Id
-                /// </summary>
                 public class Single
                 {
                     public Guid Id { get; set; }
                 }
 
-                /// <summary>
-                /// Request to get multiple branches with pagination
-                /// </summary>
                 public class Bulk
                 {
                     public int Page { get; set; } = 1;
@@ -44,17 +32,11 @@ namespace NextErp.Application.DTOs
 
             public partial class Create
             {
-                /// <summary>
-                /// Request to create a single branch
-                /// </summary>
                 public class Single : Base
                 {
                     public bool IsActive { get; set; } = true;
                 }
 
-                /// <summary>
-                /// Request to create multiple branches
-                /// </summary>
                 public class Bulk
                 {
                     public List<Single> Branches { get; set; } = new();
@@ -63,27 +45,18 @@ namespace NextErp.Application.DTOs
 
             public partial class Update : Create
             {
-                /// <summary>
-                /// Request to update a single branch (includes soft delete via IsActive)
-                /// </summary>
                 public new class Single : Base
                 {
                     public Guid Id { get; set; }
                     public bool IsActive { get; set; } = true;
                 }
 
-                /// <summary>
-                /// Request to update multiple branches
-                /// </summary>
                 public new class Bulk
                 {
                     public List<Single> Branches { get; set; } = new();
                 }
             }
 
-            /// <summary>
-            /// Branch metadata
-            /// </summary>
             public class Metadata
             {
                 public string? Phone { get; set; }
@@ -95,9 +68,6 @@ namespace NextErp.Application.DTOs
 
         public partial class Response
         {
-            /// <summary>
-            /// Base response properties for Branch
-            /// </summary>
             public abstract class Base
             {
                 public Guid Id { get; set; }
@@ -111,18 +81,12 @@ namespace NextErp.Application.DTOs
 
             public partial class Get
             {
-                /// <summary>
-                /// Response for getting a single branch
-                /// </summary>
                 public class Single : Base
                 {
                     public Request.Metadata Metadata { get; set; } = new();
                     public Tenant.Response.Get.Single? Tenant { get; set; }
                 }
 
-                /// <summary>
-                /// Response for getting multiple branches
-                /// </summary>
                 public class Bulk
                 {
                     public List<Single> Branches { get; set; } = new();
@@ -135,17 +99,11 @@ namespace NextErp.Application.DTOs
 
             public partial class Create
             {
-                /// <summary>
-                /// Response for creating a single branch
-                /// </summary>
                 public class Single : Base
                 {
                     public Request.Metadata Metadata { get; set; } = new();
                 }
 
-                /// <summary>
-                /// Response for creating multiple branches
-                /// </summary>
                 public class Bulk
                 {
                     public List<Single> Branches { get; set; } = new();
@@ -157,17 +115,11 @@ namespace NextErp.Application.DTOs
 
             public partial class Update : Create
             {
-                /// <summary>
-                /// Response for updating a single branch
-                /// </summary>
                 public new class Single : Base
                 {
                     public Request.Metadata Metadata { get; set; } = new();
                 }
 
-                /// <summary>
-                /// Response for updating multiple branches
-                /// </summary>
                 public new class Bulk
                 {
                     public List<Single> Branches { get; set; } = new();

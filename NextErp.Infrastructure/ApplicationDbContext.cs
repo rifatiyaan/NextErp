@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using NextErp.Application.Interfaces;
 using NextErp.Domain.Entities;
 using NextErp.Infrastructure.Entities;
 
@@ -17,6 +18,15 @@ namespace NextErp.Infrastructure
         public DbSet<Category> Categories { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<Module> Modules { get; set; }
+
+        // Inventory Module DbSets
+        public DbSet<Supplier> Suppliers { get; set; }
+        public DbSet<Customer> Customers { get; set; }
+        public DbSet<Stock> Stocks { get; set; }
+        public DbSet<Purchase> Purchases { get; set; }
+        public DbSet<PurchaseItem> PurchaseItems { get; set; }
+        public DbSet<Sale> Sales { get; set; }
+        public DbSet<SaleItem> SaleItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

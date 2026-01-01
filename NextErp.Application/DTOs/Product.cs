@@ -2,16 +2,10 @@ using Microsoft.AspNetCore.Http;
 
 namespace NextErp.Application.DTOs
 {
-    /// <summary>
-    /// Product DTO hierarchy using nested partial classes
-    /// </summary>
     public partial class Product
     {
         public partial class Request
         {
-            /// <summary>
-            /// Base request properties for Product
-            /// </summary>
             public abstract class Base
             {
                 public string Title { get; set; } = null!;
@@ -27,17 +21,11 @@ namespace NextErp.Application.DTOs
 
             public partial class Get
             {
-                /// <summary>
-                /// Request to get a single product by Id
-                /// </summary>
                 public class Single
                 {
                     public int Id { get; set; }
                 }
 
-                /// <summary>
-                /// Request to get multiple products with pagination
-                /// </summary>
                 public class Bulk
                 {
                     public int Page { get; set; } = 1;
@@ -52,17 +40,11 @@ namespace NextErp.Application.DTOs
 
             public partial class Create
             {
-                /// <summary>
-                /// Request to create a single product
-                /// </summary>
                 public class Single : Base
                 {
                     public bool IsActive { get; set; } = true;
                 }
 
-                /// <summary>
-                /// Request to create multiple products
-                /// </summary>
                 public class Bulk
                 {
                     public List<Single> Products { get; set; } = new();
@@ -71,27 +53,18 @@ namespace NextErp.Application.DTOs
 
             public partial class Update : Create
             {
-                /// <summary>
-                /// Request to update a single product (includes soft delete via IsActive)
-                /// </summary>
                 public new class Single : Base
                 {
                     public int Id { get; set; }
                     public bool IsActive { get; set; } = true;
                 }
 
-                /// <summary>
-                /// Request to update multiple products
-                /// </summary>
                 public new class Bulk
                 {
                     public List<Single> Products { get; set; } = new();
                 }
             }
 
-            /// <summary>
-            /// Product metadata
-            /// </summary>
             public class Metadata
             {
                 public string? Description { get; set; }
@@ -103,9 +76,6 @@ namespace NextErp.Application.DTOs
 
         public partial class Response
         {
-            /// <summary>
-            /// Base response properties for Product
-            /// </summary>
             public abstract class Base
             {
                 public int Id { get; set; }
@@ -125,18 +95,12 @@ namespace NextErp.Application.DTOs
 
             public partial class Get
             {
-                /// <summary>
-                /// Response for getting a single product
-                /// </summary>
                 public class Single : Base
                 {
                     public Request.Metadata Metadata { get; set; } = new();
                     public Category.Response.Get.Single? Category { get; set; }
                 }
 
-                /// <summary>
-                /// Response for getting multiple products
-                /// </summary>
                 public class Bulk
                 {
                     public List<Single> Products { get; set; } = new();
@@ -149,17 +113,11 @@ namespace NextErp.Application.DTOs
 
             public partial class Create
             {
-                /// <summary>
-                /// Response for creating a single product
-                /// </summary>
                 public class Single : Base
                 {
                     public Request.Metadata Metadata { get; set; } = new();
                 }
 
-                /// <summary>
-                /// Response for creating multiple products
-                /// </summary>
                 public class Bulk
                 {
                     public List<Single> Products { get; set; } = new();
@@ -171,17 +129,11 @@ namespace NextErp.Application.DTOs
 
             public partial class Update : Create
             {
-                /// <summary>
-                /// Response for updating a single product
-                /// </summary>
                 public new class Single : Base
                 {
                     public Request.Metadata Metadata { get; set; } = new();
                 }
 
-                /// <summary>
-                /// Response for updating multiple products
-                /// </summary>
                 public new class Bulk
                 {
                     public List<Single> Products { get; set; } = new();

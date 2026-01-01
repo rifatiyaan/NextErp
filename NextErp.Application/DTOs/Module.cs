@@ -2,16 +2,10 @@ using NextErp.Domain.Entities;
 
 namespace NextErp.Application.DTOs
 {
-    /// <summary>
-    /// Module DTO hierarchy using nested partial classes
-    /// </summary>
     public partial class Module
     {
         public partial class Request
         {
-            /// <summary>
-            /// Base request properties for Module
-            /// </summary>
             public abstract class Base
             {
                 public string Title { get; set; } = null!;
@@ -35,17 +29,11 @@ namespace NextErp.Application.DTOs
 
             public partial class Get
             {
-                /// <summary>
-                /// Request to get a single module by Id
-                /// </summary>
                 public class Single
                 {
                     public int Id { get; set; }
                 }
 
-                /// <summary>
-                /// Request to get multiple modules with filtering
-                /// </summary>
                 public class Bulk
                 {
                     public int Page { get; set; } = 1;
@@ -61,25 +49,16 @@ namespace NextErp.Application.DTOs
 
             public partial class Create
             {
-                /// <summary>
-                /// Request to create a single module
-                /// </summary>
                 public class Single : Base
                 {
                     public bool IsActive { get; set; } = true;
                 }
 
-                /// <summary>
-                /// Request to create multiple modules (supports hierarchical creation)
-                /// </summary>
                 public class Bulk
                 {
                     public List<Hierarchical> Modules { get; set; } = new();
                 }
 
-                /// <summary>
-                /// Hierarchical module DTO for bulk creation (supports nested children)
-                /// </summary>
                 public class Hierarchical : Base
                 {
                     public bool IsActive { get; set; } = true;
@@ -89,9 +68,6 @@ namespace NextErp.Application.DTOs
 
             public partial class Update : Create
             {
-                /// <summary>
-                /// Request to update a single module (includes soft delete via IsActive)
-                /// </summary>
                 public new class Single : Base
                 {
                     public int Id { get; set; }
@@ -99,18 +75,12 @@ namespace NextErp.Application.DTOs
                     public DateTime? InstalledAt { get; set; }
                 }
 
-                /// <summary>
-                /// Request to update multiple modules
-                /// </summary>
                 public new class Bulk
                 {
                     public List<Single> Modules { get; set; } = new();
                 }
             }
 
-            /// <summary>
-            /// Module metadata
-            /// </summary>
             public class Metadata
             {
                 // From MenuItem
@@ -130,9 +100,6 @@ namespace NextErp.Application.DTOs
 
         public partial class Response
         {
-            /// <summary>
-            /// Base response properties for Module
-            /// </summary>
             public abstract class Base
             {
                 public int Id { get; set; }
@@ -161,18 +128,12 @@ namespace NextErp.Application.DTOs
 
             public partial class Get
             {
-                /// <summary>
-                /// Response for getting a single module
-                /// </summary>
                 public class Single : Base
                 {
                     public Request.Metadata Metadata { get; set; } = new();
                     public List<Single> Children { get; set; } = new();
                 }
 
-                /// <summary>
-                /// Response for getting multiple modules
-                /// </summary>
                 public class Bulk
                 {
                     public List<Single> Modules { get; set; } = new();
@@ -185,17 +146,11 @@ namespace NextErp.Application.DTOs
 
             public partial class Create
             {
-                /// <summary>
-                /// Response for creating a single module
-                /// </summary>
                 public class Single : Base
                 {
                     public Request.Metadata Metadata { get; set; } = new();
                 }
 
-                /// <summary>
-                /// Response for creating multiple modules (supports hierarchical response)
-                /// </summary>
                 public class Bulk
                 {
                     public List<Hierarchical> Modules { get; set; } = new();
@@ -204,9 +159,6 @@ namespace NextErp.Application.DTOs
                     public List<string> Errors { get; set; } = new();
                 }
 
-                /// <summary>
-                /// Hierarchical module response for bulk creation
-                /// </summary>
                 public class Hierarchical : Base
                 {
                     public Request.Metadata Metadata { get; set; } = new();
@@ -216,17 +168,11 @@ namespace NextErp.Application.DTOs
 
             public partial class Update : Create
             {
-                /// <summary>
-                /// Response for updating a single module
-                /// </summary>
                 public new class Single : Base
                 {
                     public Request.Metadata Metadata { get; set; } = new();
                 }
 
-                /// <summary>
-                /// Response for updating multiple modules
-                /// </summary>
                 public new class Bulk
                 {
                     public List<Single> Modules { get; set; } = new();

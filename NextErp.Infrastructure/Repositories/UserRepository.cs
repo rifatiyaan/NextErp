@@ -1,3 +1,5 @@
+using NextErp.Application.Interfaces;
+using NextErp.Domain.Entities;
 using NextErp.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 

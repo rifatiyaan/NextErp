@@ -1,9 +1,5 @@
 namespace NextErp.Application.DTOs.Common
 {
-    /// <summary>
-    /// Generic response wrapper for all operations
-    /// </summary>
-    /// <typeparam name="T">The type of data being returned</typeparam>
     public class OperationResult<T>
     {
         public bool Success { get; set; }

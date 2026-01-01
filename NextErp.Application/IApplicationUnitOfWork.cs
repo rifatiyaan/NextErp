@@ -11,5 +11,12 @@ namespace NextErp.Application
         ICategoryRepository CategoryRepository { get; }
         IUserRepository UserRepository { get; }
         IModuleRepository ModuleRepository { get; }
+        
+        // Inventory Module Repositories
+        ISupplierRepository SupplierRepository { get; }
+        ICustomerRepository CustomerRepository { get; }
+        IStockRepository StockRepository { get; }
+        IPurchaseRepository PurchaseRepository { get; }
+        ISaleRepository SaleRepository { get; }
     }
 }
