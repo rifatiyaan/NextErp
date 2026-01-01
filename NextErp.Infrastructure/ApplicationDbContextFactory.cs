@@ -10,7 +10,7 @@ namespace NextErp.Infrastructure
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
 
             // Simple connection string
-            var connectionString = "Server=localhost;Database=NextErpTemp;Trusted_Connection=True;TrustServerCertificate=True";
+            var connectionString = "Server=DESKTOP-2PTJ945\\SQLEXPRESS01;Database=NextErpTemp;Integrated Security=True;TrustServerCertificate=True;";
 
             optionsBuilder.UseSqlServer(connectionString,
                 x => x.MigrationsAssembly("NextErp.Infrastructure"));
