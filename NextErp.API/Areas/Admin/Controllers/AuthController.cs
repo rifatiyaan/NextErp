@@ -16,35 +16,67 @@ namespace NextErp.API.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthController> _logger;
 
         public AuthController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ILogger<AuthController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
+            _logger = logger;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
+            var startedAt = DateTimeOffset.UtcNow;
+
+            // Allow either {username,email,password} OR {email,password}
+            var userName = string.IsNullOrWhiteSpace(dto.Username) ? dto.Email : dto.Username.Trim();
+
             var user = new ApplicationUser
             {
-                UserName = dto.Email,
+                UserName = userName,
                 Email = dto.Email
             };
 
-            var result = await _userManager.CreateAsync(user, dto.Password);
+            try
+            {
+                _logger.LogInformation("Register attempt for Email={Email}, UserName={UserName}", dto.Email, userName);
 
-            if (!result.Succeeded)
-                return BadRequest(result.Errors);
+                var result = await _userManager.CreateAsync(user, dto.Password);
 
-            // ? auto-generate token on register (optional)
-            var token = await GenerateJwtToken(user);
+                if (!result.Succeeded)
+                {
+                    _logger.LogWarning(
+                        "Register failed for Email={Email}. Errors: {Errors}",
+                        dto.Email,
+                        string.Join("; ", result.Errors.Select(e => $"{e.Code}:{e.Description}")));
 
-            return Ok(new { token });
+                    return BadRequest(result.Errors);
+                }
+
+                var token = await GenerateJwtToken(user);
+
+                _logger.LogInformation(
+                    "Register succeeded for Email={Email} in {ElapsedMs}ms",
+                    dto.Email,
+                    (DateTimeOffset.UtcNow - startedAt).TotalMilliseconds);
+
+                return Ok(new { token });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Register errored for Email={Email} after {ElapsedMs}ms", dto.Email, (DateTimeOffset.UtcNow - startedAt).TotalMilliseconds);
+                return Problem(
+                    title: "Registration failed",
+                    detail: ex.Message,
+                    statusCode: StatusCodes.Status500InternalServerError);
+            }
         }
 
         [HttpPost("login")]

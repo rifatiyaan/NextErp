@@ -9,11 +9,12 @@ namespace NextErp.Infrastructure
         {
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
 
-            // Simple connection string
-            var connectionString = "Server=DESKTOP-2PTJ945\\SQLEXPRESS01;Database=NextErpTemp;Integrated Security=True;TrustServerCertificate=True;";
+            // Connection string for Docker SQL Server (matches appsettings.json)
+            // Use 1434 to avoid clashing with any local/office SQL Server bound to 1433
+            var connectionString = "Server=localhost,1434;Database=MyDb;User Id=sa;Password=StrongPassword123!;TrustServerCertificate=True;";
 
             optionsBuilder.UseSqlServer(connectionString,
-                x => x.MigrationsAssembly("NextErp.Infrastructure"));
+                x => x.MigrationsAssembly("NextErp.API"));
 
             return new ApplicationDbContext(optionsBuilder.Options);
         }

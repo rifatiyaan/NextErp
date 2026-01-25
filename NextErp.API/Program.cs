@@ -46,7 +46,7 @@ var connectionString =
 
 var migrationAssembly =
     Environment.GetEnvironmentVariable("MigrationAssembly")
-    ?? typeof(ApplicationDbContext).Assembly.FullName;
+    ?? "NextErp.API"; // Migrations are stored in NextErp.API project
 
 var dbProvider =
     builder.Configuration["DatabaseProvider"] ?? "SqlServer";
@@ -208,6 +208,9 @@ builder.Services.AddCors(options =>
 // 🔹 BUILD APP
 // =======================================================
 var app = builder.Build();
+
+// Logs HTTP request/response timings + status codes (very helpful for "loading forever" issues)
+app.UseSerilogRequestLogging();
 
 // =======================================================
 // 🔹 AUTOMAPPER VALIDATION (DEBUG ONLY)
