@@ -104,6 +104,9 @@ namespace NextErp.Application.DTOs
                 {
                     public Request.Metadata Metadata { get; set; } = new();
                     public Category.Response.Get.Single? Category { get; set; }
+                    public bool HasVariations { get; set; }
+                    public List<ProductVariation.Response.VariationOptionDto>? VariationOptions { get; set; }
+                    public List<ProductVariation.Response.ProductVariantDto>? ProductVariants { get; set; }
                 }
 
                 public class Bulk

@@ -14,6 +14,10 @@ namespace NextErp.Application.Handlers.QueryHandlers.Product
             return await productRepo.Query()
                 .Include(p => p.Category)
                 .Include(p => p.Children)
+                .Include(p => p.VariationOptions)
+                    .ThenInclude(vo => vo.Values)
+                .Include(p => p.ProductVariants)
+                    .ThenInclude(pv => pv.VariationValues)
                 .FirstOrDefaultAsync(p => p.Id == request.Id && p.IsActive, cancellationToken);
         }
     }

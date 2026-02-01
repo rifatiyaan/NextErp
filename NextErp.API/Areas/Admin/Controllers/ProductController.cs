@@ -68,8 +68,12 @@ namespace NextErp.API.Web.Api
             int id;
             
             // Route to appropriate handler based on HasVariations flag
-            if (dto.HasVariations && dto.VariationOptions != null && dto.VariationOptions.Any() && 
-                dto.ProductVariants != null && dto.ProductVariants.Any())
+            // Check if variations are present and valid
+            bool hasValidVariations = dto.HasVariations && 
+                dto.VariationOptions != null && dto.VariationOptions.Any() && 
+                dto.ProductVariants != null && dto.ProductVariants.Any();
+            
+            if (hasValidVariations)
             {
                 // Product with variations
                 var command = new CreateProductWithVariationsCommand(

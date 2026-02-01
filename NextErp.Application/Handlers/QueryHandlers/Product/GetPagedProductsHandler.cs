@@ -29,6 +29,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Product
             };
 
             var records = await query
+                .Include(p => p.Category)
                 .Skip((request.PageIndex - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);

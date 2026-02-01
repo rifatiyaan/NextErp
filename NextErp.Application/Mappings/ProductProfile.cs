@@ -47,7 +47,17 @@ namespace NextErp.Application.Mappings
             // Entity -> Get Single Response
             CreateMap<NextErp.Domain.Entities.Product, NextErp.Application.DTOs.Product.Response.Get.Single>()
                 .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId))
-                .MaxDepth(1);
+                .ForMember(dest => dest.HasVariations, opt => opt.MapFrom(src => 
+                    src.HasVariations || (src.VariationOptions != null && src.VariationOptions.Any())))
+                .ForMember(dest => dest.VariationOptions, opt => opt.MapFrom(src => 
+                    (src.VariationOptions != null && src.VariationOptions.Any()) 
+                        ? src.VariationOptions.OrderBy(vo => vo.DisplayOrder).ToList() 
+                        : null))
+                .ForMember(dest => dest.ProductVariants, opt => opt.MapFrom(src => 
+                    (src.ProductVariants != null && src.ProductVariants.Any()) 
+                        ? src.ProductVariants.ToList() 
+                        : null))
+                .MaxDepth(3);
 
             // Entity -> Create Single Response
             CreateMap<NextErp.Domain.Entities.Product, NextErp.Application.DTOs.Product.Response.Create.Single>()
@@ -153,6 +163,10 @@ namespace NextErp.Application.Mappings
 
             // VariationValue Entity -> Response DTO
             CreateMap<VariationValue, DTOs.ProductVariation.Response.VariationValueDto>();
+
+            // ProductVariant Entity -> Response DTO
+            CreateMap<ProductVariant, DTOs.ProductVariation.Response.ProductVariantDto>()
+                .ForMember(dest => dest.VariationValues, opt => opt.MapFrom(src => src.VariationValues));
         }
     }
 }
