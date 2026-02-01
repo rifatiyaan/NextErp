@@ -14,7 +14,7 @@ namespace NextErp.Infrastructure
             var connectionString = "Server=localhost,1434;Database=MyDb;User Id=sa;Password=StrongPassword123!;TrustServerCertificate=True;";
 
             optionsBuilder.UseSqlServer(connectionString,
-                x => x.MigrationsAssembly("NextErp.API"));
+                x => x.MigrationsAssembly("NextErp.Infrastructure"));
 
             return new ApplicationDbContext(optionsBuilder.Options);
         }

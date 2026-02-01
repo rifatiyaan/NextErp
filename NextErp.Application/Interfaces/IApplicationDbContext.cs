@@ -19,6 +19,11 @@ namespace NextErp.Application.Interfaces
         DbSet<Sale> Sales { get; set; }
         DbSet<SaleItem> SaleItems { get; set; }
 
+        // Variation System DbSets
+        DbSet<VariationOption> VariationOptions { get; set; }
+        DbSet<VariationValue> VariationValues { get; set; }
+        DbSet<ProductVariant> ProductVariants { get; set; }
+
         // Transaction Support
         DatabaseFacade Database { get; }
         

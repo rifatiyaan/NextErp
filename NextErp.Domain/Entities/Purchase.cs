@@ -1,8 +1,5 @@
 namespace NextErp.Domain.Entities
 {
-    /// <summary>
-    /// Purchase master entity - represents a purchase transaction from supplier
-    /// </summary>
     public class Purchase : IEntity<Guid>
     {
         public Guid Id { get; set; }

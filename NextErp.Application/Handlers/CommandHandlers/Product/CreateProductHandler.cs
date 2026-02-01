@@ -15,6 +15,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
         {
             var product = mapper.Map<Entities.Product>(request);
             product.IsActive = true;
+            product.HasVariations = false; // Explicitly set to false for simple products
             product.CreatedAt = DateTime.UtcNow;
 
             await unitOfWork.ProductRepository.AddAsync(product);

@@ -1,9 +1,5 @@
 namespace NextErp.Domain.Entities
 {
-    /// <summary>
-    /// Stock entity - one row per product for inventory tracking
-    /// Uses optimistic concurrency via RowVersion
-    /// </summary>
     public class Stock : IEntity<int>
     {
         public int Id { get; set; } // Same as ProductId
@@ -14,9 +10,6 @@ namespace NextErp.Domain.Entities
         
         public decimal AvailableQuantity { get; set; }
         
-        /// <summary>
-        /// Concurrency token for optimistic locking
-        /// </summary>
         public byte[] RowVersion { get; set; } = null!;
         
         public DateTime CreatedAt { get; set; }

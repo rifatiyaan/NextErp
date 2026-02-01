@@ -25,6 +25,16 @@ namespace NextErp.Domain.Entities
         public Guid TenantId { get; set; }
         public Guid? BranchId { get; set; }
 
+        // Variation system support
+        public bool HasVariations { get; set; } = false; // Flag to indicate if product has variations
+        
+        // New variation system (VariationOption -> VariationValue -> ProductVariant)
+        public ICollection<VariationOption> VariationOptions { get; set; } = new List<VariationOption>();
+        public ICollection<ProductVariant> ProductVariants { get; set; } = new List<ProductVariant>();
+        
+        // Legacy: Many-to-many relationship with ProductVariation (kept for backward compatibility)
+        public ICollection<ProductVariation> Variations { get; set; } = new List<ProductVariation>();
+
         public class ProductMetadataClass
         {
             public string? Description { get; set; }

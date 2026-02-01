@@ -1,8 +1,5 @@
 namespace NextErp.Domain.Entities
 {
-    /// <summary>
-    /// Sale item (detail) entity - line items for a sale
-    /// </summary>
     public class SaleItem : IEntity<Guid>
     {
         public Guid Id { get; set; }

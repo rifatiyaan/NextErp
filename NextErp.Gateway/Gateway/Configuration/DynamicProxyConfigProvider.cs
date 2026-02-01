@@ -7,9 +7,6 @@ using NextErp.Gateway.Gateway.Abstractions;
 
 namespace NextErp.Gateway.Gateway.Configuration
 {
-    /// <summary>
-    /// Immutable snapshot of the proxy configuration.
-    /// </summary>
     public class ProxyConfigSnapshot : IProxyConfig
     {
         private readonly CancellationTokenSource _cts = new();
@@ -28,10 +25,6 @@ namespace NextErp.Gateway.Gateway.Configuration
         internal void SignalChange() => _cts.Cancel();
     }
 
-    /// <summary>
-    /// Programmatic configuration provider for YARP with hot-reload support.
-    /// Supports O(1) management via ConcurrentDictionary.
-    /// </summary>
     public class DynamicProxyConfigProvider : IGatewayConfigProvider
     {
         private readonly ConcurrentDictionary<string, RouteConfig> _routes = new();

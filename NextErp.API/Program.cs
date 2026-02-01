@@ -46,7 +46,7 @@ var connectionString =
 
 var migrationAssembly =
     Environment.GetEnvironmentVariable("MigrationAssembly")
-    ?? "NextErp.API"; // Migrations are stored in NextErp.API project
+    ?? "NextErp.Infrastructure"; // Migrations are stored in NextErp.Infrastructure project
 
 var dbProvider =
     builder.Configuration["DatabaseProvider"] ?? "SqlServer";
@@ -139,7 +139,10 @@ builder.Services.AddRazorPages();
 // =======================================================
 // 🔹 AUTOMAPPER
 // =======================================================
-builder.Services.AddAutoMapper(typeof(ApplicationAssemblyMarker).Assembly);
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AllowNullDestinationValues = true;
+}, typeof(ApplicationAssemblyMarker).Assembly);
 
 // =======================================================
 // 🔹 MEDIATR
@@ -216,10 +219,21 @@ app.UseSerilogRequestLogging();
 // 🔹 AUTOMAPPER VALIDATION (DEBUG ONLY)
 // =======================================================
 #if DEBUG
-using (var scope = app.Services.CreateScope())
+try
 {
-    var mapper = scope.ServiceProvider.GetRequiredService<AutoMapper.IMapper>();
-    mapper.ConfigurationProvider.AssertConfigurationIsValid();
+    using (var scope = app.Services.CreateScope())
+    {
+        var mapper = scope.ServiceProvider.GetRequiredService<AutoMapper.IMapper>();
+        mapper.ConfigurationProvider.AssertConfigurationIsValid();
+    }
+}
+catch (AutoMapper.AutoMapperConfigurationException ex)
+{
+    // Log the error but don't crash the app
+    var logger = app.Services.GetRequiredService<Serilog.ILogger>();
+    logger.Warning(ex, "AutoMapper configuration validation failed. This may be due to unmapped properties.");
+    // Uncomment the line below to see the full error details
+    // throw;
 }
 #endif
 

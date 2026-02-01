@@ -23,9 +23,6 @@ namespace NextErp.API.Web.Api
             _mapper = mapper;
         }
 
-        /// <summary>
-        /// Get menu items for the current authenticated user based on their roles
-        /// </summary>
         [HttpGet("user-menu")]
         public async Task<IActionResult> GetUserMenu()
         {
@@ -49,9 +46,6 @@ namespace NextErp.API.Web.Api
             return Ok(menuItems);
         }
 
-        /// <summary>
-        /// Get all modules/menu items (admin only)
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] Guid? tenantId = null)
         {
@@ -63,9 +57,6 @@ namespace NextErp.API.Web.Api
             return Ok(modules);
         }
 
-        /// <summary>
-        /// Get modules/menu items by type (1=Module, 2=Link)
-        /// </summary>
         [HttpGet("by-type/{type}")]
         public async Task<IActionResult> GetByType(int type, [FromQuery] Guid? tenantId = null)
         {
@@ -77,9 +68,6 @@ namespace NextErp.API.Web.Api
             return Ok(modules);
         }
 
-        /// <summary>
-        /// Get a specific module/menu item by ID
-        /// </summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -92,9 +80,6 @@ namespace NextErp.API.Web.Api
             return Ok(module);
         }
 
-        /// <summary>
-        /// Create a new module/menu item
-        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] Module.Request.Create.Single dto)
         {
@@ -105,9 +90,6 @@ namespace NextErp.API.Web.Api
             return CreatedAtAction(nameof(Get), new { id }, module);
         }
 
-        /// <summary>
-        /// Update an existing module/menu item
-        /// </summary>
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] Module.Request.Update.Single dto)
         {
@@ -116,10 +98,6 @@ namespace NextErp.API.Web.Api
             return NoContent();
         }
 
-
-        /// <summary>
-        /// Delete a module/menu item
-        /// </summary>
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

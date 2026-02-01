@@ -1,8 +1,5 @@
 namespace NextErp.Domain.Entities
 {
-    /// <summary>
-    /// Sale master entity - represents a sale transaction to customer
-    /// </summary>
     public class Sale : IEntity<Guid>
     {
         public Guid Id { get; set; }

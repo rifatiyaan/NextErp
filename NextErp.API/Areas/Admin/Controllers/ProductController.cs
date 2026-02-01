@@ -65,8 +65,36 @@ namespace NextErp.API.Web.Api
                 dto.ImageUrl = await _imageService.UploadImageAsync(dto.Image);
             }
 
-            var command = _mapper.Map<CreateProductCommand>(dto);
-            var id = await _mediator.Send(command);
+            int id;
+            
+            // Route to appropriate handler based on HasVariations flag
+            if (dto.HasVariations && dto.VariationOptions != null && dto.VariationOptions.Any() && 
+                dto.ProductVariants != null && dto.ProductVariants.Any())
+            {
+                // Product with variations
+                var command = new CreateProductWithVariationsCommand(
+                    dto.Title,
+                    dto.Code,
+                    dto.ParentId,
+                    dto.CategoryId ?? 0,
+                    dto.Price,
+                    dto.Stock,
+                    dto.IsActive,
+                    dto.ImageUrl,
+                    dto.Metadata?.Description,
+                    dto.Metadata?.Color,
+                    dto.Metadata?.Warranty,
+                    dto.VariationOptions,
+                    dto.ProductVariants
+                );
+                id = await _mediator.Send(command);
+            }
+            else
+            {
+                // Simple product (no variations)
+                var command = _mapper.Map<CreateProductCommand>(dto);
+                id = await _mediator.Send(command);
+            }
 
             var product = await _mediator.Send(new GetProductByIdQuery(id));
             var response = _mapper.Map<Product.Response.Get.Single>(product);

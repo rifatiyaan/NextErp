@@ -21,6 +21,10 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Parent, opt => opt.Ignore())
                 .ForMember(dest => dest.Children, opt => opt.Ignore())
                 .ForMember(dest => dest.Category, opt => opt.Ignore())
+                .ForMember(dest => dest.Variations, opt => opt.Ignore())
+                .ForMember(dest => dest.VariationOptions, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
+                .ForMember(dest => dest.HasVariations, opt => opt.Ignore())
                 .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId ?? 0));
 
             // Update Request -> Entity
@@ -32,6 +36,10 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Parent, opt => opt.Ignore())
                 .ForMember(dest => dest.Children, opt => opt.Ignore())
                 .ForMember(dest => dest.Category, opt => opt.Ignore())
+                .ForMember(dest => dest.Variations, opt => opt.Ignore())
+                .ForMember(dest => dest.VariationOptions, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
+                .ForMember(dest => dest.HasVariations, opt => opt.Ignore())
                 .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId ?? 0));
 
             // ===== Entity to Response DTOs =====
@@ -42,10 +50,12 @@ namespace NextErp.Application.Mappings
                 .MaxDepth(1);
 
             // Entity -> Create Single Response
-            CreateMap<NextErp.Domain.Entities.Product, NextErp.Application.DTOs.Product.Response.Create.Single>();
+            CreateMap<NextErp.Domain.Entities.Product, NextErp.Application.DTOs.Product.Response.Create.Single>()
+                .MaxDepth(1);
 
             // Entity -> Update Single Response
-            CreateMap<NextErp.Domain.Entities.Product, NextErp.Application.DTOs.Product.Response.Update.Single>();
+            CreateMap<NextErp.Domain.Entities.Product, NextErp.Application.DTOs.Product.Response.Update.Single>()
+                .MaxDepth(1);
 
             // ===== Metadata Mappings =====
             
@@ -103,6 +113,10 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Parent, opt => opt.Ignore())
                 .ForMember(dest => dest.Children, opt => opt.Ignore())
                 .ForMember(dest => dest.Category, opt => opt.Ignore())
+                .ForMember(dest => dest.Variations, opt => opt.Ignore())
+                .ForMember(dest => dest.VariationOptions, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
+                .ForMember(dest => dest.HasVariations, opt => opt.Ignore())
                 .ForMember(dest => dest.IsActive, opt => opt.Ignore())
                 .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new NextErp.Domain.Entities.Product.ProductMetadataClass
                 {
@@ -119,6 +133,10 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Parent, opt => opt.Ignore())
                 .ForMember(dest => dest.Children, opt => opt.Ignore())
                 .ForMember(dest => dest.Category, opt => opt.Ignore())
+                .ForMember(dest => dest.Variations, opt => opt.Ignore())
+                .ForMember(dest => dest.VariationOptions, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
+                .ForMember(dest => dest.HasVariations, opt => opt.Ignore())
                 .ForMember(dest => dest.IsActive, opt => opt.Ignore())
                 .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new NextErp.Domain.Entities.Product.ProductMetadataClass
                 {
@@ -126,6 +144,15 @@ namespace NextErp.Application.Mappings
                     Color = src.Color,
                     Warranty = src.Warranty
                 }));
+
+            // ===== Variation Mappings =====
+            
+            // VariationOption Entity -> Response DTO
+            CreateMap<VariationOption, DTOs.ProductVariation.Response.VariationOptionDto>()
+                .ForMember(dest => dest.Values, opt => opt.MapFrom(src => src.Values.OrderBy(v => v.DisplayOrder)));
+
+            // VariationValue Entity -> Response DTO
+            CreateMap<VariationValue, DTOs.ProductVariation.Response.VariationValueDto>();
         }
     }
 }
