@@ -62,6 +62,11 @@ namespace NextErp.Application.DTOs
                 {
                     public int Id { get; set; }
                     public bool IsActive { get; set; } = true;
+                    
+                    // Variation system support (optional - if null/empty, product has no variations)
+                    public bool HasVariations { get; set; } = false;
+                    public List<ProductVariation.Request.VariationOptionDto>? VariationOptions { get; set; } // null = simple product
+                    public List<ProductVariation.Request.ProductVariantDto>? ProductVariants { get; set; } // null = simple product
                 }
 
                 public new class Bulk

@@ -12,6 +12,8 @@ namespace NextErp.Application.Queries
         int PageIndex = 1,
         int PageSize = 10,
         string? SearchText = null,
-        string? SortBy = null
+        string? SortBy = null,
+        int? CategoryId = null,
+        string? Status = null
     ) : IRequest<PagedResult<Product>>; // PagedResult is now imported
 }

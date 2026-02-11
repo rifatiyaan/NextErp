@@ -98,6 +98,14 @@ namespace NextErp.API.Web.Api
             await _mediator.Send(command);
             return NoContent();
         }
+
+        [HttpGet("bulk/options")]
+        public async Task<IActionResult> GetAllDistinctOptions()
+        {
+            var query = new GetAllDistinctVariationOptionsQuery();
+            var options = await _mediator.Send(query);
+            return Ok(options);
+        }
     }
 }
 

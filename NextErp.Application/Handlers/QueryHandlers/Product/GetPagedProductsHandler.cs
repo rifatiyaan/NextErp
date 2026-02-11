@@ -14,10 +14,48 @@ namespace NextErp.Application.Handlers.QueryHandlers.Product
             GetPagedProductsQuery request,
             CancellationToken cancellationToken)
         {
-            var query = productRepo.Query().Where(p => p.IsActive);
+            var query = productRepo.Query();
 
+            // Apply status filter
+            if (!string.IsNullOrWhiteSpace(request.Status))
+            {
+                switch (request.Status.ToLower())
+                {
+                    case "active":
+                        query = query.Where(p => p.IsActive);
+                        break;
+                    case "out of stock":
+                        query = query.Where(p => p.IsActive && p.Stock == 0);
+                        break;
+                    case "closed":
+                        query = query.Where(p => !p.IsActive);
+                        break;
+                    default:
+                        // "all" or unknown - show all active products by default
+                        query = query.Where(p => p.IsActive);
+                        break;
+                }
+            }
+            else
+            {
+                // Default: show only active products
+                query = query.Where(p => p.IsActive);
+            }
+
+            // Apply search text filter (search in title and code)
             if (!string.IsNullOrWhiteSpace(request.SearchText))
-                query = query.Where(p => p.Title.Contains(request.SearchText));
+            {
+                var searchText = request.SearchText.Trim();
+                query = query.Where(p => 
+                    p.Title.Contains(searchText) || 
+                    p.Code.Contains(searchText));
+            }
+
+            // Apply category filter
+            if (request.CategoryId.HasValue && request.CategoryId.Value > 0)
+            {
+                query = query.Where(p => p.CategoryId == request.CategoryId.Value);
+            }
 
             var total = await query.CountAsync(cancellationToken);
 

@@ -42,9 +42,11 @@ namespace NextErp.API.Web.Api
             [FromQuery] int pageIndex = 1,
             [FromQuery] int pageSize = 10,
             [FromQuery] string? searchText = null,
-            [FromQuery] string? sortBy = null)
+            [FromQuery] string? sortBy = null,
+            [FromQuery] int? categoryId = null,
+            [FromQuery] string? status = null)
         {
-            var query = new GetPagedProductsQuery(pageIndex, pageSize, searchText, sortBy);
+            var query = new GetPagedProductsQuery(pageIndex, pageSize, searchText, sortBy, categoryId, status);
             var pagedResult = await _mediator.Send(query);
 
             var dtoList = _mapper.Map<List<Product.Response.Get.Single>>(pagedResult.Records);
@@ -114,8 +116,40 @@ namespace NextErp.API.Web.Api
                 dto.ImageUrl = await _imageService.UploadImageAsync(dto.Image);
             }
 
-            var command = _mapper.Map<UpdateProductCommand>(dto, opts => opts.Items["Id"] = id);
-            await _mediator.Send(command);
+            // Route to appropriate handler based on HasVariations flag
+            // Check if variations are present and valid
+            bool hasValidVariations = dto.HasVariations && 
+                dto.VariationOptions != null && dto.VariationOptions.Any() && 
+                dto.ProductVariants != null && dto.ProductVariants.Any();
+            
+            if (hasValidVariations)
+            {
+                // Product with variations
+                var command = new UpdateProductWithVariationsCommand(
+                    id,
+                    dto.Title,
+                    dto.Code,
+                    dto.ParentId,
+                    dto.CategoryId ?? 0,
+                    dto.Price,
+                    dto.Stock,
+                    dto.IsActive,
+                    dto.ImageUrl,
+                    dto.Metadata?.Description,
+                    dto.Metadata?.Color,
+                    dto.Metadata?.Warranty,
+                    dto.VariationOptions,
+                    dto.ProductVariants
+                );
+                await _mediator.Send(command);
+            }
+            else
+            {
+                // Simple product (no variations)
+                var command = _mapper.Map<UpdateProductCommand>(dto, opts => opts.Items["Id"] = id);
+                await _mediator.Send(command);
+            }
+
             return NoContent();
         }
 

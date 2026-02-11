@@ -10,7 +10,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
 {
     public class CreateProductWithVariationsHandler(
         IApplicationUnitOfWork unitOfWork,
-        IApplicationDbContext dbContext)
+        IApplicationDbContext dbContext,
+        IMapper mapper)
         : IRequestHandler<CreateProductWithVariationsCommand, int>
     {
         public async Task<int> Handle(CreateProductWithVariationsCommand request, CancellationToken cancellationToken)
@@ -22,26 +23,10 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
 
             try
             {
-                // 1. Create base product
-                var product = new Entities.Product
-                {
-                    Title = request.Title,
-                    Code = request.Code,
-                    ParentId = request.ParentId,
-                    CategoryId = request.CategoryId,
-                    Price = request.Price, // Base price (variants override)
-                    Stock = request.Stock, // Base stock (variants override)
-                    IsActive = request.IsActive,
-                    ImageUrl = request.ImageUrl,
-                    HasVariations = true, // Mark as having variations
-                    CreatedAt = DateTime.UtcNow,
-                    Metadata = new Entities.Product.ProductMetadataClass
-                    {
-                        Description = request.Description,
-                        Color = request.Color,
-                        Warranty = request.Warranty
-                    }
-                };
+                // 1. Create base product using AutoMapper
+                var product = mapper.Map<Entities.Product>(request);
+                product.HasVariations = true;
+                product.CreatedAt = DateTime.UtcNow;
 
                 await unitOfWork.ProductRepository.AddAsync(product);
                 await unitOfWork.SaveAsync(); // Save to get product.Id
@@ -52,17 +37,12 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
 
                 foreach (var optionDto in request.VariationOptions)
                 {
-                    var variationOption = new Entities.VariationOption
-                    {
-                        Title = optionDto.Name,
-                        Name = optionDto.Name,
-                        ProductId = product.Id,
-                        DisplayOrder = optionDto.DisplayOrder,
-                        IsActive = true,
-                        CreatedAt = DateTime.UtcNow,
-                        TenantId = product.TenantId,
-                        BranchId = product.BranchId
-                    };
+                    var variationOption = mapper.Map<Entities.VariationOption>(optionDto);
+                    variationOption.ProductId = product.Id;
+                    variationOption.IsActive = true;
+                    variationOption.CreatedAt = DateTime.UtcNow;
+                    variationOption.TenantId = product.TenantId;
+                    variationOption.BranchId = product.BranchId;
 
                     variationOptions.Add(variationOption);
                 }
@@ -81,18 +61,12 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
 
                     foreach (var (valueDto, valueIndex) in optionDto.Values.Select((dto, idx) => (dto, idx)))
                     {
-                        var variationValue = new Entities.VariationValue
-                        {
-                            Title = valueDto.Value,
-                            Name = valueDto.Value,
-                            Value = valueDto.Value,
-                            VariationOptionId = variationOption.Id,
-                            DisplayOrder = valueDto.DisplayOrder,
-                            IsActive = true,
-                            CreatedAt = DateTime.UtcNow,
-                            TenantId = product.TenantId,
-                            BranchId = product.BranchId
-                        };
+                        var variationValue = mapper.Map<Entities.VariationValue>(valueDto);
+                        variationValue.VariationOptionId = variationOption.Id;
+                        variationValue.IsActive = true;
+                        variationValue.CreatedAt = DateTime.UtcNow;
+                        variationValue.TenantId = product.TenantId;
+                        variationValue.BranchId = product.BranchId;
 
                         allVariationValues.Add(variationValue);
                     }
@@ -138,20 +112,14 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
 
                     var variantTitle = string.Join(" / ", variantValueEntities.Select(v => v.Value));
 
-                    var productVariant = new Entities.ProductVariant
-                    {
-                        Title = variantTitle,
-                        Name = variantTitle,
-                        ProductId = product.Id,
-                        Sku = variantDto.Sku,
-                        Price = variantDto.Price,
-                        Stock = variantDto.Stock,
-                        IsActive = variantDto.IsActive,
-                        CreatedAt = DateTime.UtcNow,
-                        TenantId = product.TenantId,
-                        BranchId = product.BranchId,
-                        VariationValues = variantValueEntities
-                    };
+                    var productVariant = mapper.Map<Entities.ProductVariant>(variantDto);
+                    productVariant.Title = variantTitle;
+                    productVariant.Name = variantTitle;
+                    productVariant.ProductId = product.Id;
+                    productVariant.CreatedAt = DateTime.UtcNow;
+                    productVariant.TenantId = product.TenantId;
+                    productVariant.BranchId = product.BranchId;
+                    productVariant.VariationValues = variantValueEntities;
 
                     await dbContext.ProductVariants.AddAsync(productVariant, cancellationToken);
                 }

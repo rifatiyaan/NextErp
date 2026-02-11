@@ -155,16 +155,90 @@ namespace NextErp.Application.Mappings
                     Warranty = src.Warranty
                 }));
 
+            // CreateProductWithVariationsCommand -> Product Entity
+            CreateMap<CreateProductWithVariationsCommand, NextErp.Domain.Entities.Product>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.TenantId, opt => opt.Ignore())
+                .ForMember(dest => dest.BranchId, opt => opt.Ignore())
+                .ForMember(dest => dest.Parent, opt => opt.Ignore())
+                .ForMember(dest => dest.Children, opt => opt.Ignore())
+                .ForMember(dest => dest.Category, opt => opt.Ignore())
+                .ForMember(dest => dest.Variations, opt => opt.Ignore())
+                .ForMember(dest => dest.VariationOptions, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
+                .ForMember(dest => dest.HasVariations, opt => opt.MapFrom(src => true))
+                .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new NextErp.Domain.Entities.Product.ProductMetadataClass
+                {
+                    Description = src.Description,
+                    Color = src.Color,
+                    Warranty = src.Warranty
+                }));
+
+            // UpdateProductWithVariationsCommand -> Product Entity
+            CreateMap<UpdateProductWithVariationsCommand, NextErp.Domain.Entities.Product>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore()) // Use existing entity's ID
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.TenantId, opt => opt.Ignore())
+                .ForMember(dest => dest.BranchId, opt => opt.Ignore())
+                .ForMember(dest => dest.Parent, opt => opt.Ignore())
+                .ForMember(dest => dest.Children, opt => opt.Ignore())
+                .ForMember(dest => dest.Category, opt => opt.Ignore())
+                .ForMember(dest => dest.Variations, opt => opt.Ignore())
+                .ForMember(dest => dest.VariationOptions, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
+                .ForMember(dest => dest.HasVariations, opt => opt.MapFrom(src => true))
+                .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new NextErp.Domain.Entities.Product.ProductMetadataClass
+                {
+                    Description = src.Description,
+                    Color = src.Color,
+                    Warranty = src.Warranty
+                }));
+
             // ===== Variation Mappings =====
             
-            // VariationOption Entity -> Response DTO
+            // Request DTO -> Entity (for creating/updating)
+            CreateMap<DTOs.ProductVariation.Request.VariationOptionDto, VariationOption>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductId, opt => opt.Ignore())
+                .ForMember(dest => dest.Values, opt => opt.Ignore())
+                .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Name))
+                .ForMember(dest => dest.IsActive, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.TenantId, opt => opt.Ignore())
+                .ForMember(dest => dest.BranchId, opt => opt.Ignore());
+
+            CreateMap<DTOs.ProductVariation.Request.VariationValueDto, VariationValue>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.VariationOptionId, opt => opt.Ignore())
+                .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Value))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Value))
+                .ForMember(dest => dest.IsActive, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.TenantId, opt => opt.Ignore())
+                .ForMember(dest => dest.BranchId, opt => opt.Ignore());
+
+            CreateMap<DTOs.ProductVariation.Request.ProductVariantDto, ProductVariant>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductId, opt => opt.Ignore())
+                .ForMember(dest => dest.VariationValues, opt => opt.Ignore())
+                .ForMember(dest => dest.Title, opt => opt.Ignore()) // Set manually from variation values
+                .ForMember(dest => dest.Name, opt => opt.Ignore()) // Set manually from variation values
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.TenantId, opt => opt.Ignore())
+                .ForMember(dest => dest.BranchId, opt => opt.Ignore());
+
+            // Entity -> Response DTO
             CreateMap<VariationOption, DTOs.ProductVariation.Response.VariationOptionDto>()
                 .ForMember(dest => dest.Values, opt => opt.MapFrom(src => src.Values.OrderBy(v => v.DisplayOrder)));
 
-            // VariationValue Entity -> Response DTO
             CreateMap<VariationValue, DTOs.ProductVariation.Response.VariationValueDto>();
 
-            // ProductVariant Entity -> Response DTO
             CreateMap<ProductVariant, DTOs.ProductVariation.Response.ProductVariantDto>()
                 .ForMember(dest => dest.VariationValues, opt => opt.MapFrom(src => src.VariationValues));
         }

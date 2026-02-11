@@ -55,6 +55,12 @@ namespace NextErp.Application.DTOs
                 public string Title { get; set; } = null!; // e.g., "S / Red"
                 public List<VariationValueDto> VariationValues { get; set; } = new();
             }
+
+            public class BulkVariationOptionDto
+            {
+                public string Name { get; set; } = null!;
+                public List<string> Values { get; set; } = new();
+            }
         }
     }
 }
