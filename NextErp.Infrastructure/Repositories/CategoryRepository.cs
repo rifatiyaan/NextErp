@@ -19,9 +19,14 @@ namespace NextErp.Infrastructure.Repositories
             int pageIndex, int pageSize, string? searchText, string? orderBy)
         {
             Expression<Func<Category, bool>> filter = x =>
-                string.IsNullOrEmpty(searchText) || x.Title.Contains(searchText);
+                x.IsActive &&
+                (string.IsNullOrEmpty(searchText) || x.Title.Contains(searchText));
 
-            return await GetDynamicAsync(filter, orderBy, null, pageIndex, pageSize);
+            Func<IQueryable<Category>, Microsoft.EntityFrameworkCore.Query.IIncludableQueryable<Category, object>> include = q =>
+                q.Include(c => c.Parent)
+                 .Include(c => c.Children);
+
+            return await GetDynamicAsync(filter, orderBy, include, pageIndex, pageSize, true);
         }
 
         // Corrected Query method to return IQueryable<Category>

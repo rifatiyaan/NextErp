@@ -23,7 +23,6 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
 
             try
             {
-                // 1. Get existing product with variations
                 var product = await dbContext.Products
                     .Include(p => p.VariationOptions)
                         .ThenInclude(vo => vo.Values)
@@ -31,9 +30,9 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                         .ThenInclude(pv => pv.VariationValues)
                     .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
 
-                if (product == null || !product.IsActive)
+                if (product == null)
                 {
-                    throw new InvalidOperationException($"Product with ID {request.Id} not found or inactive.");
+                    throw new InvalidOperationException($"Product with ID {request.Id} not found.");
                 }
 
                 // 2. Update base product fields using AutoMapper
@@ -80,11 +79,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                         optionMap[optionDto.Name] = variationOption;
                     }
 
-                    // Save to get option.Id if it's new
-                    await dbContext.SaveChangesAsync(cancellationToken);
-
-                    // Get existing values for this option
                     var existingValues = await dbContext.VariationValues
+                        .AsNoTracking()
                         .Where(v => v.VariationOptionId == variationOption.Id && v.IsActive)
                         .ToListAsync(cancellationToken);
 
@@ -111,8 +107,6 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                             variationValue.CreatedAt = DateTime.UtcNow;
                             variationValue.TenantId = product.TenantId;
                             variationValue.BranchId = product.BranchId;
-                            await dbContext.VariationValues.AddAsync(variationValue, cancellationToken);
-                            await dbContext.SaveChangesAsync(cancellationToken); // Save to get value.Id
                         }
 
                         allVariationValues.Add(variationValue);

@@ -55,8 +55,27 @@ namespace NextErp.Infrastructure.Repositories
         {
             await Task.Run(() =>
             {
-                _dbSet.Attach(entityToUpdate);
-                _dbContext.Entry(entityToUpdate).State = EntityState.Modified;
+                var entry = _dbContext.Entry(entityToUpdate);
+                
+                // If entity is not tracked, attach it
+                if (entry.State == EntityState.Detached)
+                {
+                    _dbSet.Attach(entityToUpdate);
+                    entry = _dbContext.Entry(entityToUpdate);
+                }
+                
+                // Mark as modified, but exclude key properties from being marked as modified
+                entry.State = EntityState.Modified;
+                
+                // Ensure key properties are not marked as modified
+                var keyProperties = _dbContext.Model.FindEntityType(typeof(TEntity))?.FindPrimaryKey()?.Properties;
+                if (keyProperties != null)
+                {
+                    foreach (var keyProperty in keyProperties)
+                    {
+                        entry.Property(keyProperty.Name).IsModified = false;
+                    }
+                }
             });
         }
 
@@ -121,39 +140,32 @@ namespace NextErp.Infrastructure.Repositories
             int pageSize = 10,
             bool isTrackingOff = false)
         {
-            IQueryable<TEntity> query = _dbSet;
-            var total = query.Count();
-            var totalDisplay = query.Count();
-
+            IQueryable<TEntity> baseQuery = _dbSet;
+            
             if (filter != null)
             {
-                query = query.Where(filter);
-                totalDisplay = query.Count();
+                baseQuery = baseQuery.Where(filter);
             }
+
+            var total = await baseQuery.CountAsync();
+            var totalDisplay = total;
+
+            IQueryable<TEntity> query = baseQuery;
 
             if (include != null)
                 query = include(query);
 
-            IList<TEntity> data;
+            if (isTrackingOff)
+                query = query.AsNoTracking();
 
-            if (orderBy != null)
-            {
-                var result = orderBy(query).Skip((pageIndex - 1) * pageSize).Take(pageSize);
+            IQueryable<TEntity> orderedQuery = orderBy != null 
+                ? orderBy(query) 
+                : query;
 
-                if (isTrackingOff)
-                    data = await result.AsNoTracking().ToListAsync();
-                else
-                    data = await result.ToListAsync();
-            }
-            else
-            {
-                var result = query.Skip((pageIndex - 1) * pageSize).Take(pageSize);
-
-                if (isTrackingOff)
-                    data = await result.AsNoTracking().ToListAsync();
-                else
-                    data = await result.ToListAsync();
-            }
+            var data = await orderedQuery
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             return (data, total, totalDisplay);
         }
@@ -166,39 +178,32 @@ namespace NextErp.Infrastructure.Repositories
             int pageSize = 10,
             bool isTrackingOff = false)
         {
-            IQueryable<TEntity> query = _dbSet;
-            var total = query.Count();
-            var totalDisplay = query.Count();
-
+            IQueryable<TEntity> baseQuery = _dbSet;
+            
             if (filter != null)
             {
-                query = query.Where(filter);
-                totalDisplay = query.Count();
+                baseQuery = baseQuery.Where(filter);
             }
+
+            var total = await baseQuery.CountAsync();
+            var totalDisplay = total;
+
+            IQueryable<TEntity> query = baseQuery;
 
             if (include != null)
                 query = include(query);
 
-            IList<TEntity> data;
+            if (isTrackingOff)
+                query = query.AsNoTracking();
 
-            if (orderBy != null)
-            {
-                var result = query.OrderBy(orderBy).Skip((pageIndex - 1) * pageSize).Take(pageSize);
+            IQueryable<TEntity> orderedQuery = orderBy != null 
+                ? query.OrderBy(orderBy) 
+                : query;
 
-                if (isTrackingOff)
-                    data = await result.AsNoTracking().ToListAsync();
-                else
-                    data = await result.ToListAsync();
-            }
-            else
-            {
-                var result = query.Skip((pageIndex - 1) * pageSize).Take(pageSize);
-
-                if (isTrackingOff)
-                    data = await result.AsNoTracking().ToListAsync();
-                else
-                    data = await result.ToListAsync();
-            }
+            var data = await orderedQuery
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             return (data, total, totalDisplay);
         }

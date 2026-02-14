@@ -21,7 +21,7 @@ namespace NextErp.Infrastructure.Repositories
             Expression<Func<Customer, bool>> filter = x =>
                 string.IsNullOrEmpty(searchText) || x.Title.Contains(searchText);
 
-            return await GetDynamicAsync(filter, orderBy, null, pageIndex, pageSize);
+            return await GetDynamicAsync(filter, orderBy, null, pageIndex, pageSize, true);
         }
 
         public IQueryable<Customer> Query()

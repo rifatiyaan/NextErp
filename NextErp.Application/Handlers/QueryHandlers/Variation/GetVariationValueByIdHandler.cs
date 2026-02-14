@@ -12,6 +12,9 @@ namespace NextErp.Application.Handlers.QueryHandlers.Variation
         public async Task<Entities.VariationValue?> Handle(GetVariationValueByIdQuery request, CancellationToken cancellationToken)
         {
             return await dbContext.VariationValues
+                .AsNoTracking()
+                .Include(vv => vv.VariationOption)
+                    .ThenInclude(vo => vo.Product)
                 .FirstOrDefaultAsync(vv => vv.Id == request.Id, cancellationToken);
         }
     }

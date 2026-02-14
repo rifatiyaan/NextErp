@@ -20,6 +20,12 @@ namespace NextErp.Infrastructure.Configurations
             {
                 meta.ToJson();
             });
+
+            // JSON column for Category.Assets (EF Core 8+ syntax)
+            builder.OwnsMany(c => c.Assets, assets =>
+            {
+                assets.ToJson();
+            });
         }
     }
 }

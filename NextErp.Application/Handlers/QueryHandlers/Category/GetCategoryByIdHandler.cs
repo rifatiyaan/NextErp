@@ -12,8 +12,11 @@ namespace NextErp.Application.Handlers.QueryHandlers.Category
         public async Task<Entities.Category?> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken)
         {
             return await categoryRepo.Query()
-                .Include(c => c.Products)
+                .AsNoTracking()
+                .Include(c => c.Parent)
                 .Include(c => c.Children)
+                .Include(c => c.Products)
+                    .ThenInclude(p => p.Category)
                 .FirstOrDefaultAsync(c => c.Id == request.Id && c.IsActive, cancellationToken);
         }
     }

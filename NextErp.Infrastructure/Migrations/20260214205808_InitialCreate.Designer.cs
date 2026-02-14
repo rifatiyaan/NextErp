@@ -12,8 +12,8 @@ using NextErp.Infrastructure;
 namespace NextErp.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260101183142_InitialSqlServerSchema")]
-    partial class InitialSqlServerSchema
+    [Migration("20260214205808_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -492,6 +492,9 @@ namespace NextErp.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("HasVariations")
+                        .HasColumnType("bit");
+
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
 
@@ -525,6 +528,113 @@ namespace NextErp.Infrastructure.Migrations
                     b.HasIndex("ParentId");
 
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("NextErp.Domain.Entities.ProductVariant", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("BranchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Sku")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Stock")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("Sku");
+
+                    b.HasIndex("ProductId", "Sku")
+                        .IsUnique();
+
+                    b.ToTable("ProductVariants");
+                });
+
+            modelBuilder.Entity("NextErp.Domain.Entities.ProductVariation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("BranchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("PriceAdjustment")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Sku")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("Stock")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProductVariations");
                 });
 
             modelBuilder.Entity("NextErp.Domain.Entities.Purchase", b =>
@@ -634,8 +744,19 @@ namespace NextErp.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("CustomerId")
+                    b.Property<Guid?>("CreatedBy")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Discount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("FinalAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
@@ -647,6 +768,10 @@ namespace NextErp.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("Tax")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uniqueidentifier");
@@ -685,6 +810,10 @@ namespace NextErp.Infrastructure.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
@@ -815,6 +944,98 @@ namespace NextErp.Infrastructure.Migrations
                     b.ToTable("Suppliers");
                 });
 
+            modelBuilder.Entity("NextErp.Domain.Entities.VariationOption", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("BranchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("VariationOptions");
+                });
+
+            modelBuilder.Entity("NextErp.Domain.Entities.VariationValue", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("BranchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("VariationOptionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VariationOptionId");
+
+                    b.ToTable("VariationValues");
+                });
+
             modelBuilder.Entity("NextErp.Infrastructure.Entities.RefreshToken", b =>
                 {
                     b.Property<int>("Id")
@@ -839,6 +1060,36 @@ namespace NextErp.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("RefreshTokens");
+                });
+
+            modelBuilder.Entity("ProductProductVariation", b =>
+                {
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductVariationId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProductId", "ProductVariationId");
+
+                    b.HasIndex("ProductVariationId");
+
+                    b.ToTable("ProductProductVariations", (string)null);
+                });
+
+            modelBuilder.Entity("ProductVariantVariationValue", b =>
+                {
+                    b.Property<int>("ProductVariantId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VariationValueId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProductVariantId", "VariationValueId");
+
+                    b.HasIndex("VariationValueId");
+
+                    b.ToTable("ProductVariantVariationValues", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -899,6 +1150,43 @@ namespace NextErp.Infrastructure.Migrations
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.OwnsMany("NextErp.Domain.Entities.Category+CategoryAsset", "Assets", b1 =>
+                        {
+                            b1.Property<int>("CategoryId")
+                                .HasColumnType("int");
+
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("int");
+
+                            b1.Property<string>("Filename")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<long?>("Size")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Type")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<DateTime>("UploadedAt")
+                                .HasColumnType("datetime2");
+
+                            b1.Property<string>("Url")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.HasKey("CategoryId", "Id");
+
+                            b1.ToTable("Categories");
+
+                            b1.ToJson("Assets");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CategoryId");
+                        });
+
                     b.OwnsOne("NextErp.Domain.Entities.Category+CategoryMetadataClass", "Metadata", b1 =>
                         {
                             b1.Property<int>("CategoryId")
@@ -919,6 +1207,8 @@ namespace NextErp.Infrastructure.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("CategoryId");
                         });
+
+                    b.Navigation("Assets");
 
                     b.Navigation("Metadata")
                         .IsRequired();
@@ -1056,6 +1346,17 @@ namespace NextErp.Infrastructure.Migrations
                     b.Navigation("Parent");
                 });
 
+            modelBuilder.Entity("NextErp.Domain.Entities.ProductVariant", b =>
+                {
+                    b.HasOne("NextErp.Domain.Entities.Product", "Product")
+                        .WithMany("ProductVariants")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("NextErp.Domain.Entities.Purchase", b =>
                 {
                     b.HasOne("NextErp.Domain.Entities.Supplier", "Supplier")
@@ -1115,8 +1416,7 @@ namespace NextErp.Infrastructure.Migrations
                     b.HasOne("NextErp.Domain.Entities.Customer", "Customer")
                         .WithMany()
                         .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.OwnsOne("NextErp.Domain.Entities.Sale+SaleMetadata", "Metadata", b1 =>
                         {
@@ -1208,6 +1508,28 @@ namespace NextErp.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("NextErp.Domain.Entities.VariationOption", b =>
+                {
+                    b.HasOne("NextErp.Domain.Entities.Product", "Product")
+                        .WithMany("VariationOptions")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("NextErp.Domain.Entities.VariationValue", b =>
+                {
+                    b.HasOne("NextErp.Domain.Entities.VariationOption", "VariationOption")
+                        .WithMany("Values")
+                        .HasForeignKey("VariationOptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("VariationOption");
+                });
+
             modelBuilder.Entity("NextErp.Infrastructure.Entities.RefreshToken", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
@@ -1217,6 +1539,36 @@ namespace NextErp.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ProductProductVariation", b =>
+                {
+                    b.HasOne("NextErp.Domain.Entities.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NextErp.Domain.Entities.ProductVariation", null)
+                        .WithMany()
+                        .HasForeignKey("ProductVariationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ProductVariantVariationValue", b =>
+                {
+                    b.HasOne("NextErp.Domain.Entities.ProductVariant", null)
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NextErp.Domain.Entities.VariationValue", null)
+                        .WithMany()
+                        .HasForeignKey("VariationValueId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("NextErp.Domain.Entities.Category", b =>
@@ -1234,6 +1586,10 @@ namespace NextErp.Infrastructure.Migrations
             modelBuilder.Entity("NextErp.Domain.Entities.Product", b =>
                 {
                     b.Navigation("Children");
+
+                    b.Navigation("ProductVariants");
+
+                    b.Navigation("VariationOptions");
                 });
 
             modelBuilder.Entity("NextErp.Domain.Entities.Purchase", b =>
@@ -1244,6 +1600,11 @@ namespace NextErp.Infrastructure.Migrations
             modelBuilder.Entity("NextErp.Domain.Entities.Sale", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("NextErp.Domain.Entities.VariationOption", b =>
+                {
+                    b.Navigation("Values");
                 });
 #pragma warning restore 612, 618
         }

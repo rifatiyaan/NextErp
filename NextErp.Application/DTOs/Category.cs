@@ -10,6 +10,16 @@ namespace NextErp.Application.DTOs
                 public string? Description { get; set; }
                 public int? ParentId { get; set; }
                 public Metadata Metadata { get; set; } = new();
+                public List<Asset> Assets { get; set; } = new();
+            }
+
+            public class Asset
+            {
+                public string Filename { get; set; } = null!;
+                public string Url { get; set; } = null!;
+                public string Type { get; set; } = "image";
+                public long? Size { get; set; }
+                public DateTime UploadedAt { get; set; }
             }
 
             public partial class Get
@@ -35,7 +45,7 @@ namespace NextErp.Application.DTOs
             {
                 public class Single : Base
                 {
-                    public bool IsActive { get; set; } = true;
+                    public Microsoft.AspNetCore.Http.IFormFile[]? Images { get; set; }
                 }
 
                 public class Bulk
@@ -49,7 +59,7 @@ namespace NextErp.Application.DTOs
                 public new class Single : Base
                 {
                     public int Id { get; set; }
-                    public bool IsActive { get; set; } = true;
+                    public Microsoft.AspNetCore.Http.IFormFile[]? Images { get; set; }
                 }
 
                 public new class Bulk
@@ -78,6 +88,7 @@ namespace NextErp.Application.DTOs
                 public DateTime? UpdatedAt { get; set; }
                 public Guid TenantId { get; set; }
                 public Guid? BranchId { get; set; }
+                public List<Request.Asset> Assets { get; set; } = new();
             }
 
             public partial class Get

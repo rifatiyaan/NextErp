@@ -7,7 +7,7 @@ namespace NextErp.Application.Commands
         string Title,
         string? Description,
         int? ParentId,
-        bool IsActive = true
+        List<CategoryAsset>? Assets = null
     ) : IRequest<int>; // Returns Id of created category
 
     // Update
@@ -16,8 +16,16 @@ namespace NextErp.Application.Commands
         string Title,
         string? Description,
         int? ParentId,
-        bool IsActive = true
+        List<CategoryAsset>? Assets = null
     ) : IRequest<Unit>; // No return
+
+    public record CategoryAsset(
+        string Filename,
+        string Url,
+        string Type = "image",
+        long? Size = null,
+        DateTime UploadedAt = default
+    );
 
     // Soft Delete
     public record SoftDeleteCategoryCommand(int Id) : IRequest<Unit>; // No return

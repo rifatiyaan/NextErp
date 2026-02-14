@@ -12,6 +12,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Variation
         public async Task<List<Entities.VariationOption>> Handle(GetVariationOptionsByProductIdQuery request, CancellationToken cancellationToken)
         {
             return await dbContext.VariationOptions
+                .AsNoTracking()
                 .Where(vo => vo.ProductId == request.ProductId)
                 .Include(vo => vo.Values)
                 .OrderBy(vo => vo.DisplayOrder)

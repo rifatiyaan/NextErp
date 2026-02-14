@@ -12,20 +12,23 @@ namespace NextErp.Application.Handlers.QueryHandlers.Stock
             GetCurrentStockReportQuery request,
             CancellationToken cancellationToken)
         {
-            var stocks = await unitOfWork.StockRepository.GetAllWithProductsAsync();
-
-            var stockDtos = stocks.Select(s => new DTOs.Stock.Response.Single
-            {
-                Id = s.Id,
-                ProductId = s.ProductId,
-                ProductTitle = s.Product?.Title ?? "Unknown",
-                ProductCode = s.Product?.Code ?? "N/A",
-                AvailableQuantity = s.AvailableQuantity,
-                CreatedAt = s.CreatedAt,
-                UpdatedAt = s.UpdatedAt,
-                TenantId = s.TenantId,
-                BranchId = s.BranchId
-            }).ToList();
+            var stockDtos = await unitOfWork.StockRepository.Query()
+                .AsNoTracking()
+                .Include(s => s.Product)
+                    .ThenInclude(p => p.Category)
+                .Select(s => new DTOs.Stock.Response.Single
+                {
+                    Id = s.Id,
+                    ProductId = s.ProductId,
+                    ProductTitle = s.Product != null ? s.Product.Title : "Unknown",
+                    ProductCode = s.Product != null ? s.Product.Code : "N/A",
+                    AvailableQuantity = s.AvailableQuantity,
+                    CreatedAt = s.CreatedAt,
+                    UpdatedAt = s.UpdatedAt,
+                    TenantId = s.TenantId,
+                    BranchId = s.BranchId
+                })
+                .ToListAsync(cancellationToken);
 
             return new DTOs.Stock.Response.CurrentStockReport
             {

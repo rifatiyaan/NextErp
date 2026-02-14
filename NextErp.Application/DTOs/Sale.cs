@@ -35,20 +35,21 @@ namespace NextErp.Application.DTOs
             {
                 public class Single
                 {
-                    public string Title { get; set; } = null!;
-                    public string SaleNumber { get; set; } = null!;
-                    public Guid CustomerId { get; set; }
-                    public DateTime SaleDate { get; set; }
+                    public Guid? CustomerId { get; set; }
+                    public decimal TotalAmount { get; set; }
+                    public decimal Discount { get; set; } = 0;
+                    public decimal Tax { get; set; } = 0;
+                    public decimal FinalAmount { get; set; }
+                    public string? PaymentMethod { get; set; }
                     public List<SaleItemRequest> Items { get; set; } = new();
-                    public Metadata Metadata { get; set; } = new();
                 }
 
                 public class SaleItemRequest
                 {
-                    public string Title { get; set; } = null!;
                     public int ProductId { get; set; }
                     public decimal Quantity { get; set; }
-                    public decimal UnitPrice { get; set; }
+                    public decimal Price { get; set; }
+                    public decimal Subtotal { get; set; }
                 }
             }
 

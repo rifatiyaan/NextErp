@@ -14,7 +14,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Category
             GetPagedCategoriesQuery request,
             CancellationToken cancellationToken)
         {
-            var query = categoryRepo.Query().Where(c => c.IsActive);
+            var query = categoryRepo.Query().AsNoTracking().Where(c => c.IsActive);
 
             if (!string.IsNullOrWhiteSpace(request.SearchText))
                 query = query.Where(c => c.Title.Contains(request.SearchText));
@@ -29,6 +29,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Category
             };
 
             var records = await query
+                .Include(c => c.Parent)
                 .Skip((request.PageIndex - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);

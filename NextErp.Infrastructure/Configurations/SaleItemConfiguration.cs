@@ -20,6 +20,9 @@ namespace NextErp.Infrastructure.Configurations
             builder.Property(si => si.Quantity)
                 .HasPrecision(18, 2);
 
+            builder.Property(si => si.Price)
+                .HasPrecision(18, 2);
+
             builder.Property(si => si.UnitPrice)
                 .HasPrecision(18, 2);
 

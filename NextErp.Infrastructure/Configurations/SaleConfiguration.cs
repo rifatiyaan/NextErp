@@ -23,12 +23,19 @@ namespace NextErp.Infrastructure.Configurations
             // Decimal precision
             builder.Property(s => s.TotalAmount)
                 .HasPrecision(18, 2);
+            builder.Property(s => s.Discount)
+                .HasPrecision(18, 2);
+            builder.Property(s => s.Tax)
+                .HasPrecision(18, 2);
+            builder.Property(s => s.FinalAmount)
+                .HasPrecision(18, 2);
 
-            // Relationship with Customer
+            // Relationship with Customer (optional)
             builder.HasOne(s => s.Customer)
                 .WithMany() // Customer has collection navigation in entity
                 .HasForeignKey(s => s.CustomerId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
 
             // Relationship with SaleItems
             builder.HasMany(s => s.Items)

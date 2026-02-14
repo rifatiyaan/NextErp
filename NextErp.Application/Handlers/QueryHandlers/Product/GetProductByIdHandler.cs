@@ -12,13 +12,15 @@ namespace NextErp.Application.Handlers.QueryHandlers.Product
         public async Task<Entities.Product?> Handle(GetProductByIdQuery request, CancellationToken cancellationToken)
         {
             return await productRepo.Query()
+                .AsNoTracking()
                 .Include(p => p.Category)
+                .Include(p => p.Parent)
                 .Include(p => p.Children)
                 .Include(p => p.VariationOptions)
                     .ThenInclude(vo => vo.Values)
                 .Include(p => p.ProductVariants)
                     .ThenInclude(pv => pv.VariationValues)
-                .FirstOrDefaultAsync(p => p.Id == request.Id && p.IsActive, cancellationToken);
+                .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
         }
     }
 }

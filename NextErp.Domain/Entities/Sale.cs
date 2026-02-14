@@ -6,11 +6,14 @@ namespace NextErp.Domain.Entities
         public string Title { get; set; } = null!;
         public string SaleNumber { get; set; } = null!;
 
-        public Guid CustomerId { get; set; }
-        public Customer Customer { get; set; } = null!;
+        public Guid? CustomerId { get; set; }
+        public Customer? Customer { get; set; }
 
         public DateTime SaleDate { get; set; }
         public decimal TotalAmount { get; set; }
+        public decimal Discount { get; set; } = 0;
+        public decimal Tax { get; set; } = 0;
+        public decimal FinalAmount { get; set; }
 
         public ICollection<SaleItem> Items { get; set; } = new List<SaleItem>();
 
@@ -19,6 +22,7 @@ namespace NextErp.Domain.Entities
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public Guid? CreatedBy { get; set; }
 
         public Guid TenantId { get; set; }
         public Guid? BranchId { get; set; }

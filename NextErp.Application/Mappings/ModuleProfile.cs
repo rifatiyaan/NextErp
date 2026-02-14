@@ -35,8 +35,10 @@ namespace NextErp.Application.Mappings
 
             // Update Request -> Entity
             CreateMap<NextErp.Application.DTOs.Module.Request.Update.Single, NextErp.Domain.Entities.Module>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.InstalledAt, opt => opt.Ignore())
                 .ForMember(dest => dest.TenantId, opt => opt.Ignore())
                 .ForMember(dest => dest.BranchId, opt => opt.Ignore())
                 .ForMember(dest => dest.Parent, opt => opt.Ignore())

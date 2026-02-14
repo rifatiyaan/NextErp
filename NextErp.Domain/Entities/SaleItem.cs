@@ -12,8 +12,12 @@ namespace NextErp.Domain.Entities
         public Product Product { get; set; } = null!;
         
         public decimal Quantity { get; set; }
-        public decimal UnitPrice { get; set; }
-        public decimal Total => Quantity * UnitPrice;
+        public decimal Price { get; set; }
+        public decimal Subtotal => Quantity * Price;
+        
+        // Legacy support
+        public decimal UnitPrice { get => Price; set => Price = value; }
+        public decimal Total => Subtotal;
         
         public DateTime CreatedAt { get; set; }
         

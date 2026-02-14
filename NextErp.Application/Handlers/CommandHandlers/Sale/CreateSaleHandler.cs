@@ -1,4 +1,3 @@
-using AutoMapper;
 using NextErp.Application.Commands;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -14,86 +13,85 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
     {
         public async Task<Guid> Handle(CreateSaleCommand request, CancellationToken cancellationToken)
         {
-            // Begin transaction with READ COMMITTED isolation level
             using var transaction = await dbContext.Database.BeginTransactionAsync(
                 System.Data.IsolationLevel.ReadCommitted,
                 cancellationToken);
 
             try
             {
-                // 1. Check stock availability for all products FIRST
+                var productIds = request.Items.Select(i => i.ProductId).Distinct().ToList();
+                var products = await unitOfWork.ProductRepository.Query()
+                    .Where(p => productIds.Contains(p.Id))
+                    .ToDictionaryAsync(p => p.Id, cancellationToken);
+
                 foreach (var itemDto in request.Items)
                 {
-                    var stock = await unitOfWork.StockRepository.GetByIdAsync(itemDto.ProductId);
-                    if (stock == null || stock.AvailableQuantity < itemDto.Quantity)
+                    if (!products.TryGetValue(itemDto.ProductId, out var product))
+                    {
+                        throw new InvalidOperationException($"Product with ID {itemDto.ProductId} not found.");
+                    }
+                    
+                    if (product.Stock < (int)itemDto.Quantity)
                     {
                         throw new InvalidOperationException(
-                            $"Insufficient stock for product ID {itemDto.ProductId}. " +
-                            $"Available: {stock?.AvailableQuantity ?? 0}, Required: {itemDto.Quantity}");
+                            $"Insufficient stock for product {product.Title}. " +
+                            $"Available: {product.Stock}, Required: {itemDto.Quantity}");
                     }
                 }
 
-                // 2. Create Sale master
+                var saleNumber = $"SALE-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
+
                 var sale = new Entities.Sale
                 {
                     Id = Guid.NewGuid(),
-                    Title = request.Title,
-                    SaleNumber = request.SaleNumber,
+                    Title = $"Sale - {DateTime.UtcNow:yyyy-MM-dd HH:mm}",
+                    SaleNumber = saleNumber,
                     CustomerId = request.CustomerId,
-                    SaleDate = request.SaleDate,
-                    TotalAmount = 0, // Will be calculated
+                    SaleDate = DateTime.UtcNow,
+                    TotalAmount = request.TotalAmount,
+                    Discount = request.Discount,
+                    Tax = request.Tax,
+                    FinalAmount = request.FinalAmount,
                     Metadata = new Entities.Sale.SaleMetadata
                     {
-                        ReferenceNo = request.Metadata?.ReferenceNo,
-                        PaymentMethod = request.Metadata?.PaymentMethod,
-                        Notes = request.Metadata?.Notes
+                        PaymentMethod = request.PaymentMethod
                     },
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = null
                 };
 
                 await unitOfWork.SaleRepository.AddAsync(sale);
 
-                // 3. Create Sale items and calculate total
-                decimal totalAmount = 0;
                 foreach (var itemDto in request.Items)
                 {
-                    var item = new Entities.SaleItem
-                    {
-                        Id = Guid.NewGuid(),
-                        Title = itemDto.Title,
-                        SaleId = sale.Id,
-                        ProductId = itemDto.ProductId,
-                        Quantity = itemDto.Quantity,
-                        UnitPrice = itemDto.UnitPrice,
-                        CreatedAt = DateTime.UtcNow,
-                        TenantId = sale.TenantId
-                    };
-
-                    sale.Items.Add(item);
-                    totalAmount += item.Total;
-
-                    // 4. Decrease stock for each product
-                    var stock = await unitOfWork.StockRepository.GetByIdAsync(itemDto.ProductId);
+                    var product = products[itemDto.ProductId];
                     
-                    // Double-check stock (defensive programming)
-                    if (stock == null || stock.AvailableQuantity < itemDto.Quantity)
+                    if (product.Stock < (int)itemDto.Quantity)
                     {
                         throw new InvalidOperationException(
                             $"Stock changed during transaction for product ID {itemDto.ProductId}");
                     }
 
-                    stock.AvailableQuantity -= itemDto.Quantity;
-                    stock.UpdatedAt = DateTime.UtcNow;
-                    await unitOfWork.StockRepository.EditAsync(stock);
+                    var item = new Entities.SaleItem
+                    {
+                        Id = Guid.NewGuid(),
+                        Title = product.Title,
+                        SaleId = sale.Id,
+                        ProductId = itemDto.ProductId,
+                        Quantity = itemDto.Quantity,
+                        Price = itemDto.Price,
+                        CreatedAt = DateTime.UtcNow,
+                        TenantId = sale.TenantId
+                    };
+
+                    sale.Items.Add(item);
+
+                    product.Stock -= (int)itemDto.Quantity;
+                    product.UpdatedAt = DateTime.UtcNow;
                 }
 
-                sale.TotalAmount = totalAmount;
-
-                // 5. Save all changes (single SaveChanges call)
                 await unitOfWork.SaveAsync();
-
-                // 6. Commit transaction
                 await transaction.CommitAsync(cancellationToken);
 
                 return sale.Id;

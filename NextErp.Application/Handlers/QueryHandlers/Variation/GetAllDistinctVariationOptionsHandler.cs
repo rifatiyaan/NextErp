@@ -13,14 +13,10 @@ namespace NextErp.Application.Handlers.QueryHandlers.Variation
             GetAllDistinctVariationOptionsQuery request, 
             CancellationToken cancellationToken)
         {
-            // Get all variation options with their values
-            var allOptions = await dbContext.VariationOptions
+            return await dbContext.VariationOptions
+                .AsNoTracking()
                 .Include(vo => vo.Values)
                 .Where(vo => vo.IsActive)
-                .ToListAsync(cancellationToken);
-
-            // Group by option name and aggregate distinct values
-            var groupedOptions = allOptions
                 .GroupBy(vo => vo.Name)
                 .Select(g => new ProductVariation.Response.BulkVariationOptionDto
                 {
@@ -34,9 +30,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Variation
                         .ToList()
                 })
                 .OrderBy(dto => dto.Name)
-                .ToList();
-
-            return groupedOptions;
+                .ToListAsync(cancellationToken);
         }
     }
 }

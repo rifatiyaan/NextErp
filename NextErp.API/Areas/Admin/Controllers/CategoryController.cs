@@ -15,11 +15,13 @@ namespace NextErp.API.Web.Api
     {
         private readonly IMediator _mediator;
         private readonly IMapper _mapper;
+        private readonly NextErp.Application.Interfaces.IImageService _imageService;
 
-        public CategoryController(IMediator mediator, IMapper mapper)
+        public CategoryController(IMediator mediator, IMapper mapper, NextErp.Application.Interfaces.IImageService imageService)
         {
             _mediator = mediator;
             _mapper = mapper;
+            _imageService = imageService;
         }
 
         // GET api/category/{id}
@@ -58,8 +60,26 @@ namespace NextErp.API.Web.Api
 
         // POST api/category
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Category.Request.Create.Single dto)
+        public async Task<IActionResult> Create([FromForm] Category.Request.Create.Single dto)
         {
+            // Upload images and create assets
+            if (dto.Images != null && dto.Images.Length > 0)
+            {
+                dto.Assets = new List<Category.Request.Asset>();
+                foreach (var image in dto.Images)
+                {
+                    var imageUrl = await _imageService.UploadImageAsync(image);
+                    dto.Assets.Add(new Category.Request.Asset
+                    {
+                        Filename = image.FileName,
+                        Url = imageUrl,
+                        Type = "image",
+                        Size = image.Length,
+                        UploadedAt = DateTime.UtcNow
+                    });
+                }
+            }
+
             var command = _mapper.Map<CreateCategoryCommand>(dto);
             var id = await _mediator.Send(command);
 
@@ -71,8 +91,29 @@ namespace NextErp.API.Web.Api
 
         // PUT api/category/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Category.Request.Update.Single dto)
+        public async Task<IActionResult> Update(int id, [FromForm] Category.Request.Update.Single dto)
         {
+            // Upload new images and add to assets
+            if (dto.Images != null && dto.Images.Length > 0)
+            {
+                if (dto.Assets == null)
+                {
+                    dto.Assets = new List<Category.Request.Asset>();
+                }
+                foreach (var image in dto.Images)
+                {
+                    var imageUrl = await _imageService.UploadImageAsync(image);
+                    dto.Assets.Add(new Category.Request.Asset
+                    {
+                        Filename = image.FileName,
+                        Url = imageUrl,
+                        Type = "image",
+                        Size = image.Length,
+                        UploadedAt = DateTime.UtcNow
+                    });
+                }
+            }
+
             var command = _mapper.Map<UpdateCategoryCommand>(dto, opts => opts.Items["Id"] = id);
             await _mediator.Send(command);
             return NoContent();

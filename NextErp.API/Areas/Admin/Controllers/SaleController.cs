@@ -61,18 +61,19 @@ namespace NextErp.API.Web.Api
         public async Task<IActionResult> Create([FromBody] Sale.Request.Create.Single dto)
         {
             var command = new CreateSaleCommand(
-                dto.Title,
-                dto.SaleNumber,
                 dto.CustomerId,
-                dto.SaleDate,
-                dto.Items,
-                dto.Metadata
+                dto.TotalAmount,
+                dto.Discount,
+                dto.Tax,
+                dto.FinalAmount,
+                dto.PaymentMethod,
+                dto.Items
             );
 
             var id = await _mediator.Send(command);
 
             var sale = await _mediator.Send(new GetSaleByIdQuery(id));
-            var response = _mapper.Map<Sale.Response.Create.Single>(sale);
+            var response = _mapper.Map<Sale.Response.Get.Single>(sale);
 
             return CreatedAtAction(nameof(Get), new { id }, response);
         }

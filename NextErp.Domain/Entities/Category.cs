@@ -13,6 +13,8 @@ namespace NextErp.Domain.Entities
 
         public CategoryMetadataClass Metadata { get; set; } = new CategoryMetadataClass();
 
+        public List<CategoryAsset> Assets { get; set; } = new List<CategoryAsset>();
+
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; }
@@ -25,6 +27,15 @@ namespace NextErp.Domain.Entities
         {
             public string? ProductCount { get; set; }
             public string? Department { get; set; }
+        }
+
+        public class CategoryAsset
+        {
+            public string Filename { get; set; } = null!;
+            public string Url { get; set; } = null!;
+            public string Type { get; set; } = "image"; // image, thumbnail, etc.
+            public long? Size { get; set; }
+            public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
         }
     }
 }

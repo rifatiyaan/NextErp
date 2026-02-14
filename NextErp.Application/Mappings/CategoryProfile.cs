@@ -14,6 +14,7 @@ namespace NextErp.Application.Mappings
             // Create Request -> Entity
             CreateMap<NextErp.Application.DTOs.Category.Request.Create.Single, NextErp.Domain.Entities.Category>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.IsActive, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.TenantId, opt => opt.Ignore())
@@ -24,6 +25,8 @@ namespace NextErp.Application.Mappings
 
             // Update Request -> Entity
             CreateMap<NextErp.Application.DTOs.Category.Request.Update.Single, NextErp.Domain.Entities.Category>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.IsActive, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.TenantId, opt => opt.Ignore())
@@ -52,27 +55,47 @@ namespace NextErp.Application.Mappings
 
             // ===== Legacy Mappings (for backward compatibility during transition) =====
             
+            // Asset mappings
+            CreateMap<NextErp.Application.DTOs.Category.Request.Asset, NextErp.Domain.Entities.Category.CategoryAsset>()
+                .ReverseMap();
+            
+            CreateMap<NextErp.Application.Commands.CategoryAsset, NextErp.Domain.Entities.Category.CategoryAsset>()
+                .ReverseMap();
+
             // Request DTO -> Commands (keeping for existing handlers)
             CreateMap<NextErp.Application.DTOs.Category.Request.Create.Single, CreateCategoryCommand>()
                 .ConstructUsing(dto => new CreateCategoryCommand(
                     dto.Title,
                     dto.Description,
                     dto.ParentId,
-                    dto.IsActive
+                    dto.Assets != null ? dto.Assets.Select(a => new CategoryAsset(
+                        a.Filename,
+                        a.Url,
+                        a.Type,
+                        a.Size,
+                        a.UploadedAt
+                    )).ToList() : new List<CategoryAsset>()
                 ));
 
             CreateMap<NextErp.Application.DTOs.Category.Request.Update.Single, UpdateCategoryCommand>()
-                .ConstructUsing(dto => new UpdateCategoryCommand(
-                    dto.Id,
+                .ConstructUsing((dto, context) => new UpdateCategoryCommand(
+                    context.Items.ContainsKey("Id") ? (int)context.Items["Id"]! : dto.Id,
                     dto.Title,
                     dto.Description,
                     dto.ParentId,
-                    dto.IsActive
+                    dto.Assets != null ? dto.Assets.Select(a => new CategoryAsset(
+                        a.Filename,
+                        a.Url,
+                        a.Type,
+                        a.Size,
+                        a.UploadedAt
+                    )).ToList() : new List<CategoryAsset>()
                 ));
 
             // Command -> Entity (for handlers)
             CreateMap<CreateCategoryCommand, NextErp.Domain.Entities.Category>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.IsActive, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.TenantId, opt => opt.Ignore())
@@ -80,9 +103,12 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Parent, opt => opt.Ignore())
                 .ForMember(dest => dest.Children, opt => opt.Ignore())
                 .ForMember(dest => dest.Products, opt => opt.Ignore())
-                .ForMember(dest => dest.Metadata, opt => opt.Ignore());
+                .ForMember(dest => dest.Metadata, opt => opt.Ignore())
+                .ForMember(dest => dest.Assets, opt => opt.MapFrom(src => src.Assets ?? new List<CategoryAsset>()));
 
             CreateMap<UpdateCategoryCommand, NextErp.Domain.Entities.Category>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.IsActive, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.TenantId, opt => opt.Ignore())
@@ -90,7 +116,8 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Parent, opt => opt.Ignore())
                 .ForMember(dest => dest.Children, opt => opt.Ignore())
                 .ForMember(dest => dest.Products, opt => opt.Ignore())
-                .ForMember(dest => dest.Metadata, opt => opt.Ignore());
+                .ForMember(dest => dest.Metadata, opt => opt.Ignore())
+                .ForMember(dest => dest.Assets, opt => opt.MapFrom(src => src.Assets ?? new List<CategoryAsset>()));
         }
     }
 }

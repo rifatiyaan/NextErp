@@ -741,8 +741,19 @@ namespace NextErp.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("CustomerId")
+                    b.Property<Guid?>("CreatedBy")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Discount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("FinalAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
@@ -754,6 +765,10 @@ namespace NextErp.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("Tax")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uniqueidentifier");
@@ -792,6 +807,10 @@ namespace NextErp.Infrastructure.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
@@ -1128,6 +1147,43 @@ namespace NextErp.Infrastructure.Migrations
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.OwnsMany("NextErp.Domain.Entities.Category+CategoryAsset", "Assets", b1 =>
+                        {
+                            b1.Property<int>("CategoryId")
+                                .HasColumnType("int");
+
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("int");
+
+                            b1.Property<string>("Filename")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<long?>("Size")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Type")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<DateTime>("UploadedAt")
+                                .HasColumnType("datetime2");
+
+                            b1.Property<string>("Url")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.HasKey("CategoryId", "Id");
+
+                            b1.ToTable("Categories");
+
+                            b1.ToJson("Assets");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CategoryId");
+                        });
+
                     b.OwnsOne("NextErp.Domain.Entities.Category+CategoryMetadataClass", "Metadata", b1 =>
                         {
                             b1.Property<int>("CategoryId")
@@ -1148,6 +1204,8 @@ namespace NextErp.Infrastructure.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("CategoryId");
                         });
+
+                    b.Navigation("Assets");
 
                     b.Navigation("Metadata")
                         .IsRequired();
@@ -1355,8 +1413,7 @@ namespace NextErp.Infrastructure.Migrations
                     b.HasOne("NextErp.Domain.Entities.Customer", "Customer")
                         .WithMany()
                         .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.OwnsOne("NextErp.Domain.Entities.Sale+SaleMetadata", "Metadata", b1 =>
                         {
@@ -1507,7 +1564,7 @@ namespace NextErp.Infrastructure.Migrations
                     b.HasOne("NextErp.Domain.Entities.VariationValue", null)
                         .WithMany()
                         .HasForeignKey("VariationValueId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
                 });
 

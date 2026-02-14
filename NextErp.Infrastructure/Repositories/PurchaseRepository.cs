@@ -23,24 +23,34 @@ namespace NextErp.Infrastructure.Repositories
                 x.Title.Contains(searchText) || 
                 x.PurchaseNumber.Contains(searchText);
 
-            return await GetDynamicAsync(filter, orderBy, null, pageIndex, pageSize);
+            Func<IQueryable<Purchase>, Microsoft.EntityFrameworkCore.Query.IIncludableQueryable<Purchase, object>> include = q =>
+                q.Include(p => p.Supplier)
+                 .Include(p => p.Items)
+                    .ThenInclude(i => i.Product)
+                        .ThenInclude(pr => pr.Category);
+
+            return await GetDynamicAsync(filter, orderBy, include, pageIndex, pageSize, true);
         }
 
         public async Task<Purchase?> GetByIdWithDetailsAsync(Guid id)
         {
             return await _db.Set<Purchase>()
+                .AsNoTracking()
                 .Include(p => p.Supplier)
                 .Include(p => p.Items)
                     .ThenInclude(i => i.Product)
+                        .ThenInclude(pr => pr.Category)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
         public async Task<IList<Purchase>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
         {
             return await _db.Set<Purchase>()
+                .AsNoTracking()
                 .Include(p => p.Supplier)
                 .Include(p => p.Items)
                     .ThenInclude(i => i.Product)
+                        .ThenInclude(pr => pr.Category)
                 .Where(p => p.PurchaseDate >= startDate && p.PurchaseDate <= endDate)
                 .OrderByDescending(p => p.PurchaseDate)
                 .ToListAsync();

@@ -23,24 +23,33 @@ namespace NextErp.Infrastructure.Repositories
                 x.Title.Contains(searchText) || 
                 x.SaleNumber.Contains(searchText);
 
-            return await GetDynamicAsync(filter, orderBy, null, pageIndex, pageSize);
+            Func<IQueryable<Sale>, Microsoft.EntityFrameworkCore.Query.IIncludableQueryable<Sale, object>> include = q =>
+                q.Include(s => s.Customer)
+                 .Include(s => s.Items)
+                    .ThenInclude(i => i.Product);
+
+            return await GetDynamicAsync(filter, orderBy, include, pageIndex, pageSize, true);
         }
 
         public async Task<Sale?> GetByIdWithDetailsAsync(Guid id)
         {
             return await _db.Set<Sale>()
+                .AsNoTracking()
                 .Include(s => s.Customer)
                 .Include(s => s.Items)
                     .ThenInclude(i => i.Product)
+                        .ThenInclude(p => p.Category)
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
 
         public async Task<IList<Sale>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
         {
             return await _db.Set<Sale>()
+                .AsNoTracking()
                 .Include(s => s.Customer)
                 .Include(s => s.Items)
                     .ThenInclude(i => i.Product)
+                        .ThenInclude(p => p.Category)
                 .Where(s => s.SaleDate >= startDate && s.SaleDate <= endDate)
                 .OrderByDescending(s => s.SaleDate)
                 .ToListAsync();

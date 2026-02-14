@@ -47,19 +47,14 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                     variationOptions.Add(variationOption);
                 }
 
-                // Add all variation options
-                foreach (var option in variationOptions)
-                {
-                    await dbContext.VariationOptions.AddAsync(option, cancellationToken);
-                }
-                await dbContext.SaveChangesAsync(cancellationToken); // Save to get option.Ids
+                await dbContext.VariationOptions.AddRangeAsync(variationOptions, cancellationToken);
+                await dbContext.SaveChangesAsync(cancellationToken);
 
-                // 3. Create VariationValues for each option
                 foreach (var (optionDto, optionIndex) in request.VariationOptions.Select((dto, idx) => (dto, idx)))
                 {
                     var variationOption = variationOptions[optionIndex];
 
-                    foreach (var (valueDto, valueIndex) in optionDto.Values.Select((dto, idx) => (dto, idx)))
+                    foreach (var valueDto in optionDto.Values)
                     {
                         var variationValue = mapper.Map<Entities.VariationValue>(valueDto);
                         variationValue.VariationOptionId = variationOption.Id;
@@ -72,15 +67,9 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                     }
                 }
 
-                // Add all variation values
-                foreach (var value in allVariationValues)
-                {
-                    await dbContext.VariationValues.AddAsync(value, cancellationToken);
-                }
-                await dbContext.SaveChangesAsync(cancellationToken); // Save to get value.Ids
+                await dbContext.VariationValues.AddRangeAsync(allVariationValues, cancellationToken);
+                await dbContext.SaveChangesAsync(cancellationToken);
 
-                // 4. Create ProductVariants
-                // Build a map: "optionIndex:valueIndex" -> VariationValue entity
                 var valueKeyMap = new Dictionary<string, Entities.VariationValue>();
                 int optIdx = 0;
                 foreach (var optionDto in request.VariationOptions)
@@ -98,6 +87,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                     optIdx++;
                 }
 
+                var productVariants = new List<Entities.ProductVariant>();
                 foreach (var variantDto in request.ProductVariants)
                 {
                     // Build variant title from variation values using keys
@@ -121,10 +111,10 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                     productVariant.BranchId = product.BranchId;
                     productVariant.VariationValues = variantValueEntities;
 
-                    await dbContext.ProductVariants.AddAsync(productVariant, cancellationToken);
+                    productVariants.Add(productVariant);
                 }
 
-                // 5. Save all changes
+                await dbContext.ProductVariants.AddRangeAsync(productVariants, cancellationToken);
                 await dbContext.SaveChangesAsync(cancellationToken);
 
                 // 6. Commit transaction

@@ -12,14 +12,13 @@ namespace NextErp.Application.Handlers.QueryHandlers.Module
     {
         public async Task<List<DTOs.Module.Response.Get.Single>> Handle(GetMenuByUserQuery request, CancellationToken cancellationToken)
         {
-            // Get all modules for the tenant and filter by active status
             var menuItems = await unitOfWork.ModuleRepository.Query()
+                .AsNoTracking()
                 .Where(x => x.TenantId == request.TenantId && x.IsActive)
+                .OrderBy(x => x.Order)
                 .ToListAsync(cancellationToken);
             
             var dtos = mapper.Map<List<DTOs.Module.Response.Get.Single>>(menuItems);
-
-            // Build tree structure from flat list
             return BuildMenuTree(dtos);
         }
 
@@ -51,6 +50,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Module
         public async Task<List<DTOs.Module.Response.Get.Single>> Handle(GetAllModulesQuery request, CancellationToken cancellationToken)
         {
             var items = await unitOfWork.ModuleRepository.Query()
+                .AsNoTracking()
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync(cancellationToken);
 
@@ -63,7 +63,9 @@ namespace NextErp.Application.Handlers.QueryHandlers.Module
     {
         public async Task<DTOs.Module.Response.Get.Single?> Handle(GetModuleByIdQuery request, CancellationToken cancellationToken)
         {
-            var item = await unitOfWork.ModuleRepository.GetByIdAsync(request.Id);
+            var item = await unitOfWork.ModuleRepository.Query()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.Id == request.Id, cancellationToken);
             return mapper.Map<DTOs.Module.Response.Get.Single?>(item);
         }
     }
@@ -74,6 +76,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Module
         public async Task<List<DTOs.Module.Response.Get.Single>> Handle(GetModulesByTypeQuery request, CancellationToken cancellationToken)
         {
             var items = await unitOfWork.ModuleRepository.Query()
+                .AsNoTracking()
                 .Where(x => x.Type == (ModuleType)request.Type)
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync(cancellationToken);

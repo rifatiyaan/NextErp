@@ -1,6 +1,7 @@
 using NextErp.Application.Queries;
 using NextErp.Application.DTOs;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Stock
 {
@@ -11,24 +12,23 @@ namespace NextErp.Application.Handlers.QueryHandlers.Stock
             GetLowStockReportQuery request,
             CancellationToken cancellationToken)
         {
-            var lowStocks = await unitOfWork.StockRepository.GetLowStockAsync();
-
-            var lowStockItems = lowStocks.Select(s =>
-            {
-                var status = s.AvailableQuantity == 0 ? "Out of Stock"
-                    : s.AvailableQuantity <= 5 ? "Critical"
-                    : "Low";
-
-                return new DTOs.Stock.Response.LowStockItem
+            var lowStockItems = await unitOfWork.StockRepository.Query()
+                .AsNoTracking()
+                .Include(s => s.Product)
+                    .ThenInclude(p => p.Category)
+                .Where(s => s.AvailableQuantity <= 10)
+                .Select(s => new DTOs.Stock.Response.LowStockItem
                 {
                     ProductId = s.ProductId,
-                    ProductTitle = s.Product?.Title ?? "Unknown",
-                    ProductCode = s.Product?.Code ?? "N/A",
+                    ProductTitle = s.Product != null ? s.Product.Title : "Unknown",
+                    ProductCode = s.Product != null ? s.Product.Code : "N/A",
                     AvailableQuantity = s.AvailableQuantity,
-                    ReorderLevel = null, // TODO: Add ReorderLevel to Product entity if needed
-                    Status = status
-                };
-            }).ToList();
+                    ReorderLevel = null,
+                    Status = s.AvailableQuantity == 0 ? "Out of Stock"
+                        : s.AvailableQuantity <= 5 ? "Critical"
+                        : "Low"
+                })
+                .ToListAsync(cancellationToken);
 
             return new DTOs.Stock.Response.LowStockReport
             {

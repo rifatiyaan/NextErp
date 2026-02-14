@@ -1,6 +1,7 @@
 using AutoMapper;
 using NextErp.Application.Commands;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Repositories = NextErp.Domain.Repositories;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Product
@@ -12,15 +13,17 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
     {
         public async Task<Unit> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
         {
-            var existing = await unitOfWork.ProductRepository.GetByIdAsync(request.Id);
-            if (existing != null && existing.IsActive)
-            {
-                mapper.Map(request, existing);
-                existing.UpdatedAt = DateTime.UtcNow;
+            var existing = await unitOfWork.ProductRepository.Query()
+                .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
+            
+            if (existing == null)
+                throw new KeyNotFoundException($"Product with ID {request.Id} not found.");
 
-                await unitOfWork.ProductRepository.EditAsync(existing);
-                await unitOfWork.SaveAsync();
-            }
+            mapper.Map(request, existing);
+            existing.UpdatedAt = DateTime.UtcNow;
+
+            await unitOfWork.ProductRepository.EditAsync(existing);
+            await unitOfWork.SaveAsync();
 
             return Unit.Value;
         }

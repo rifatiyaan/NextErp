@@ -1,4 +1,3 @@
-using AutoMapper;
 using NextErp.Application.Commands;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -14,14 +13,17 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
     {
         public async Task<Guid> Handle(CreatePurchaseCommand request, CancellationToken cancellationToken)
         {
-            // Begin transaction with READ COMMITTED isolation level
             using var transaction = await dbContext.Database.BeginTransactionAsync(
                 System.Data.IsolationLevel.ReadCommitted,
                 cancellationToken);
 
             try
             {
-                // 1. Create Purchase master
+                var productIds = request.Items.Select(i => i.ProductId).Distinct().ToList();
+                var stocks = await unitOfWork.StockRepository.Query()
+                    .Where(s => productIds.Contains(s.ProductId))
+                    .ToDictionaryAsync(s => s.ProductId, cancellationToken);
+
                 var purchase = new Entities.Purchase
                 {
                     Id = Guid.NewGuid(),
@@ -29,7 +31,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
                     PurchaseNumber = request.PurchaseNumber,
                     SupplierId = request.SupplierId,
                     PurchaseDate = request.PurchaseDate,
-                    TotalAmount = 0, // Will be calculated
+                    TotalAmount = 0,
                     Metadata = new Entities.Purchase.PurchaseMetadata
                     {
                         ReferenceNo = request.Metadata?.ReferenceNo,
@@ -41,7 +43,6 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
 
                 await unitOfWork.PurchaseRepository.AddAsync(purchase);
 
-                // 2. Create Purchase items and calculate total
                 decimal totalAmount = 0;
                 foreach (var itemDto in request.Items)
                 {
@@ -60,11 +61,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
                     purchase.Items.Add(item);
                     totalAmount += item.Total;
 
-                    // 3. Update stock for each product
-                    var stock = await unitOfWork.StockRepository.GetByIdAsync(itemDto.ProductId);
-                    if (stock == null)
+                    if (!stocks.TryGetValue(itemDto.ProductId, out var stock))
                     {
-                        // Create stock if doesn't exist
                         stock = new Entities.Stock
                         {
                             Id = itemDto.ProductId,
@@ -75,22 +73,17 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
                             BranchId = purchase.BranchId
                         };
                         await unitOfWork.StockRepository.AddAsync(stock);
+                        stocks[itemDto.ProductId] = stock;
                     }
                     else
                     {
-                        // Increase stock quantity
                         stock.AvailableQuantity += itemDto.Quantity;
                         stock.UpdatedAt = DateTime.UtcNow;
-                        await unitOfWork.StockRepository.EditAsync(stock);
                     }
                 }
 
                 purchase.TotalAmount = totalAmount;
-
-                // 4. Save all changes (single SaveChanges call)
                 await unitOfWork.SaveAsync();
-
-                // 5. Commit transaction
                 await transaction.CommitAsync(cancellationToken);
 
                 return purchase.Id;
