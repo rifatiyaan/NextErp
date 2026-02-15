@@ -11,6 +11,8 @@ namespace NextErp.Domain.Entities
         
         public DateTime PurchaseDate { get; set; }
         public decimal TotalAmount { get; set; }
+        public decimal Discount { get; set; }
+        public decimal NetTotal => TotalAmount - Discount;
         
         public ICollection<PurchaseItem> Items { get; set; } = new List<PurchaseItem>();
         
@@ -25,6 +27,9 @@ namespace NextErp.Domain.Entities
         
         public class PurchaseMetadata
         {
+            public string? BatchNo { get; set; }
+            public string? BillNo { get; set; }
+            public string? ChallanNo { get; set; }
             public string? ReferenceNo { get; set; }
             public string? Notes { get; set; }
         }

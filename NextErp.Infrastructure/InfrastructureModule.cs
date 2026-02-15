@@ -51,6 +51,10 @@ namespace NextErp.Infrastructure
                 .As<IImageService>()
                 .InstancePerLifetimeScope();
 
+            builder.RegisterType<NextErp.Application.Services.StockService>()
+                .As<NextErp.Application.Interfaces.IStockService>()
+                .InstancePerLifetimeScope();
+
             // Register Repositories
             var assembly = System.Reflection.Assembly.GetExecutingAssembly();
 

@@ -15,8 +15,18 @@ namespace NextErp.Domain.Entities
         public decimal UnitCost { get; set; }
         public decimal Total => Quantity * UnitCost;
         
+        public PurchaseItemMetadata Metadata { get; set; } = new PurchaseItemMetadata();
+        
         public DateTime CreatedAt { get; set; }
         
         public Guid TenantId { get; set; }
+        
+        public class PurchaseItemMetadata
+        {
+            public string? Description { get; set; }
+            public decimal? Weight { get; set; }
+            public DateTime? ExpiryDate { get; set; }
+            public string? BatchNumber { get; set; }
+        }
     }
 }

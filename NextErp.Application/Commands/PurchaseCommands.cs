@@ -8,6 +8,7 @@ namespace NextErp.Application.Commands
         string PurchaseNumber,
         int SupplierId,
         DateTime PurchaseDate,
+        decimal Discount,
         List<Purchase.Request.Create.PurchaseItemRequest> Items,
         Purchase.Request.Metadata? Metadata
     ) : IRequest<Guid>; // Returns Id of created purchase

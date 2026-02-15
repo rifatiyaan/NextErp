@@ -65,6 +65,7 @@ namespace NextErp.API.Web.Api
                 dto.PurchaseNumber,
                 dto.SupplierId,
                 dto.PurchaseDate,
+                dto.Discount,
                 dto.Items,
                 dto.Metadata
             );

@@ -26,6 +26,14 @@ namespace NextErp.Infrastructure.Configurations
             // Computed column (Total) - ignored in database
             builder.Ignore(pi => pi.Total);
 
+            // Metadata as JSON column
+            builder.Property(pi => pi.Metadata)
+                .HasConversion(
+                    v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
+                    v => System.Text.Json.JsonSerializer.Deserialize<PurchaseItem.PurchaseItemMetadata>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new PurchaseItem.PurchaseItemMetadata()
+                )
+                .HasColumnType("nvarchar(max)");
+
             // Relationship with Product
             builder.HasOne(pi => pi.Product)
                 .WithMany()

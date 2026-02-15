@@ -39,6 +39,7 @@ namespace NextErp.Application.DTOs
                     public string PurchaseNumber { get; set; } = null!;
                     public int SupplierId { get; set; }
                     public DateTime PurchaseDate { get; set; }
+                    public decimal Discount { get; set; }
                     public List<PurchaseItemRequest> Items { get; set; } = new();
                     public Metadata Metadata { get; set; } = new();
                 }
@@ -49,11 +50,23 @@ namespace NextErp.Application.DTOs
                     public int ProductId { get; set; }
                     public decimal Quantity { get; set; }
                     public decimal UnitCost { get; set; }
+                    public PurchaseItemMetadata? Metadata { get; set; }
+                }
+
+                public class PurchaseItemMetadata
+                {
+                    public string? Description { get; set; }
+                    public decimal? Weight { get; set; }
+                    public DateTime? ExpiryDate { get; set; }
+                    public string? BatchNumber { get; set; }
                 }
             }
 
             public class Metadata
             {
+                public string? BatchNo { get; set; }
+                public string? BillNo { get; set; }
+                public string? ChallanNo { get; set; }
                 public string? ReferenceNo { get; set; }
                 public string? Notes { get; set; }
             }
@@ -72,6 +85,8 @@ namespace NextErp.Application.DTOs
                     public string SupplierName { get; set; } = null!;
                     public DateTime PurchaseDate { get; set; }
                     public decimal TotalAmount { get; set; }
+                    public decimal Discount { get; set; }
+                    public decimal NetTotal { get; set; }
                     public List<PurchaseItemResponse> Items { get; set; } = new();
                     public Request.Metadata Metadata { get; set; } = new();
                     public bool IsActive { get; set; }
@@ -90,6 +105,15 @@ namespace NextErp.Application.DTOs
                     public decimal Quantity { get; set; }
                     public decimal UnitCost { get; set; }
                     public decimal Total { get; set; }
+                    public PurchaseItemMetadata? Metadata { get; set; }
+                }
+
+                public class PurchaseItemMetadata
+                {
+                    public string? Description { get; set; }
+                    public decimal? Weight { get; set; }
+                    public DateTime? ExpiryDate { get; set; }
+                    public string? BatchNumber { get; set; }
                 }
 
                 public class Bulk

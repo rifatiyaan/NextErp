@@ -60,22 +60,33 @@ namespace NextErp.API.Web.Api
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] Sale.Request.Create.Single dto)
         {
-            var command = new CreateSaleCommand(
-                dto.CustomerId,
-                dto.TotalAmount,
-                dto.Discount,
-                dto.Tax,
-                dto.FinalAmount,
-                dto.PaymentMethod,
-                dto.Items
-            );
+            try
+            {
+                var command = new CreateSaleCommand(
+                    dto.CustomerId,
+                    dto.TotalAmount,
+                    dto.Discount,
+                    dto.Tax,
+                    dto.FinalAmount,
+                    dto.PaymentMethod,
+                    dto.Items
+                );
 
-            var id = await _mediator.Send(command);
+                var id = await _mediator.Send(command);
 
-            var sale = await _mediator.Send(new GetSaleByIdQuery(id));
-            var response = _mapper.Map<Sale.Response.Get.Single>(sale);
+                var sale = await _mediator.Send(new GetSaleByIdQuery(id));
+                var response = _mapper.Map<Sale.Response.Get.Single>(sale);
 
-            return CreatedAtAction(nameof(Get), new { id }, response);
+                return CreatedAtAction(nameof(Get), new { id }, response);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
         }
 
         // GET api/sale/report

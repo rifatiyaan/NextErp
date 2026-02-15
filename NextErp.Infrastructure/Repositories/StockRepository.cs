@@ -16,6 +16,16 @@ namespace NextErp.Infrastructure.Repositories
 
         public async Task<Stock?> GetByProductIdAsync(int productId)
         {
+            // First check change tracker for uncommitted entities
+            var tracked = _db.ChangeTracker.Entries<Stock>()
+                .FirstOrDefault(e => e.Entity.ProductId == productId);
+            
+            if (tracked != null)
+            {
+                return tracked.Entity;
+            }
+
+            // If not in change tracker, query database
             return await _db.Set<Stock>()
                 .Include(s => s.Product)
                 .FirstOrDefaultAsync(s => s.ProductId == productId);

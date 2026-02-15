@@ -8,7 +8,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
 {
     public class CreateSaleHandler(
         IApplicationUnitOfWork unitOfWork,
-        IApplicationDbContext dbContext)
+        IApplicationDbContext dbContext,
+        IStockService stockService)
         : IRequestHandler<CreateSaleCommand, Guid>
     {
         public async Task<Guid> Handle(CreateSaleCommand request, CancellationToken cancellationToken)
@@ -24,18 +25,32 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
                     .Where(p => productIds.Contains(p.Id))
                     .ToDictionaryAsync(p => p.Id, cancellationToken);
 
+                var tenantId = Guid.Empty;
+
                 foreach (var itemDto in request.Items)
                 {
                     if (!products.TryGetValue(itemDto.ProductId, out var product))
                     {
                         throw new InvalidOperationException($"Product with ID {itemDto.ProductId} not found.");
                     }
-                    
-                    if (product.Stock < (int)itemDto.Quantity)
+
+                    tenantId = product.TenantId;
+
+                    await stockService.EnsureStockRecordExistsAsync(itemDto.ProductId, tenantId, cancellationToken);
+
+                    var isAvailable = await stockService.CheckStockAvailabilityAsync(
+                        itemDto.ProductId,
+                        itemDto.Quantity,
+                        cancellationToken);
+
+                    if (!isAvailable)
                     {
+                        var availableStock = await stockService.GetAvailableStockAsync(
+                            itemDto.ProductId,
+                            cancellationToken);
                         throw new InvalidOperationException(
-                            $"Insufficient stock for product {product.Title}. " +
-                            $"Available: {product.Stock}, Required: {itemDto.Quantity}");
+                            $"Insufficient stock for product '{product.Title}'. " +
+                            $"Available: {availableStock}, Required: {itemDto.Quantity}");
                     }
                 }
 
@@ -58,7 +73,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
                     },
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
-                    CreatedBy = null
+                    CreatedBy = null,
+                    TenantId = tenantId
                 };
 
                 await unitOfWork.SaleRepository.AddAsync(sale);
@@ -66,12 +82,6 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
                 foreach (var itemDto in request.Items)
                 {
                     var product = products[itemDto.ProductId];
-                    
-                    if (product.Stock < (int)itemDto.Quantity)
-                    {
-                        throw new InvalidOperationException(
-                            $"Stock changed during transaction for product ID {itemDto.ProductId}");
-                    }
 
                     var item = new Entities.SaleItem
                     {
@@ -87,8 +97,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
 
                     sale.Items.Add(item);
 
-                    product.Stock -= (int)itemDto.Quantity;
-                    product.UpdatedAt = DateTime.UtcNow;
+                    await stockService.ReduceStockAsync(itemDto.ProductId, itemDto.Quantity, cancellationToken);
                 }
 
                 await unitOfWork.SaveAsync();
@@ -101,10 +110,15 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
                 await transaction.RollbackAsync(cancellationToken);
                 throw new InvalidOperationException("Stock was modified by another transaction. Please retry.");
             }
-            catch
+            catch (InvalidOperationException)
             {
                 await transaction.RollbackAsync(cancellationToken);
                 throw;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw new InvalidOperationException($"Failed to create sale: {ex.Message}", ex);
             }
         }
     }

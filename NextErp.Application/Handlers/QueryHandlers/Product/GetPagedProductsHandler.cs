@@ -42,13 +42,14 @@ namespace NextErp.Application.Handlers.QueryHandlers.Product
                 query = query.Where(p => p.IsActive);
             }
 
-            // Apply search text filter (search in title and code)
+            // Apply search text filter using SQL LIKE (case-insensitive)
             if (!string.IsNullOrWhiteSpace(request.SearchText))
             {
                 var searchText = request.SearchText.Trim();
+                var searchPattern = $"%{searchText}%";
                 query = query.Where(p => 
-                    p.Title.Contains(searchText) || 
-                    p.Code.Contains(searchText));
+                    Microsoft.EntityFrameworkCore.EF.Functions.Like(p.Title, searchPattern) || 
+                    Microsoft.EntityFrameworkCore.EF.Functions.Like(p.Code, searchPattern));
             }
 
             // Apply category filter

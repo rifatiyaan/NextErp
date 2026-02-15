@@ -8,7 +8,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
 {
     public class CreatePurchaseHandler(
         IApplicationUnitOfWork unitOfWork,
-        IApplicationDbContext dbContext)
+        IApplicationDbContext dbContext,
+        IStockService stockService)
         : IRequestHandler<CreatePurchaseCommand, Guid>
     {
         public async Task<Guid> Handle(CreatePurchaseCommand request, CancellationToken cancellationToken)
@@ -20,20 +21,28 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
             try
             {
                 var productIds = request.Items.Select(i => i.ProductId).Distinct().ToList();
-                var stocks = await unitOfWork.StockRepository.Query()
-                    .Where(s => productIds.Contains(s.ProductId))
-                    .ToDictionaryAsync(s => s.ProductId, cancellationToken);
+                var products = await unitOfWork.ProductRepository.Query()
+                    .Where(p => productIds.Contains(p.Id))
+                    .ToDictionaryAsync(p => p.Id, cancellationToken);
+
+                var purchaseNumber = string.IsNullOrWhiteSpace(request.PurchaseNumber)
+                    ? $"PUR-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}"
+                    : request.PurchaseNumber;
 
                 var purchase = new Entities.Purchase
                 {
                     Id = Guid.NewGuid(),
                     Title = request.Title,
-                    PurchaseNumber = request.PurchaseNumber,
+                    PurchaseNumber = purchaseNumber,
                     SupplierId = request.SupplierId,
                     PurchaseDate = request.PurchaseDate,
                     TotalAmount = 0,
+                    Discount = request.Discount,
                     Metadata = new Entities.Purchase.PurchaseMetadata
                     {
+                        BatchNo = request.Metadata?.BatchNo,
+                        BillNo = request.Metadata?.BillNo,
+                        ChallanNo = request.Metadata?.ChallanNo,
                         ReferenceNo = request.Metadata?.ReferenceNo,
                         Notes = request.Metadata?.Notes
                     },
@@ -54,6 +63,13 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
                         ProductId = itemDto.ProductId,
                         Quantity = itemDto.Quantity,
                         UnitCost = itemDto.UnitCost,
+                        Metadata = new Entities.PurchaseItem.PurchaseItemMetadata
+                        {
+                            Description = itemDto.Metadata?.Description,
+                            Weight = itemDto.Metadata?.Weight,
+                            ExpiryDate = itemDto.Metadata?.ExpiryDate,
+                            BatchNumber = itemDto.Metadata?.BatchNumber
+                        },
                         CreatedAt = DateTime.UtcNow,
                         TenantId = purchase.TenantId
                     };
@@ -61,24 +77,13 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
                     purchase.Items.Add(item);
                     totalAmount += item.Total;
 
-                    if (!stocks.TryGetValue(itemDto.ProductId, out var stock))
+                    if (products.TryGetValue(itemDto.ProductId, out var product))
                     {
-                        stock = new Entities.Stock
-                        {
-                            Id = itemDto.ProductId,
-                            ProductId = itemDto.ProductId,
-                            AvailableQuantity = itemDto.Quantity,
-                            CreatedAt = DateTime.UtcNow,
-                            TenantId = purchase.TenantId,
-                            BranchId = purchase.BranchId
-                        };
-                        await unitOfWork.StockRepository.AddAsync(stock);
-                        stocks[itemDto.ProductId] = stock;
-                    }
-                    else
-                    {
-                        stock.AvailableQuantity += itemDto.Quantity;
-                        stock.UpdatedAt = DateTime.UtcNow;
+                        // Ensure stock record exists (creates if doesn't exist)
+                        await stockService.EnsureStockRecordExistsAsync(itemDto.ProductId, purchase.TenantId, cancellationToken);
+                        
+                        // Increase stock (this will also update Product.Stock)
+                        await stockService.IncreaseStockAsync(itemDto.ProductId, itemDto.Quantity, cancellationToken);
                     }
                 }
 

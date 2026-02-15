@@ -90,6 +90,14 @@ namespace NextErp.API.Web.Api
             return CreatedAtAction(nameof(Get), new { id }, module);
         }
 
+        [HttpPost("bulk")]
+        public async Task<IActionResult> CreateBulk([FromBody] Module.Request.Create.Bulk dto)
+        {
+            var command = new CreateBulkModulesCommand(dto);
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] Module.Request.Update.Single dto)
         {

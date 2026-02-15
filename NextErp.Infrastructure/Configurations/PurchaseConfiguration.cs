@@ -24,6 +24,12 @@ namespace NextErp.Infrastructure.Configurations
             builder.Property(p => p.TotalAmount)
                 .HasPrecision(18, 2);
 
+            builder.Property(p => p.Discount)
+                .HasPrecision(18, 2);
+
+            // Computed column (NetTotal) - ignored in database
+            builder.Ignore(p => p.NetTotal);
+
             // Relationship with Supplier
             builder.HasOne(p => p.Supplier)
                 .WithMany() // Supplier has collection navigation in entity

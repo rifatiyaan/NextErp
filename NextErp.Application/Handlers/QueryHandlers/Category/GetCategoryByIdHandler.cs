@@ -16,7 +16,6 @@ namespace NextErp.Application.Handlers.QueryHandlers.Category
                 .Include(c => c.Parent)
                 .Include(c => c.Children)
                 .Include(c => c.Products)
-                    .ThenInclude(p => p.Category)
                 .FirstOrDefaultAsync(c => c.Id == request.Id && c.IsActive, cancellationToken);
         }
     }
