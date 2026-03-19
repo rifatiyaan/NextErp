@@ -3,6 +3,12 @@ using NextErp.Application.DTOs;
 
 namespace NextErp.Application.Commands
 {
+    public record CreateVariationOptionCommandGlobal(string Name, int DisplayOrder, Guid TenantId, Guid? BranchId = null) : IRequest<int>;
+
+    public record AssignVariationOptionToProductCommand(int ProductId, int VariationOptionId, int DisplayOrder = 0) : IRequest<int>;
+
+    public record UnassignVariationOptionFromProductCommand(int ProductId, int VariationOptionId) : IRequest;
+
     public record CreateProductWithVariationsCommand(
         // Base product fields
         string Title,
@@ -21,8 +27,6 @@ namespace NextErp.Application.Commands
         List<ProductVariation.Request.ProductVariantDto> ProductVariants
     ) : IRequest<int>; // Returns Id of created product
 
-    public record CreateVariationOptionCommand(int ProductId, string Name, int DisplayOrder) : IRequest<int>;
-    
     public record UpdateVariationOptionCommand(int Id, string Name, int DisplayOrder) : IRequest;
     
     public record DeleteVariationOptionCommand(int Id) : IRequest;

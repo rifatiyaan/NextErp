@@ -59,6 +59,7 @@ namespace NextErp.Application.DTOs
                 public new class Single : Base
                 {
                     public int Id { get; set; }
+                    public bool IsActive { get; set; } = true;
                     public Microsoft.AspNetCore.Http.IFormFile[]? Images { get; set; }
                 }
 

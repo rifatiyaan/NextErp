@@ -20,7 +20,4 @@ namespace NextErp.Application.Commands
         string? Address,
         bool IsActive = true
     ) : IRequest<Unit>; // No return
-
-    // Soft Delete
-    public record SoftDeleteCustomerCommand(Guid Id) : IRequest<Unit>; // No return
 }

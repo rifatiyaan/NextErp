@@ -1,8 +1,8 @@
 using AutoMapper;
-using NextErp.Application.Commands;
-using NextErp.Application.DTOs;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using NextErp.Application.Commands;
+using NextErp.Application.DTOs;
 using NextErp.Application.Interfaces;
 using Entities = NextErp.Domain.Entities;
 
@@ -16,89 +16,62 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
     {
         public async Task<int> Handle(CreateProductWithVariationsCommand request, CancellationToken cancellationToken)
         {
-            // Begin transaction
             using var transaction = await dbContext.Database.BeginTransactionAsync(
                 System.Data.IsolationLevel.ReadCommitted,
                 cancellationToken);
 
             try
             {
-                // 1. Create base product using AutoMapper
                 var product = mapper.Map<Entities.Product>(request);
                 product.HasVariations = true;
                 product.CreatedAt = DateTime.UtcNow;
 
                 await unitOfWork.ProductRepository.AddAsync(product);
-                await unitOfWork.SaveAsync(); // Save to get product.Id
+                await unitOfWork.SaveAsync();
 
-                // 2. Create VariationOptions and VariationValues
-                var variationOptions = new List<Entities.VariationOption>();
-                var allVariationValues = new List<Entities.VariationValue>();
+                var optionNames = request.VariationOptions.Select(o => o.Name).Distinct().ToList();
+                var globalOptions = await dbContext.VariationOptions
+                    .Include(vo => vo.Values.OrderBy(v => v.DisplayOrder))
+                    .Where(vo => vo.IsActive && optionNames.Contains(vo.Name))
+                    .ToListAsync(cancellationToken);
 
-                foreach (var optionDto in request.VariationOptions)
+                var optionByName = globalOptions.ToDictionary(vo => vo.Name, vo => vo);
+
+                foreach (var (optionDto, displayOrder) in request.VariationOptions.Select((dto, i) => (dto, i)))
                 {
-                    var variationOption = mapper.Map<Entities.VariationOption>(optionDto);
-                    variationOption.ProductId = product.Id;
-                    variationOption.IsActive = true;
-                    variationOption.CreatedAt = DateTime.UtcNow;
-                    variationOption.TenantId = product.TenantId;
-                    variationOption.BranchId = product.BranchId;
+                    if (!optionByName.TryGetValue(optionDto.Name, out var globalOption))
+                        throw new InvalidOperationException($"Global variation option '{optionDto.Name}' not found. Create it first in Variation management.");
 
-                    variationOptions.Add(variationOption);
-                }
-
-                await dbContext.VariationOptions.AddRangeAsync(variationOptions, cancellationToken);
-                await dbContext.SaveChangesAsync(cancellationToken);
-
-                foreach (var (optionDto, optionIndex) in request.VariationOptions.Select((dto, idx) => (dto, idx)))
-                {
-                    var variationOption = variationOptions[optionIndex];
-
-                    foreach (var valueDto in optionDto.Values)
+                    var pvo = new Entities.ProductVariationOption
                     {
-                        var variationValue = mapper.Map<Entities.VariationValue>(valueDto);
-                        variationValue.VariationOptionId = variationOption.Id;
-                        variationValue.IsActive = true;
-                        variationValue.CreatedAt = DateTime.UtcNow;
-                        variationValue.TenantId = product.TenantId;
-                        variationValue.BranchId = product.BranchId;
-
-                        allVariationValues.Add(variationValue);
-                    }
+                        Title = globalOption.Name,
+                        ProductId = product.Id,
+                        VariationOptionId = globalOption.Id,
+                        DisplayOrder = displayOrder,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await dbContext.ProductVariationOptions.AddAsync(pvo, cancellationToken);
                 }
 
-                await dbContext.VariationValues.AddRangeAsync(allVariationValues, cancellationToken);
                 await dbContext.SaveChangesAsync(cancellationToken);
 
                 var valueKeyMap = new Dictionary<string, Entities.VariationValue>();
-                int optIdx = 0;
-                foreach (var optionDto in request.VariationOptions)
+                foreach (var (optionDto, optIdx) in request.VariationOptions.Select((dto, idx) => (dto, idx)))
                 {
-                    int valIdx = 0;
-                    var option = variationOptions[optIdx];
-                    var optionValues = allVariationValues.Where(v => v.VariationOptionId == option.Id).ToList();
-                    
-                    foreach (var value in optionValues)
-                    {
-                        string key = $"{optIdx}:{valIdx}";
-                        valueKeyMap[key] = value;
-                        valIdx++;
-                    }
-                    optIdx++;
+                    if (!optionByName.TryGetValue(optionDto.Name, out var globalOption))
+                        continue;
+                    var valuesInOrder = globalOption.Values.Where(v => v.IsActive).OrderBy(v => v.DisplayOrder).ToList();
+                    foreach (var (val, valIdx) in valuesInOrder.Select((v, i) => (v, i)))
+                        valueKeyMap[$"{optIdx}:{valIdx}"] = val;
                 }
 
-                var productVariants = new List<Entities.ProductVariant>();
                 foreach (var variantDto in request.ProductVariants)
                 {
-                    // Build variant title from variation values using keys
-                    var variantValueEntities = new List<Entities.VariationValue>();
-                    foreach (var key in variantDto.VariationValueKeys)
-                    {
-                        if (valueKeyMap.TryGetValue(key, out var value))
-                        {
-                            variantValueEntities.Add(value);
-                        }
-                    }
+                    var variantValueEntities = variantDto.VariationValueKeys
+                        .Select(key => valueKeyMap.GetValueOrDefault(key))
+                        .Where(v => v != null)
+                        .Cast<Entities.VariationValue>()
+                        .ToList();
 
                     var variantTitle = string.Join(" / ", variantValueEntities.Select(v => v.Value));
 
@@ -111,15 +84,11 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                     productVariant.BranchId = product.BranchId;
                     productVariant.VariationValues = variantValueEntities;
 
-                    productVariants.Add(productVariant);
+                    await dbContext.ProductVariants.AddAsync(productVariant, cancellationToken);
                 }
 
-                await dbContext.ProductVariants.AddRangeAsync(productVariants, cancellationToken);
                 await dbContext.SaveChangesAsync(cancellationToken);
-
-                // 6. Commit transaction
                 await transaction.CommitAsync(cancellationToken);
-
                 return product.Id;
             }
             catch
@@ -130,4 +99,3 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
         }
     }
 }
-

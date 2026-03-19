@@ -77,14 +77,5 @@ namespace NextErp.API.Web.Api
             await _mediator.Send(command);
             return NoContent();
         }
-
-        // DELETE api/customer/{id}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> SoftDelete(Guid id)
-        {
-            var command = new SoftDeleteCustomerCommand(id);
-            await _mediator.Send(command);
-            return NoContent();
-        }
     }
 }

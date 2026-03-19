@@ -51,7 +51,4 @@ namespace NextErp.Application.Commands
         List<ProductVariation.Request.VariationOptionDto> VariationOptions,
         List<ProductVariation.Request.ProductVariantDto> ProductVariants
     ) : IRequest<Unit>; // No return
-
-    // Soft Delete Product
-    public record SoftDeleteProductCommand(int Id) : IRequest<Unit>; // No return
 }

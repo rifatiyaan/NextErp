@@ -26,7 +26,6 @@ namespace NextErp.Application.Mappings
             // Update Request -> Entity
             CreateMap<NextErp.Application.DTOs.Category.Request.Update.Single, NextErp.Domain.Entities.Category>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.IsActive, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.TenantId, opt => opt.Ignore())
@@ -83,6 +82,7 @@ namespace NextErp.Application.Mappings
                     dto.Title,
                     dto.Description,
                     dto.ParentId,
+                    dto.IsActive,
                     dto.Assets != null ? dto.Assets.Select(a => new CategoryAsset(
                         a.Filename,
                         a.Url,
@@ -108,7 +108,6 @@ namespace NextErp.Application.Mappings
 
             CreateMap<UpdateCategoryCommand, NextErp.Domain.Entities.Category>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.IsActive, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.TenantId, opt => opt.Ignore())

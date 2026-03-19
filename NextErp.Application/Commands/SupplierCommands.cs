@@ -22,7 +22,4 @@ namespace NextErp.Application.Commands
         string? Address,
         bool IsActive = true
     ) : IRequest<Unit>; // No return
-
-    // Soft Delete
-    public record SoftDeleteSupplierCommand(int Id) : IRequest<Unit>; // No return
 }

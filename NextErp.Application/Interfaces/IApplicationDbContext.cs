@@ -22,6 +22,7 @@ namespace NextErp.Application.Interfaces
         // Variation System DbSets
         DbSet<VariationOption> VariationOptions { get; set; }
         DbSet<VariationValue> VariationValues { get; set; }
+        DbSet<ProductVariationOption> ProductVariationOptions { get; set; }
         DbSet<ProductVariant> ProductVariants { get; set; }
 
         // Transaction Support

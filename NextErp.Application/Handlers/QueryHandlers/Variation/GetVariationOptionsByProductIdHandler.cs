@@ -11,13 +11,20 @@ namespace NextErp.Application.Handlers.QueryHandlers.Variation
     {
         public async Task<List<Entities.VariationOption>> Handle(GetVariationOptionsByProductIdQuery request, CancellationToken cancellationToken)
         {
-            return await dbContext.VariationOptions
+            var product = await dbContext.Products
                 .AsNoTracking()
-                .Where(vo => vo.ProductId == request.ProductId)
-                .Include(vo => vo.Values)
-                .OrderBy(vo => vo.DisplayOrder)
-                .ToListAsync(cancellationToken);
+                .Include(p => p.ProductVariationOptions)
+                    .ThenInclude(pvo => pvo.VariationOption)
+                    .ThenInclude(vo => vo.Values.OrderBy(v => v.DisplayOrder))
+                .FirstOrDefaultAsync(p => p.Id == request.ProductId, cancellationToken);
+
+            if (product == null)
+                return new List<Entities.VariationOption>();
+
+            return product.ProductVariationOptions
+                .OrderBy(pvo => pvo.DisplayOrder)
+                .Select(pvo => pvo.VariationOption)
+                .ToList();
         }
     }
 }
-

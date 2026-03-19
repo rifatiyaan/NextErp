@@ -1,13 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace NextErp.Infrastructure.Migrations
 {
-    /// <inheritdoc />
     public partial class AddPurchaseFields : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<decimal>(
@@ -27,7 +25,6 @@ namespace NextErp.Infrastructure.Migrations
                 defaultValue: "");
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(

@@ -17,19 +17,17 @@ namespace NextErp.Application.Handlers.QueryHandlers.Variation
                 .AsNoTracking()
                 .Include(vo => vo.Values)
                 .Where(vo => vo.IsActive)
-                .GroupBy(vo => vo.Name)
-                .Select(g => new ProductVariation.Response.BulkVariationOptionDto
+                .OrderBy(vo => vo.DisplayOrder)
+                .ThenBy(vo => vo.Name)
+                .Select(vo => new ProductVariation.Response.BulkVariationOptionDto
                 {
-                    Name = g.Key,
-                    Values = g
-                        .SelectMany(vo => vo.Values)
+                    Name = vo.Name,
+                    Values = vo.Values
                         .Where(v => v.IsActive)
+                        .OrderBy(v => v.DisplayOrder)
                         .Select(v => v.Value)
-                        .Distinct()
-                        .OrderBy(v => v)
                         .ToList()
                 })
-                .OrderBy(dto => dto.Name)
                 .ToListAsync(cancellationToken);
         }
     }

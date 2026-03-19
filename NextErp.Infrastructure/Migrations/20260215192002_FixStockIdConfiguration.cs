@@ -1,13 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace NextErp.Infrastructure.Migrations
 {
-    /// <inheritdoc />
     public partial class FixStockIdConfiguration : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             // Drop the foreign key constraint first
@@ -70,7 +68,6 @@ namespace NextErp.Infrastructure.Migrations
                 onDelete: ReferentialAction.Restrict);
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             // Drop the foreign key constraint

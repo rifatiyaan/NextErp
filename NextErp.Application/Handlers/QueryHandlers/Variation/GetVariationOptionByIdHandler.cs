@@ -13,9 +13,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Variation
         {
             return await dbContext.VariationOptions
                 .AsNoTracking()
-                .Include(vo => vo.Values)
-                .Include(vo => vo.Product)
-                    .ThenInclude(p => p.Category)
+                .Include(vo => vo.Values.OrderBy(v => v.DisplayOrder))
                 .FirstOrDefaultAsync(vo => vo.Id == request.Id, cancellationToken);
         }
     }

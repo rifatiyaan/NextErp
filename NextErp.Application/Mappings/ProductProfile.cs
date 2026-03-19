@@ -22,7 +22,7 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Children, opt => opt.Ignore())
                 .ForMember(dest => dest.Category, opt => opt.Ignore())
                 .ForMember(dest => dest.Variations, opt => opt.Ignore())
-                .ForMember(dest => dest.VariationOptions, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductVariationOptions, opt => opt.Ignore())
                 .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
                 .ForMember(dest => dest.HasVariations, opt => opt.Ignore())
                 .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId ?? 0));
@@ -37,7 +37,7 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Children, opt => opt.Ignore())
                 .ForMember(dest => dest.Category, opt => opt.Ignore())
                 .ForMember(dest => dest.Variations, opt => opt.Ignore())
-                .ForMember(dest => dest.VariationOptions, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductVariationOptions, opt => opt.Ignore())
                 .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
                 .ForMember(dest => dest.HasVariations, opt => opt.Ignore())
                 .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId ?? 0));
@@ -48,10 +48,10 @@ namespace NextErp.Application.Mappings
             CreateMap<NextErp.Domain.Entities.Product, NextErp.Application.DTOs.Product.Response.Get.Single>()
                 .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId))
                 .ForMember(dest => dest.HasVariations, opt => opt.MapFrom(src => 
-                    src.HasVariations || (src.VariationOptions != null && src.VariationOptions.Any())))
+                    src.HasVariations || (src.ProductVariationOptions != null && src.ProductVariationOptions.Any())))
                 .ForMember(dest => dest.VariationOptions, opt => opt.MapFrom(src => 
-                    (src.VariationOptions != null && src.VariationOptions.Any()) 
-                        ? src.VariationOptions.OrderBy(vo => vo.DisplayOrder).ToList() 
+                    (src.ProductVariationOptions != null && src.ProductVariationOptions.Any()) 
+                        ? src.ProductVariationOptions.OrderBy(pvo => pvo.DisplayOrder).Select(pvo => pvo.VariationOption).ToList() 
                         : null))
                 .ForMember(dest => dest.ProductVariants, opt => opt.MapFrom(src => 
                     (src.ProductVariants != null && src.ProductVariants.Any()) 
@@ -124,7 +124,7 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Children, opt => opt.Ignore())
                 .ForMember(dest => dest.Category, opt => opt.Ignore())
                 .ForMember(dest => dest.Variations, opt => opt.Ignore())
-                .ForMember(dest => dest.VariationOptions, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductVariationOptions, opt => opt.Ignore())
                 .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
                 .ForMember(dest => dest.HasVariations, opt => opt.Ignore())
                 .ForMember(dest => dest.IsActive, opt => opt.Ignore())
@@ -144,10 +144,9 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Children, opt => opt.Ignore())
                 .ForMember(dest => dest.Category, opt => opt.Ignore())
                 .ForMember(dest => dest.Variations, opt => opt.Ignore())
-                .ForMember(dest => dest.VariationOptions, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductVariationOptions, opt => opt.Ignore())
                 .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
                 .ForMember(dest => dest.HasVariations, opt => opt.Ignore())
-                .ForMember(dest => dest.IsActive, opt => opt.Ignore())
                 .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new NextErp.Domain.Entities.Product.ProductMetadataClass
                 {
                     Description = src.Description,
@@ -166,7 +165,7 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Children, opt => opt.Ignore())
                 .ForMember(dest => dest.Category, opt => opt.Ignore())
                 .ForMember(dest => dest.Variations, opt => opt.Ignore())
-                .ForMember(dest => dest.VariationOptions, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductVariationOptions, opt => opt.Ignore())
                 .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
                 .ForMember(dest => dest.HasVariations, opt => opt.MapFrom(src => true))
                 .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new NextErp.Domain.Entities.Product.ProductMetadataClass
@@ -187,7 +186,7 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Children, opt => opt.Ignore())
                 .ForMember(dest => dest.Category, opt => opt.Ignore())
                 .ForMember(dest => dest.Variations, opt => opt.Ignore())
-                .ForMember(dest => dest.VariationOptions, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductVariationOptions, opt => opt.Ignore())
                 .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
                 .ForMember(dest => dest.HasVariations, opt => opt.MapFrom(src => true))
                 .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new NextErp.Domain.Entities.Product.ProductMetadataClass
@@ -202,8 +201,8 @@ namespace NextErp.Application.Mappings
             // Request DTO -> Entity (for creating/updating)
             CreateMap<DTOs.ProductVariation.Request.VariationOptionDto, VariationOption>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.ProductId, opt => opt.Ignore())
                 .ForMember(dest => dest.Values, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductVariationOptions, opt => opt.Ignore())
                 .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.IsActive, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())

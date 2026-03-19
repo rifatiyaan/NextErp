@@ -12,9 +12,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Variation
         public async Task<int> Handle(CreateVariationValueCommand request, CancellationToken cancellationToken)
         {
             var option = await dbContext.VariationOptions
-                .Include(vo => vo.Product)
                 .FirstOrDefaultAsync(vo => vo.Id == request.VariationOptionId, cancellationToken);
-            
+
             if (option == null)
                 throw new InvalidOperationException($"Variation option with ID {request.VariationOptionId} not found.");
 

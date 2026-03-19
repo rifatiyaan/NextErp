@@ -22,19 +22,20 @@ namespace NextErp.API.Web.Api
             _mapper = mapper;
         }
 
-        [HttpGet("product/{productId}/options")]
-        public async Task<IActionResult> GetOptionsByProduct(int productId)
+        [HttpGet("options")]
+        public async Task<IActionResult> GetAllOptions()
         {
-            var query = new GetVariationOptionsByProductIdQuery(productId);
+            var query = new GetAllVariationOptionsQuery();
             var options = await _mediator.Send(query);
             var dtoList = _mapper.Map<List<ProductVariation.Response.VariationOptionDto>>(options);
             return Ok(dtoList);
         }
 
-        [HttpPost("product/{productId}/options")]
-        public async Task<IActionResult> CreateOption(int productId, [FromBody] ProductVariation.Request.VariationOptionDto dto)
+        [HttpPost("options")]
+        public async Task<IActionResult> CreateOption([FromBody] ProductVariation.Request.VariationOptionDto dto)
         {
-            var command = new CreateVariationOptionCommand(productId, dto.Name, dto.DisplayOrder);
+            var tenantId = Guid.TryParse(User.FindFirst("TenantId")?.Value, out var tid) ? tid : Guid.Empty;
+            var command = new CreateVariationOptionCommandGlobal(dto.Name, dto.DisplayOrder, tenantId);
             var optionId = await _mediator.Send(command);
             return CreatedAtAction(nameof(GetOption), new { id = optionId }, new { id = optionId });
         }
@@ -99,6 +100,31 @@ namespace NextErp.API.Web.Api
             return NoContent();
         }
 
+        [HttpGet("product/{productId}/options")]
+        public async Task<IActionResult> GetOptionsByProduct(int productId)
+        {
+            var query = new GetVariationOptionsByProductIdQuery(productId);
+            var options = await _mediator.Send(query);
+            var dtoList = _mapper.Map<List<ProductVariation.Response.VariationOptionDto>>(options);
+            return Ok(dtoList);
+        }
+
+        [HttpPost("product/{productId}/assign-option")]
+        public async Task<IActionResult> AssignOptionToProduct(int productId, [FromBody] AssignVariationOptionRequest body)
+        {
+            var command = new AssignVariationOptionToProductCommand(productId, body.VariationOptionId, body.DisplayOrder);
+            var id = await _mediator.Send(command);
+            return CreatedAtAction(nameof(GetOptionsByProduct), new { productId }, new { id });
+        }
+
+        [HttpDelete("product/{productId}/assign-option/{variationOptionId}")]
+        public async Task<IActionResult> UnassignOptionFromProduct(int productId, int variationOptionId)
+        {
+            var command = new UnassignVariationOptionFromProductCommand(productId, variationOptionId);
+            await _mediator.Send(command);
+            return NoContent();
+        }
+
         [HttpGet("bulk/options")]
         public async Task<IActionResult> GetAllDistinctOptions()
         {
@@ -107,5 +133,10 @@ namespace NextErp.API.Web.Api
             return Ok(options);
         }
     }
-}
 
+    public class AssignVariationOptionRequest
+    {
+        public int VariationOptionId { get; set; }
+        public int DisplayOrder { get; set; }
+    }
+}
