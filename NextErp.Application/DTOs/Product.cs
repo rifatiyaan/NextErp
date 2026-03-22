@@ -112,6 +112,12 @@ namespace NextErp.Application.DTOs
                     public bool HasVariations { get; set; }
                     public List<ProductVariation.Response.VariationOptionDto>? VariationOptions { get; set; }
                     public List<ProductVariation.Response.ProductVariantDto>? ProductVariants { get; set; }
+
+                    /// <summary>Set when list API is called with includeStock=true (sum of variant ledger qty).</summary>
+                    public decimal? TotalAvailableQuantity { get; set; }
+
+                    /// <summary>True if any variant ledger is at or below low threshold.</summary>
+                    public bool? HasLowStock { get; set; }
                 }
 
                 public class Bulk

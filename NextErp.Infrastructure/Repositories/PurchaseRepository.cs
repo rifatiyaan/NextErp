@@ -16,12 +16,20 @@ namespace NextErp.Infrastructure.Repositories
         }
 
         public async Task<(IList<Purchase> records, int total, int totalDisplay)> GetTableDataAsync(
-            int pageIndex, int pageSize, string? searchText, string? orderBy)
+            int pageIndex,
+            int pageSize,
+            string? searchText,
+            string? orderBy,
+            IReadOnlyList<int>? supplierIds = null,
+            bool? isActiveFilter = null)
         {
             Expression<Func<Purchase, bool>> filter = x =>
-                string.IsNullOrEmpty(searchText) || 
-                x.Title.Contains(searchText) || 
-                x.PurchaseNumber.Contains(searchText);
+                (string.IsNullOrEmpty(searchText) ||
+                 x.Title.Contains(searchText) ||
+                 x.PurchaseNumber.Contains(searchText) ||
+                 (x.Supplier != null && x.Supplier.Title.Contains(searchText)))
+                && (supplierIds == null || supplierIds.Count == 0 || supplierIds.Contains(x.SupplierId))
+                && (!isActiveFilter.HasValue || x.IsActive == isActiveFilter.Value);
 
             Func<IQueryable<Purchase>, Microsoft.EntityFrameworkCore.Query.IIncludableQueryable<Purchase, object>> include = q =>
                 q.Include(p => p.Supplier)

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MediatR;
 using NextErp.Application.DTOs;
 using Entities = NextErp.Domain.Entities;
@@ -12,7 +13,9 @@ namespace NextErp.Application.Queries
         int PageIndex,
         int PageSize,
         string? SearchText,
-        string? SortBy
+        string? SortBy,
+        IReadOnlyList<int>? SupplierIds = null,
+        bool? IsActiveFilter = null
     ) : IRequest<(IList<Entities.Purchase> Records, int Total, int TotalDisplay)>;
 
     // Get purchase report

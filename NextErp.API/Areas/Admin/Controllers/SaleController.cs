@@ -35,24 +35,29 @@ namespace NextErp.API.Web.Api
             return Ok(dto);
         }
 
-        // GET api/sale
+        // GET api/sale  (supports page + pageSize or pageIndex + pageSize)
         [HttpGet]
         public async Task<IActionResult> GetPaged(
-            [FromQuery] int pageIndex = 1,
+            [FromQuery] int? page = null,
+            [FromQuery] int? pageIndex = null,
             [FromQuery] int pageSize = 10,
             [FromQuery] string? searchText = null,
             [FromQuery] string? sortBy = null)
         {
-            var query = new GetPagedSalesQuery(pageIndex, pageSize, searchText, sortBy);
-            var pagedResult = await _mediator.Send(query);
+            var effectivePage = page ?? pageIndex ?? 1;
+            if (effectivePage < 1) effectivePage = 1;
+            if (pageSize < 1) pageSize = 10;
 
-            var dtoList = _mapper.Map<List<Sale.Response.Get.Single>>(pagedResult.Records);
+            var query = new GetPagedSalesQuery(effectivePage, pageSize, searchText, sortBy);
+            var pagedResult = await _mediator.Send(query);
 
             return Ok(new
             {
                 total = pagedResult.Total,
                 totalDisplay = pagedResult.TotalDisplay,
-                data = dtoList
+                page = effectivePage,
+                pageSize,
+                data = pagedResult.Records
             });
         }
 

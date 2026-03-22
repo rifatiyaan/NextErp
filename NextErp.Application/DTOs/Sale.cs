@@ -89,6 +89,18 @@ namespace NextErp.Application.DTOs
                     public Guid? BranchId { get; set; }
                 }
 
+                /// <summary>Lightweight row for paged sale list (no line items or payment lines).</summary>
+                public class ListRow
+                {
+                    public Guid Id { get; set; }
+                    public string SaleNumber { get; set; } = null!;
+                    public string CustomerName { get; set; } = null!;
+                    public DateTime SaleDate { get; set; }
+                    public decimal FinalAmount { get; set; }
+                    public decimal TotalPaid { get; set; }
+                    public decimal BalanceDue { get; set; }
+                }
+
                 public class SaleItemResponse
                 {
                     public Guid Id { get; set; }

@@ -1,70 +1,60 @@
+using NextErp.Application;
 using NextErp.Application.Common;
 using NextErp.Application.Queries;
+using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Entities = NextErp.Domain.Entities;
-using Repositories = NextErp.Domain.Repositories;
+using ProductDto = NextErp.Application.DTOs.Product;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Product
 {
-    public class GetPagedProductsHandler(Repositories.IProductRepository productRepo) 
-        : IRequestHandler<GetPagedProductsQuery, PagedResult<Entities.Product>>
+    public class GetPagedProductsHandler(IApplicationUnitOfWork unitOfWork, IMapper mapper)
+        : IRequestHandler<GetPagedProductsQuery, PagedResult<ProductDto.Response.Get.Single>>
     {
-        public async Task<PagedResult<Entities.Product>> Handle(
+        public async Task<PagedResult<ProductDto.Response.Get.Single>> Handle(
             GetPagedProductsQuery request,
             CancellationToken cancellationToken)
         {
-            var query = productRepo.Query();
+            var query = unitOfWork.ProductRepository.Query();
 
-            // Apply status filter
             if (!string.IsNullOrWhiteSpace(request.Status))
             {
-                switch (request.Status.ToLower())
+                query = request.Status.ToLowerInvariant() switch
                 {
-                    case "active":
-                        query = query.Where(p => p.IsActive);
-                        break;
-                    case "out of stock":
-                        query = query.Where(p => p.IsActive && !p.ProductVariants.Any(v => v.Stock > 0));
-                        break;
-                    case "closed":
-                        query = query.Where(p => !p.IsActive);
-                        break;
-                    default:
-                        // "all" or unknown - show all active products by default
-                        query = query.Where(p => p.IsActive);
-                        break;
-                }
+                    "active" => query.Where(p => p.IsActive),
+                    "out of stock" => query.Where(p =>
+                        p.IsActive && !p.ProductVariants.Any(v => v.Stock > 0)),
+                    "closed" => query.Where(p => !p.IsActive),
+                    _ => query.Where(p => p.IsActive),
+                };
             }
             else
             {
-                // Default: show only active products
                 query = query.Where(p => p.IsActive);
             }
 
-            // Apply search text filter using SQL LIKE (case-insensitive)
             if (!string.IsNullOrWhiteSpace(request.SearchText))
             {
                 var searchText = request.SearchText.Trim();
                 var searchPattern = $"%{searchText}%";
-                query = query.Where(p => 
-                    Microsoft.EntityFrameworkCore.EF.Functions.Like(p.Title, searchPattern) || 
-                    Microsoft.EntityFrameworkCore.EF.Functions.Like(p.Code, searchPattern));
+                query = query.Where(p =>
+                    EF.Functions.Like(p.Title, searchPattern) ||
+                    EF.Functions.Like(p.Code, searchPattern));
             }
 
-            // Apply category filter
-            if (request.CategoryId.HasValue && request.CategoryId.Value > 0)
+            if (request.CategoryId is > 0)
             {
                 query = query.Where(p => p.CategoryId == request.CategoryId.Value);
             }
 
             var total = await query.CountAsync(cancellationToken);
 
-            query = request.SortBy?.ToLower() switch
+            query = request.SortBy?.ToLowerInvariant() switch
             {
                 "title" => query.OrderBy(p => p.Title),
                 "price" => query.OrderBy(p => p.Price),
-                _ => query.OrderByDescending(p => p.CreatedAt)
+                _ => query.OrderByDescending(p => p.CreatedAt),
             };
 
             var records = await query
@@ -75,7 +65,41 @@ namespace NextErp.Application.Handlers.QueryHandlers.Product
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
 
-            return new PagedResult<Entities.Product>(records, total, total);
+            var dtos = mapper.Map<List<ProductDto.Response.Get.Single>>(records);
+
+            if (request.IncludeStock && dtos.Count > 0)
+            {
+                var ids = records.Select(p => p.Id).Distinct().ToArray();
+                var aggregates =
+                    await unitOfWork.StockRepository.GetProductStockAggregatesAsync(ids,
+                        cancellationToken);
+                var lookup = aggregates.ToDictionary(
+                    t => t.ProductId,
+                    t => (t.TotalAvailable, t.HasLowStock));
+
+                ApplyStockColumns(dtos, lookup);
+            }
+
+            return new PagedResult<ProductDto.Response.Get.Single>(dtos, total, total);
+        }
+
+        private static void ApplyStockColumns(
+            List<ProductDto.Response.Get.Single> dtos,
+            IReadOnlyDictionary<int, (decimal TotalAvailable, bool HasLowStock)> lookup)
+        {
+            foreach (var d in dtos)
+            {
+                if (lookup.TryGetValue(d.Id, out var row))
+                {
+                    d.TotalAvailableQuantity = row.TotalAvailable;
+                    d.HasLowStock = row.HasLowStock;
+                }
+                else
+                {
+                    d.TotalAvailableQuantity = 0m;
+                    d.HasLowStock = false;
+                }
+            }
         }
     }
 }

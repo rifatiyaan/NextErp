@@ -51,5 +51,34 @@ namespace NextErp.Infrastructure.Repositories
         {
             return _db.Set<Stock>().AsQueryable();
         }
+
+        public async Task<IReadOnlyList<(int ProductId, decimal TotalAvailable, bool HasLowStock)>>
+            GetProductStockAggregatesAsync(
+                IReadOnlyList<int> productIds,
+                CancellationToken cancellationToken = default)
+        {
+            if (productIds.Count == 0)
+                return Array.Empty<(int, decimal, bool)>();
+
+            const decimal lowThreshold = 10m;
+
+            var rows = await _db.Set<ProductVariant>()
+                .AsNoTracking()
+                .Where(v => productIds.Contains(v.ProductId))
+                .GroupBy(v => v.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    TotalAvailable = g.Sum(v =>
+                        v.StockRecord != null ? v.StockRecord.AvailableQuantity : 0m),
+                    HasLowStock = g.Any(v =>
+                        v.StockRecord != null && v.StockRecord.AvailableQuantity <= lowThreshold),
+                })
+                .ToListAsync(cancellationToken);
+
+            return rows
+                .Select(r => (r.ProductId, r.TotalAvailable, r.HasLowStock))
+                .ToList();
+        }
     }
 }

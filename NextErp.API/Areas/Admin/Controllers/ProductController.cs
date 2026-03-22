@@ -39,23 +39,36 @@ namespace NextErp.API.Web.Api
 
         [HttpGet]
         public async Task<IActionResult> GetPaged(
-            [FromQuery] int pageIndex = 1,
+            [FromQuery] int? page = null,
+            [FromQuery] int? pageIndex = null,
             [FromQuery] int pageSize = 10,
             [FromQuery] string? searchText = null,
             [FromQuery] string? sortBy = null,
             [FromQuery] int? categoryId = null,
-            [FromQuery] string? status = null)
+            [FromQuery] string? status = null,
+            [FromQuery] bool includeStock = false)
         {
-            var query = new GetPagedProductsQuery(pageIndex, pageSize, searchText, sortBy, categoryId, status);
-            var pagedResult = await _mediator.Send(query);
+            var effectivePage = page ?? pageIndex ?? 1;
+            if (effectivePage < 1) effectivePage = 1;
+            if (pageSize < 1) pageSize = 10;
 
-            var dtoList = _mapper.Map<List<Product.Response.Get.Single>>(pagedResult.Records);
+            var query = new GetPagedProductsQuery(
+                effectivePage,
+                pageSize,
+                searchText,
+                sortBy,
+                categoryId,
+                status,
+                includeStock);
+            var pagedResult = await _mediator.Send(query);
 
             return Ok(new
             {
                 total = pagedResult.Total,
                 totalDisplay = pagedResult.TotalDisplay,
-                data = dtoList
+                page = effectivePage,
+                pageSize,
+                data = pagedResult.Records
             });
         }
 

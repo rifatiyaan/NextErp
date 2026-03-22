@@ -15,7 +15,9 @@ namespace NextErp.Application.Handlers.QueryHandlers.Purchase
                 request.PageIndex,
                 request.PageSize,
                 request.SearchText,
-                request.SortBy);
+                request.SortBy,
+                request.SupplierIds,
+                request.IsActiveFilter);
         }
     }
 }

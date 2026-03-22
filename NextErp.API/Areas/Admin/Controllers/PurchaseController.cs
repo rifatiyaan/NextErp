@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -41,9 +42,17 @@ namespace NextErp.API.Web.Api
             [FromQuery] int pageIndex = 1,
             [FromQuery] int pageSize = 10,
             [FromQuery] string? searchText = null,
-            [FromQuery] string? sortBy = null)
+            [FromQuery] string? sortBy = null,
+            [FromQuery] int[]? supplierIds = null,
+            [FromQuery] string[]? status = null)
         {
-            var query = new GetPagedPurchasesQuery(pageIndex, pageSize, searchText, sortBy);
+            var query = new GetPagedPurchasesQuery(
+                pageIndex,
+                pageSize,
+                searchText,
+                sortBy,
+                supplierIds,
+                ParsePurchaseStatusFilter(status));
             var pagedResult = await _mediator.Send(query);
 
             var dtoList = _mapper.Map<List<Purchase.Response.Get.Single>>(pagedResult.Records);
@@ -89,6 +98,30 @@ namespace NextErp.API.Web.Api
             var report = await _mediator.Send(query);
 
             return Ok(report);
+        }
+
+        /// <summary>Maps multi-select status checkboxes to a single nullable IsActive filter (both = no filter).</summary>
+        private static bool? ParsePurchaseStatusFilter(string[]? status)
+        {
+            if (status == null || status.Length == 0)
+                return null;
+
+            var set = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+            foreach (var s in status)
+            {
+                if (!string.IsNullOrWhiteSpace(s))
+                    set.Add(s.Trim().ToLowerInvariant());
+            }
+
+            var active = set.Contains("active");
+            var inactive = set.Contains("inactive");
+            if (active && inactive)
+                return null;
+            if (active)
+                return true;
+            if (inactive)
+                return false;
+            return null;
         }
     }
 }

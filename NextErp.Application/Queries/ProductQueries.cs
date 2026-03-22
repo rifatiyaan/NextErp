@@ -1,11 +1,12 @@
-using NextErp.Application.Common; // <-- import PagedResult<T>
-using NextErp.Domain.Entities;
+using NextErp.Application.Common;
 using MediatR;
+using Entities = NextErp.Domain.Entities;
+using DTOs = NextErp.Application.DTOs;
 
 namespace NextErp.Application.Queries
 {
     // Get Product by Id
-    public record GetProductByIdQuery(int Id) : IRequest<Product?>;
+    public record GetProductByIdQuery(int Id) : IRequest<Entities.Product?>;
 
     // Get Paged Products
     public record GetPagedProductsQuery(
@@ -14,6 +15,7 @@ namespace NextErp.Application.Queries
         string? SearchText = null,
         string? SortBy = null,
         int? CategoryId = null,
-        string? Status = null
-    ) : IRequest<PagedResult<Product>>; // PagedResult is now imported
+        string? Status = null,
+        bool IncludeStock = false
+    ) : IRequest<PagedResult<DTOs.Product.Response.Get.Single>>;
 }

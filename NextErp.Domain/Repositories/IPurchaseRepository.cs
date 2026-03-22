@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NextErp.Domain.Entities;
 
 namespace NextErp.Domain.Repositories
@@ -5,7 +6,12 @@ namespace NextErp.Domain.Repositories
     public interface IPurchaseRepository : IRepositoryBase<Purchase, Guid>
     {
         Task<(IList<Purchase> records, int total, int totalDisplay)> GetTableDataAsync(
-            int pageIndex, int pageSize, string? searchText, string? orderBy);
+            int pageIndex,
+            int pageSize,
+            string? searchText,
+            string? orderBy,
+            IReadOnlyList<int>? supplierIds = null,
+            bool? isActiveFilter = null);
 
         Task<Purchase?> GetByIdWithDetailsAsync(Guid id);
 
