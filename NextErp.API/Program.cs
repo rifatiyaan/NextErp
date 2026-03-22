@@ -1,4 +1,4 @@
-﻿using Autofac;
+using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -131,6 +131,8 @@ builder.Services.AddControllers()
     {
         opt.JsonSerializerOptions.ReferenceHandler =
             System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        opt.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 
 builder.Services.AddControllersWithViews();

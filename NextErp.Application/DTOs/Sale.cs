@@ -46,7 +46,7 @@ namespace NextErp.Application.DTOs
 
                 public class SaleItemRequest
                 {
-                    public int ProductId { get; set; }
+                    public int ProductVariantId { get; set; }
                     public decimal Quantity { get; set; }
                     public decimal Price { get; set; }
                     public decimal Subtotal { get; set; }
@@ -74,7 +74,13 @@ namespace NextErp.Application.DTOs
                     public string CustomerName { get; set; } = null!;
                     public DateTime SaleDate { get; set; }
                     public decimal TotalAmount { get; set; }
+                    public decimal Discount { get; set; }
+                    public decimal Tax { get; set; }
+                    public decimal FinalAmount { get; set; }
+                    public decimal TotalPaid { get; set; }
+                    public decimal BalanceDue { get; set; }
                     public List<SaleItemResponse> Items { get; set; } = new();
+                    public List<Payment.Response.Line> Payments { get; set; } = new();
                     public Request.Metadata Metadata { get; set; } = new();
                     public bool IsActive { get; set; }
                     public DateTime CreatedAt { get; set; }
@@ -87,8 +93,10 @@ namespace NextErp.Application.DTOs
                 {
                     public Guid Id { get; set; }
                     public string Title { get; set; } = null!;
-                    public int ProductId { get; set; }
+                    public int ProductVariantId { get; set; }
                     public string ProductTitle { get; set; } = null!;
+                    public string VariantSku { get; set; } = null!;
+                    public string VariantTitle { get; set; } = null!;
                     public decimal Quantity { get; set; }
                     public decimal UnitPrice { get; set; }
                     public decimal Total { get; set; }

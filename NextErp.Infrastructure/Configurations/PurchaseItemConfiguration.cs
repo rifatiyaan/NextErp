@@ -34,15 +34,13 @@ namespace NextErp.Infrastructure.Configurations
                 )
                 .HasColumnType("nvarchar(max)");
 
-            // Relationship with Product
-            builder.HasOne(pi => pi.Product)
+            builder.HasOne(pi => pi.ProductVariant)
                 .WithMany()
-                .HasForeignKey(pi => pi.ProductId)
+                .HasForeignKey(pi => pi.ProductVariantId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Indexes
             builder.HasIndex(pi => pi.PurchaseId);
-            builder.HasIndex(pi => pi.ProductId);
+            builder.HasIndex(pi => pi.ProductVariantId);
         }
     }
 }

@@ -29,15 +29,13 @@ namespace NextErp.Infrastructure.Configurations
             // Computed column (Total) - ignored in database
             builder.Ignore(si => si.Total);
 
-            // Relationship with Product
-            builder.HasOne(si => si.Product)
+            builder.HasOne(si => si.ProductVariant)
                 .WithMany()
-                .HasForeignKey(si => si.ProductId)
+                .HasForeignKey(si => si.ProductVariantId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Indexes
             builder.HasIndex(si => si.SaleId);
-            builder.HasIndex(si => si.ProductId);
+            builder.HasIndex(si => si.ProductVariantId);
         }
     }
 }

@@ -2,14 +2,15 @@ using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Commands;
-using NextErp.Application.DTOs;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Products;
 using Entities = NextErp.Domain.Entities;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Product
 {
     public class UpdateProductWithVariationsHandler(
         IApplicationDbContext dbContext,
+        IStockService stockService,
         IMapper mapper)
         : IRequestHandler<UpdateProductWithVariationsCommand, Unit>
     {
@@ -35,97 +36,81 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                 mapper.Map(request, product);
                 product.UpdatedAt = DateTime.UtcNow;
 
-                var optionNames = request.VariationOptions.Select(o => o.Name).Distinct().ToList();
-                var globalOptions = await dbContext.VariationOptions
-                    .Include(vo => vo.Values.OrderBy(v => v.DisplayOrder))
-                    .Where(vo => vo.IsActive && optionNames.Contains(vo.Name))
-                    .ToListAsync(cancellationToken);
+                var optionByName = await ConfigurableProductVariantFactory.LoadActiveGlobalOptionsAsync(
+                    dbContext,
+                    request.VariationOptions.Select(o => o.Name),
+                    cancellationToken);
 
-                var optionByName = globalOptions.ToDictionary(vo => vo.Name, vo => vo);
-
-                var existingPvos = product.ProductVariationOptions.ToList();
-                var requestOptionNamesInOrder = request.VariationOptions.Select(o => o.Name).ToList();
-
-                foreach (var pvo in existingPvos.Where(pvo => !requestOptionNamesInOrder.Contains(pvo.VariationOption.Name)))
-                    dbContext.ProductVariationOptions.Remove(pvo);
-
-                var assignedNames = new HashSet<string>();
-                foreach (var (optionDto, displayOrder) in request.VariationOptions.Select((dto, i) => (dto, i)))
-                {
-                    if (!optionByName.TryGetValue(optionDto.Name, out var globalOption))
-                        throw new InvalidOperationException($"Global variation option '{optionDto.Name}' not found.");
-
-                    if (assignedNames.Add(optionDto.Name))
-                    {
-                        var alreadyAssigned = product.ProductVariationOptions.Any(pvo => pvo.VariationOptionId == globalOption.Id);
-                        if (!alreadyAssigned)
-                        {
-                            var pvo = new Entities.ProductVariationOption
-                            {
-                                Title = globalOption.Name,
-                                ProductId = product.Id,
-                                VariationOptionId = globalOption.Id,
-                                DisplayOrder = displayOrder,
-                                CreatedAt = DateTime.UtcNow
-                            };
-                            await dbContext.ProductVariationOptions.AddAsync(pvo, cancellationToken);
-                        }
-                    }
-                }
-
+                await SyncProductVariationOptionsAsync(product, request, optionByName, dbContext, cancellationToken);
                 await dbContext.SaveChangesAsync(cancellationToken);
 
-                var valueKeyMap = new Dictionary<string, Entities.VariationValue>();
-                foreach (var (optionDto, optIdx) in request.VariationOptions.Select((dto, idx) => (dto, idx)))
+                if (request.ProductVariants.Count == 0)
                 {
-                    if (!optionByName.TryGetValue(optionDto.Name, out var globalOption))
-                        continue;
-                    var valuesInOrder = globalOption.Values.Where(v => v.IsActive).OrderBy(v => v.DisplayOrder).ToList();
-                    foreach (var (val, valIdx) in valuesInOrder.Select((v, i) => (v, i)))
-                        valueKeyMap[$"{optIdx}:{valIdx}"] = val;
+                    throw new InvalidOperationException(
+                        "At least one product variant is required when saving variation options.");
                 }
 
-                var valueIdToKey = valueKeyMap.ToDictionary(kvp => kvp.Value.Id, kvp => kvp.Key);
-                var existingVariants = product.ProductVariants.ToList();
-                var existingVariantMap = existingVariants
-                    .Select(v => (Variant: v, KeyString: string.Join(",", v.VariationValues.Select(vv => valueIdToKey.GetValueOrDefault(vv.Id)).Where(k => k != null).OrderBy(k => k))))
-                    .Where(x => !string.IsNullOrEmpty(x.KeyString))
-                    .ToDictionary(x => x.KeyString, x => x.Variant);
+                var valueKeyMap = ConfigurableProductVariantFactory.BuildValueKeyMap(
+                    request.VariationOptions,
+                    optionByName);
+
+                var valueIdToKey = ConfigurableProductVariantFactory.BuildVariationValueIdToKeyMap(valueKeyMap);
+                var existingVariantMap = ConfigurableProductVariantFactory.IndexExistingVariantsByCombinationKey(
+                    product.ProductVariants,
+                    valueIdToKey);
+
+                var requestedCombinationKeys = request.ProductVariants
+                    .Select(d => ConfigurableProductVariantFactory.BuildCombinationKey(d.VariationValueKeys))
+                    .ToHashSet(StringComparer.Ordinal);
 
                 foreach (var variantDto in request.ProductVariants)
                 {
-                    var variantValueEntities = variantDto.VariationValueKeys
-                        .Select(key => valueKeyMap.GetValueOrDefault(key))
-                        .Where(v => v != null)
-                        .Cast<Entities.VariationValue>()
-                        .ToList();
+                    var values = ConfigurableProductVariantFactory.ResolveVariationValues(
+                        variantDto.VariationValueKeys,
+                        valueKeyMap);
 
-                    var variantTitle = string.Join(" / ", variantValueEntities.Select(v => v.Value));
-                    var keyString = string.Join(",", variantDto.VariationValueKeys.OrderBy(k => k));
+                    var title = ConfigurableProductVariantFactory.BuildDisplayTitle(values);
+                    var combinationKey = ConfigurableProductVariantFactory.BuildCombinationKey(variantDto.VariationValueKeys);
 
-                    if (existingVariantMap.TryGetValue(keyString, out var existingVariant))
+                    if (existingVariantMap.TryGetValue(combinationKey, out var existingVariant))
                     {
                         mapper.Map(variantDto, existingVariant);
-                        existingVariant.Title = variantTitle;
-                        existingVariant.Name = variantTitle;
+                        existingVariant.Title = title;
+                        existingVariant.Name = title;
                         existingVariant.UpdatedAt = DateTime.UtcNow;
                         existingVariant.VariationValues.Clear();
-                        foreach (var v in variantValueEntities)
+                        foreach (var v in values)
                             existingVariant.VariationValues.Add(v);
                     }
                     else
                     {
                         var productVariant = mapper.Map<Entities.ProductVariant>(variantDto);
-                        productVariant.Title = variantTitle;
-                        productVariant.Name = variantTitle;
+                        productVariant.Title = title;
+                        productVariant.Name = title;
                         productVariant.ProductId = product.Id;
                         productVariant.CreatedAt = DateTime.UtcNow;
                         productVariant.TenantId = product.TenantId;
                         productVariant.BranchId = product.BranchId;
-                        productVariant.VariationValues = variantValueEntities;
+                        productVariant.VariationValues = values;
                         await dbContext.ProductVariants.AddAsync(productVariant, cancellationToken);
                     }
                 }
+
+                DeactivateVariantsRemovedFromRequest(product, requestedCombinationKeys, valueIdToKey);
+
+                await dbContext.SaveChangesAsync(cancellationToken);
+
+                product.Stock = await dbContext.ProductVariants
+                    .Where(pv => pv.ProductId == product.Id)
+                    .SumAsync(pv => pv.Stock, cancellationToken);
+
+                var variantIds = await dbContext.ProductVariants
+                    .Where(pv => pv.ProductId == product.Id)
+                    .Select(pv => pv.Id)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var variantId in variantIds)
+                    await stockService.EnsureStockRecordExistsAsync(variantId, product.TenantId, cancellationToken);
 
                 await dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
@@ -135,6 +120,73 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
             {
                 await transaction.RollbackAsync(cancellationToken);
                 throw;
+            }
+        }
+
+        private static async Task SyncProductVariationOptionsAsync(
+            Entities.Product product,
+            UpdateProductWithVariationsCommand request,
+            IReadOnlyDictionary<string, Entities.VariationOption> optionByName,
+            IApplicationDbContext dbContext,
+            CancellationToken cancellationToken)
+        {
+            var requestOptionNamesInOrder = request.VariationOptions.Select(o => o.Name).ToList();
+
+            foreach (var pvo in product.ProductVariationOptions
+                         .Where(pvo => !requestOptionNamesInOrder.Contains(pvo.VariationOption.Name))
+                         .ToList())
+            {
+                dbContext.ProductVariationOptions.Remove(pvo);
+            }
+
+            var assignedNames = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var (optionDto, displayOrder) in request.VariationOptions.Select((dto, i) => (dto, i)))
+            {
+                if (!optionByName.TryGetValue(optionDto.Name, out var globalOption))
+                {
+                    throw new InvalidOperationException(
+                        $"Global variation option '{optionDto.Name}' not found.");
+                }
+
+                if (!assignedNames.Add(optionDto.Name))
+                    continue;
+
+                var existingPvo = product.ProductVariationOptions
+                    .FirstOrDefault(pvo => pvo.VariationOptionId == globalOption.Id);
+
+                if (existingPvo != null)
+                {
+                    existingPvo.DisplayOrder = displayOrder;
+                    continue;
+                }
+
+                var pvo = new Entities.ProductVariationOption
+                {
+                    Title = globalOption.Name,
+                    ProductId = product.Id,
+                    VariationOptionId = globalOption.Id,
+                    DisplayOrder = displayOrder,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await dbContext.ProductVariationOptions.AddAsync(pvo, cancellationToken);
+            }
+        }
+
+        private static void DeactivateVariantsRemovedFromRequest(
+            Entities.Product product,
+            HashSet<string> requestedCombinationKeys,
+            IReadOnlyDictionary<int, string> valueIdToKey)
+        {
+            foreach (var v in product.ProductVariants)
+            {
+                var keys = v.VariationValues
+                    .Select(vv => valueIdToKey.GetValueOrDefault(vv.Id))
+                    .Where(k => !string.IsNullOrEmpty(k))
+                    .Cast<string>();
+
+                var combinationKey = ConfigurableProductVariantFactory.BuildCombinationKey(keys);
+                if (string.IsNullOrEmpty(combinationKey) || !requestedCombinationKeys.Contains(combinationKey))
+                    v.IsActive = false;
             }
         }
     }

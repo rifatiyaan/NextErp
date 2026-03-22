@@ -26,7 +26,9 @@ namespace NextErp.Infrastructure.Repositories
             Func<IQueryable<Sale>, Microsoft.EntityFrameworkCore.Query.IIncludableQueryable<Sale, object>> include = q =>
                 q.Include(s => s.Customer)
                  .Include(s => s.Items)
-                    .ThenInclude(i => i.Product);
+                    .ThenInclude(i => i.ProductVariant)
+                        .ThenInclude(pv => pv.Product)
+                 .Include(s => s.Payments);
 
             return await GetDynamicAsync(filter, orderBy, include, pageIndex, pageSize, true);
         }
@@ -37,8 +39,10 @@ namespace NextErp.Infrastructure.Repositories
                 .AsNoTracking()
                 .Include(s => s.Customer)
                 .Include(s => s.Items)
-                    .ThenInclude(i => i.Product)
-                        .ThenInclude(p => p.Category)
+                    .ThenInclude(i => i.ProductVariant)
+                        .ThenInclude(pv => pv.Product)
+                            .ThenInclude(p => p.Category)
+                .Include(s => s.Payments)
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
 
@@ -48,8 +52,10 @@ namespace NextErp.Infrastructure.Repositories
                 .AsNoTracking()
                 .Include(s => s.Customer)
                 .Include(s => s.Items)
-                    .ThenInclude(i => i.Product)
-                        .ThenInclude(p => p.Category)
+                    .ThenInclude(i => i.ProductVariant)
+                        .ThenInclude(pv => pv.Product)
+                            .ThenInclude(p => p.Category)
+                .Include(s => s.Payments)
                 .Where(s => s.SaleDate >= startDate && s.SaleDate <= endDate)
                 .OrderByDescending(s => s.SaleDate)
                 .ToListAsync();

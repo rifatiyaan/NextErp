@@ -20,14 +20,24 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
 
             try
             {
-                var productIds = request.Items.Select(i => i.ProductId).Distinct().ToList();
-                var products = await unitOfWork.ProductRepository.Query()
-                    .Where(p => productIds.Contains(p.Id))
-                    .ToDictionaryAsync(p => p.Id, cancellationToken);
+                var variantIds = request.Items.Select(i => i.ProductVariantId).Distinct().ToList();
+                var variants = await dbContext.ProductVariants
+                    .Include(v => v.Product)
+                    .Where(v => variantIds.Contains(v.Id))
+                    .ToDictionaryAsync(v => v.Id, cancellationToken);
+
+                if (variants.Count != variantIds.Count)
+                {
+                    var missing = variantIds.Except(variants.Keys).ToList();
+                    throw new InvalidOperationException(
+                        $"Product variant(s) not found: {string.Join(", ", missing)}.");
+                }
 
                 var purchaseNumber = string.IsNullOrWhiteSpace(request.PurchaseNumber)
                     ? $"PUR-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}"
                     : request.PurchaseNumber;
+
+                var tenantId = variants.Values.First().TenantId;
 
                 var purchase = new Entities.Purchase
                 {
@@ -47,7 +57,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
                         Notes = request.Metadata?.Notes
                     },
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    TenantId = tenantId
                 };
 
                 await unitOfWork.PurchaseRepository.AddAsync(purchase);
@@ -55,12 +66,17 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
                 decimal totalAmount = 0;
                 foreach (var itemDto in request.Items)
                 {
+                    var variant = variants[itemDto.ProductVariantId];
+                    var lineTitle = string.IsNullOrWhiteSpace(itemDto.Title)
+                        ? $"{variant.Product?.Title ?? "Product"} — {variant.Title}"
+                        : itemDto.Title;
+
                     var item = new Entities.PurchaseItem
                     {
                         Id = Guid.NewGuid(),
-                        Title = itemDto.Title,
+                        Title = lineTitle,
                         PurchaseId = purchase.Id,
-                        ProductId = itemDto.ProductId,
+                        ProductVariantId = variant.Id,
                         Quantity = itemDto.Quantity,
                         UnitCost = itemDto.UnitCost,
                         Metadata = new Entities.PurchaseItem.PurchaseItemMetadata
@@ -77,14 +93,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
                     purchase.Items.Add(item);
                     totalAmount += item.Total;
 
-                    if (products.TryGetValue(itemDto.ProductId, out var product))
-                    {
-                        // Ensure stock record exists (creates if doesn't exist)
-                        await stockService.EnsureStockRecordExistsAsync(itemDto.ProductId, purchase.TenantId, cancellationToken);
-                        
-                        // Increase stock (this will also update Product.Stock)
-                        await stockService.IncreaseStockAsync(itemDto.ProductId, itemDto.Quantity, cancellationToken);
-                    }
+                    await stockService.EnsureStockRecordExistsAsync(variant.Id, purchase.TenantId, cancellationToken);
+                    await stockService.IncreaseStockAsync(variant.Id, itemDto.Quantity, cancellationToken);
                 }
 
                 purchase.TotalAmount = totalAmount;

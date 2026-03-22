@@ -25,7 +25,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Product
                         query = query.Where(p => p.IsActive);
                         break;
                     case "out of stock":
-                        query = query.Where(p => p.IsActive && p.Stock == 0);
+                        query = query.Where(p => p.IsActive && !p.ProductVariants.Any(v => v.Stock > 0));
                         break;
                     case "closed":
                         query = query.Where(p => !p.IsActive);
@@ -70,6 +70,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Product
             var records = await query
                 .AsNoTracking()
                 .Include(p => p.Category)
+                .Include(p => p.ProductVariants)
                 .Skip((request.PageIndex - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);

@@ -1,3 +1,4 @@
+using NextErp.Application;
 using NextErp.Application.Queries;
 using NextErp.Application.DTOs;
 using MediatR;
@@ -14,14 +15,21 @@ namespace NextErp.Application.Handlers.QueryHandlers.Stock
         {
             var stockDtos = await unitOfWork.StockRepository.Query()
                 .AsNoTracking()
-                .Include(s => s.Product)
-                    .ThenInclude(p => p.Category)
+                .Include(s => s.ProductVariant)
+                    .ThenInclude(pv => pv.Product)
                 .Select(s => new DTOs.Stock.Response.Single
                 {
                     Id = s.Id,
-                    ProductId = s.ProductId,
-                    ProductTitle = s.Product != null ? s.Product.Title : "Unknown",
-                    ProductCode = s.Product != null ? s.Product.Code : "N/A",
+                    ProductVariantId = s.Id,
+                    ProductId = s.ProductVariant != null ? s.ProductVariant.ProductId : 0,
+                    ProductTitle = s.ProductVariant != null && s.ProductVariant.Product != null
+                        ? s.ProductVariant.Product.Title
+                        : "Unknown",
+                    ProductCode = s.ProductVariant != null && s.ProductVariant.Product != null
+                        ? s.ProductVariant.Product.Code
+                        : "N/A",
+                    VariantSku = s.ProductVariant != null ? s.ProductVariant.Sku : "",
+                    VariantTitle = s.ProductVariant != null ? s.ProductVariant.Title : "",
                     AvailableQuantity = s.AvailableQuantity,
                     CreatedAt = s.CreatedAt,
                     UpdatedAt = s.UpdatedAt,
@@ -33,7 +41,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Stock
             return new DTOs.Stock.Response.CurrentStockReport
             {
                 Stocks = stockDtos,
-                TotalProducts = stockDtos.Count,
+                TotalVariants = stockDtos.Count,
                 TotalQuantity = stockDtos.Sum(s => s.AvailableQuantity)
             };
         }

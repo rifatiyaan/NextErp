@@ -47,7 +47,7 @@ namespace NextErp.Application.DTOs
                 public class PurchaseItemRequest
                 {
                     public string Title { get; set; } = null!;
-                    public int ProductId { get; set; }
+                    public int ProductVariantId { get; set; }
                     public decimal Quantity { get; set; }
                     public decimal UnitCost { get; set; }
                     public PurchaseItemMetadata? Metadata { get; set; }
@@ -100,8 +100,10 @@ namespace NextErp.Application.DTOs
                 {
                     public Guid Id { get; set; }
                     public string Title { get; set; } = null!;
-                    public int ProductId { get; set; }
+                    public int ProductVariantId { get; set; }
                     public string ProductTitle { get; set; } = null!;
+                    public string VariantSku { get; set; } = null!;
+                    public string VariantTitle { get; set; } = null!;
                     public decimal Quantity { get; set; }
                     public decimal UnitCost { get; set; }
                     public decimal Total { get; set; }

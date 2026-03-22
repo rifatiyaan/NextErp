@@ -1,12 +1,12 @@
 namespace NextErp.Domain.Entities
 {
+    /// <summary>1:1 ledger row per sellable SKU. <see cref="Id"/> equals <see cref="ProductVariant"/> id.</summary>
     public class Stock : IEntity<int>
     {
-        public int Id { get; set; } // Same as ProductId (one-to-one). For multi-warehouse: change to Guid and remove unique constraint
-        public string Title { get; set; } = "Stock"; // Required by IEntity
-        
-        public int ProductId { get; set; }
-        public Product Product { get; set; } = null!;
+        public int Id { get; set; }
+        public string Title { get; set; } = "Stock";
+
+        public ProductVariant ProductVariant { get; set; } = null!;
         
         public decimal AvailableQuantity { get; set; }
         

@@ -4,12 +4,11 @@ using Entities = NextErp.Domain.Entities;
 
 namespace NextErp.Application.Queries
 {
-    // Get stock by product Id
-    public record GetStockByProductIdQuery(int ProductId) : IRequest<Entities.Stock?>;
+    public record GetStockByProductVariantIdQuery(int ProductVariantId) : IRequest<Entities.Stock?>;
 
-    // Get current stock report
+    public record GetStocksByProductIdQuery(int ProductId) : IRequest<IReadOnlyList<Entities.Stock>>;
+
     public record GetCurrentStockReportQuery() : IRequest<Stock.Response.CurrentStockReport>;
 
-    // Get low stock report
     public record GetLowStockReportQuery() : IRequest<Stock.Response.LowStockReport>;
 }

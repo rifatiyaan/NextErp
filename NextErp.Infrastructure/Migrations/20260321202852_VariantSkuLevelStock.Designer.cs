@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NextErp.Infrastructure;
 
@@ -11,9 +12,11 @@ using NextErp.Infrastructure;
 namespace NextErp.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260321202852_VariantSkuLevelStock")]
+    partial class VariantSkuLevelStock
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -887,49 +890,6 @@ namespace NextErp.Infrastructure.Migrations
                     b.ToTable("SaleItems");
                 });
 
-            modelBuilder.Entity("NextErp.Domain.Entities.SalePayment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("PaidAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("PaymentMethod")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Reference")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<Guid>("SaleId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PaidAt");
-
-                    b.HasIndex("SaleId");
-
-                    b.ToTable("SalePayments");
-                });
-
             modelBuilder.Entity("NextErp.Domain.Entities.Stock", b =>
                 {
                     b.Property<int>("Id")
@@ -1567,17 +1527,6 @@ namespace NextErp.Infrastructure.Migrations
                     b.Navigation("Sale");
                 });
 
-            modelBuilder.Entity("NextErp.Domain.Entities.SalePayment", b =>
-                {
-                    b.HasOne("NextErp.Domain.Entities.Sale", "Sale")
-                        .WithMany("Payments")
-                        .HasForeignKey("SaleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Sale");
-                });
-
             modelBuilder.Entity("NextErp.Domain.Entities.Stock", b =>
                 {
                     b.HasOne("NextErp.Domain.Entities.ProductVariant", "ProductVariant")
@@ -1705,8 +1654,6 @@ namespace NextErp.Infrastructure.Migrations
             modelBuilder.Entity("NextErp.Domain.Entities.Sale", b =>
                 {
                     b.Navigation("Items");
-
-                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("NextErp.Domain.Entities.VariationOption", b =>

@@ -20,38 +20,39 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
 
             try
             {
-                var productIds = request.Items.Select(i => i.ProductId).Distinct().ToList();
-                var products = await unitOfWork.ProductRepository.Query()
-                    .Where(p => productIds.Contains(p.Id))
-                    .ToDictionaryAsync(p => p.Id, cancellationToken);
+                var variantIds = request.Items.Select(i => i.ProductVariantId).Distinct().ToList();
+                var variants = await dbContext.ProductVariants
+                    .Include(v => v.Product)
+                    .Where(v => variantIds.Contains(v.Id))
+                    .ToDictionaryAsync(v => v.Id, cancellationToken);
 
-                var tenantId = Guid.Empty;
+                if (variants.Count != variantIds.Count)
+                {
+                    var missing = variantIds.Except(variants.Keys).ToList();
+                    throw new InvalidOperationException(
+                        $"Product variant(s) not found: {string.Join(", ", missing)}.");
+                }
+
+                var tenantId = variants.Values.First().TenantId;
 
                 foreach (var itemDto in request.Items)
                 {
-                    if (!products.TryGetValue(itemDto.ProductId, out var product))
-                    {
-                        throw new InvalidOperationException($"Product with ID {itemDto.ProductId} not found.");
-                    }
+                    var variant = variants[itemDto.ProductVariantId];
 
-                    tenantId = product.TenantId;
-
-                    await stockService.EnsureStockRecordExistsAsync(itemDto.ProductId, tenantId, cancellationToken);
+                    await stockService.EnsureStockRecordExistsAsync(variant.Id, tenantId, cancellationToken);
 
                     var isAvailable = await stockService.CheckStockAvailabilityAsync(
-                        itemDto.ProductId,
+                        variant.Id,
                         itemDto.Quantity,
                         cancellationToken);
 
-                    if (!isAvailable)
-                    {
-                        var availableStock = await stockService.GetAvailableStockAsync(
-                            itemDto.ProductId,
-                            cancellationToken);
-                        throw new InvalidOperationException(
-                            $"Insufficient stock for product '{product.Title}'. " +
-                            $"Available: {availableStock}, Required: {itemDto.Quantity}");
-                    }
+                    if (isAvailable)
+                        continue;
+
+                    var available = await stockService.GetAvailableStockAsync(variant.Id, cancellationToken);
+                    throw new InvalidOperationException(
+                        $"Insufficient stock for SKU '{variant.Sku}' ({variant.Product?.Title}). " +
+                        $"Available: {available}, Required: {itemDto.Quantity}.");
                 }
 
                 var saleNumber = $"SALE-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
@@ -81,14 +82,15 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
 
                 foreach (var itemDto in request.Items)
                 {
-                    var product = products[itemDto.ProductId];
+                    var variant = variants[itemDto.ProductVariantId];
+                    var lineTitle = $"{variant.Product?.Title ?? "Product"} — {variant.Title}";
 
                     var item = new Entities.SaleItem
                     {
                         Id = Guid.NewGuid(),
-                        Title = product.Title,
+                        Title = lineTitle,
                         SaleId = sale.Id,
-                        ProductId = itemDto.ProductId,
+                        ProductVariantId = variant.Id,
                         Quantity = itemDto.Quantity,
                         Price = itemDto.Price,
                         CreatedAt = DateTime.UtcNow,
@@ -97,7 +99,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
 
                     sale.Items.Add(item);
 
-                    await stockService.ReduceStockAsync(itemDto.ProductId, itemDto.Quantity, cancellationToken);
+                    await stockService.ReduceStockAsync(variant.Id, itemDto.Quantity, cancellationToken);
                 }
 
                 await unitOfWork.SaveAsync();

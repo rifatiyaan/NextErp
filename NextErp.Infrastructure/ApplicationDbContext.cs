@@ -32,6 +32,7 @@ namespace NextErp.Infrastructure
         public DbSet<PurchaseItem> PurchaseItems { get; set; }
         public DbSet<Sale> Sales { get; set; }
         public DbSet<SaleItem> SaleItems { get; set; }
+        public DbSet<SalePayment> SalePayments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

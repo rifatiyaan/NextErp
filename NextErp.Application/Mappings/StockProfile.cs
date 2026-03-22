@@ -8,10 +8,20 @@ namespace NextErp.Application.Mappings
     {
         public StockProfile()
         {
-            // Entity -> Response DTOs (Stock is read-only from API perspective)
             CreateMap<Entities.Stock, NextErp.Application.DTOs.Stock.Response.Single>()
-                .ForMember(dest => dest.ProductTitle, opt => opt.MapFrom(src => src.Product != null ? src.Product.Title : "Unknown"))
-                .ForMember(dest => dest.ProductCode, opt => opt.MapFrom(src => src.Product != null ? src.Product.Code : "N/A"));
+                .ForMember(dest => dest.ProductVariantId, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.ProductId, opt => opt.MapFrom(src =>
+                    src.ProductVariant != null ? src.ProductVariant.ProductId : 0))
+                .ForMember(dest => dest.ProductTitle, opt => opt.MapFrom(src =>
+                    src.ProductVariant != null && src.ProductVariant.Product != null
+                        ? src.ProductVariant.Product.Title
+                        : "Unknown"))
+                .ForMember(dest => dest.ProductCode, opt => opt.MapFrom(src =>
+                    src.ProductVariant != null && src.ProductVariant.Product != null
+                        ? src.ProductVariant.Product.Code
+                        : "N/A"))
+                .ForMember(dest => dest.VariantSku, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.Sku : ""))
+                .ForMember(dest => dest.VariantTitle, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.Title : ""));
         }
     }
 }

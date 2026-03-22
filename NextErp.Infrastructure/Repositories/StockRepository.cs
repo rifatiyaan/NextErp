@@ -14,36 +14,35 @@ namespace NextErp.Infrastructure.Repositories
             _db = (DbContext)context;
         }
 
-        public async Task<Stock?> GetByProductIdAsync(int productId)
+        public async Task<Stock?> GetByProductVariantIdAsync(int productVariantId)
         {
-            // First check change tracker for uncommitted entities
             var tracked = _db.ChangeTracker.Entries<Stock>()
-                .FirstOrDefault(e => e.Entity.ProductId == productId);
-            
-            if (tracked != null)
-            {
-                return tracked.Entity;
-            }
+                .FirstOrDefault(e => e.Entity.Id == productVariantId);
 
-            // If not in change tracker, query database
+            if (tracked != null)
+                return tracked.Entity;
+
             return await _db.Set<Stock>()
-                .Include(s => s.Product)
-                .FirstOrDefaultAsync(s => s.ProductId == productId);
+                .Include(s => s.ProductVariant)
+                    .ThenInclude(pv => pv.Product)
+                .FirstOrDefaultAsync(s => s.Id == productVariantId);
         }
 
-        public async Task<IList<Stock>> GetAllWithProductsAsync()
+        public async Task<IList<Stock>> GetAllWithVariantsAsync()
         {
             return await _db.Set<Stock>()
-                .Include(s => s.Product)
+                .Include(s => s.ProductVariant)
+                    .ThenInclude(pv => pv.Product)
+                        .ThenInclude(p => p.Category)
                 .Where(s => s.AvailableQuantity >= 0)
                 .ToListAsync();
         }
 
         public async Task<IList<Stock>> GetLowStockAsync()
         {
-            // Returns stocks with quantity <= 10 (you can adjust this threshold)
             return await _db.Set<Stock>()
-                .Include(s => s.Product)
+                .Include(s => s.ProductVariant)
+                    .ThenInclude(pv => pv.Product)
                 .Where(s => s.AvailableQuantity <= 10)
                 .ToListAsync();
         }

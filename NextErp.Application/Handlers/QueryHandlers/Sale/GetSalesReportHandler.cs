@@ -1,3 +1,4 @@
+using NextErp.Application;
 using NextErp.Application.Queries;
 using NextErp.Application.DTOs;
 using MediatR;
@@ -16,7 +17,9 @@ namespace NextErp.Application.Handlers.QueryHandlers.Sale
                 .AsNoTracking()
                 .Include(s => s.Customer)
                 .Include(s => s.Items)
-                    .ThenInclude(i => i.Product)
+                    .ThenInclude(i => i.ProductVariant)
+                        .ThenInclude(pv => pv.Product)
+                .Include(s => s.Payments)
                 .Where(s => s.SaleDate >= request.StartDate && s.SaleDate <= request.EndDate);
 
             if (request.CustomerId.HasValue)
@@ -34,16 +37,39 @@ namespace NextErp.Application.Handlers.QueryHandlers.Sale
                     CustomerName = s.Customer != null ? s.Customer.Title : "Unknown",
                     SaleDate = s.SaleDate,
                     TotalAmount = s.TotalAmount,
+                    Discount = s.Discount,
+                    Tax = s.Tax,
+                    FinalAmount = s.FinalAmount,
+                    TotalPaid = s.Payments.Sum(p => p.Amount),
+                    BalanceDue = s.FinalAmount - s.Payments.Sum(p => p.Amount),
                     Items = s.Items.Select(i => new DTOs.Sale.Response.Get.SaleItemResponse
                     {
                         Id = i.Id,
                         Title = i.Title,
-                        ProductId = i.ProductId,
-                        ProductTitle = i.Product != null ? i.Product.Title : "Unknown",
+                        ProductVariantId = i.ProductVariantId,
+                        ProductTitle = i.ProductVariant != null && i.ProductVariant.Product != null
+                            ? i.ProductVariant.Product.Title
+                            : "Unknown",
+                        VariantSku = i.ProductVariant != null ? i.ProductVariant.Sku : "",
+                        VariantTitle = i.ProductVariant != null ? i.ProductVariant.Title : "",
                         Quantity = i.Quantity,
                         UnitPrice = i.UnitPrice,
                         Total = i.Total
                     }).ToList(),
+                    Payments = s.Payments
+                        .OrderBy(p => p.PaidAt)
+                        .ThenBy(p => p.CreatedAt)
+                        .Select(p => new DTOs.Payment.Response.Line
+                        {
+                            Id = p.Id,
+                            SaleId = p.SaleId,
+                            Amount = p.Amount,
+                            PaymentMethod = p.PaymentMethod,
+                            PaidAt = p.PaidAt,
+                            Reference = p.Reference,
+                            CreatedAt = p.CreatedAt
+                        })
+                        .ToList(),
                     Metadata = new DTOs.Sale.Request.Metadata
                     {
                         ReferenceNo = s.Metadata.ReferenceNo,

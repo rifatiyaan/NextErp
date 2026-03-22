@@ -1,25 +1,35 @@
 using AutoMapper;
 using NextErp.Application.Commands;
 using MediatR;
+using NextErp.Application.Interfaces;
 using Entities = NextErp.Domain.Entities;
-using Repositories = NextErp.Domain.Repositories;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Product
 {
     public class CreateProductHandler(
         IApplicationUnitOfWork unitOfWork,
-        IMapper mapper) 
+        IApplicationDbContext dbContext,
+        IStockService stockService,
+        IMapper mapper)
         : IRequestHandler<CreateProductCommand, int>
     {
         public async Task<int> Handle(CreateProductCommand request, CancellationToken cancellationToken)
         {
             var product = mapper.Map<Entities.Product>(request);
             product.IsActive = true;
-            product.HasVariations = false; // Explicitly set to false for simple products
+            product.HasVariations = false;
             product.CreatedAt = DateTime.UtcNow;
 
             await unitOfWork.ProductRepository.AddAsync(product);
             await unitOfWork.SaveAsync();
+
+            var variant = Entities.SimpleProductVariantFactory.CreateDefault(product);
+            await dbContext.ProductVariants.AddAsync(variant, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            await stockService.EnsureStockRecordExistsAsync(variant.Id, product.TenantId, cancellationToken);
+            await unitOfWork.SaveAsync();
+
             return product.Id;
         }
     }

@@ -17,6 +17,8 @@ namespace NextErp.Domain.Entities
 
         public ICollection<SaleItem> Items { get; set; } = new List<SaleItem>();
 
+        public ICollection<SalePayment> Payments { get; set; } = new List<SalePayment>();
+
         public SaleMetadata Metadata { get; set; } = new SaleMetadata();
 
         public bool IsActive { get; set; } = true;

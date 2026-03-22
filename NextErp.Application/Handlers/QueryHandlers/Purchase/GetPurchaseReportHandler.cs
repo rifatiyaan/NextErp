@@ -1,3 +1,4 @@
+using NextErp.Application;
 using NextErp.Application.Queries;
 using NextErp.Application.DTOs;
 using MediatR;
@@ -16,8 +17,9 @@ namespace NextErp.Application.Handlers.QueryHandlers.Purchase
                 .AsNoTracking()
                 .Include(p => p.Supplier)
                 .Include(p => p.Items)
-                    .ThenInclude(i => i.Product)
-                        .ThenInclude(pr => pr.Category)
+                    .ThenInclude(i => i.ProductVariant)
+                        .ThenInclude(pv => pv.Product)
+                            .ThenInclude(pr => pr.Category)
                 .Where(p => p.PurchaseDate >= request.StartDate && p.PurchaseDate <= request.EndDate);
 
             if (request.SupplierId.HasValue)
@@ -35,12 +37,18 @@ namespace NextErp.Application.Handlers.QueryHandlers.Purchase
                     SupplierName = p.Supplier != null ? p.Supplier.Title : "Unknown",
                     PurchaseDate = p.PurchaseDate,
                     TotalAmount = p.TotalAmount,
+                    Discount = p.Discount,
+                    NetTotal = p.NetTotal,
                     Items = p.Items.Select(i => new DTOs.Purchase.Response.Get.PurchaseItemResponse
                     {
                         Id = i.Id,
                         Title = i.Title,
-                        ProductId = i.ProductId,
-                        ProductTitle = i.Product != null ? i.Product.Title : "Unknown",
+                        ProductVariantId = i.ProductVariantId,
+                        ProductTitle = i.ProductVariant != null && i.ProductVariant.Product != null
+                            ? i.ProductVariant.Product.Title
+                            : "Unknown",
+                        VariantSku = i.ProductVariant != null ? i.ProductVariant.Sku : "",
+                        VariantTitle = i.ProductVariant != null ? i.ProductVariant.Title : "",
                         Quantity = i.Quantity,
                         UnitCost = i.UnitCost,
                         Total = i.Total

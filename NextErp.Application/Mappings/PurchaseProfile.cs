@@ -14,7 +14,12 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));
 
             CreateMap<Entities.PurchaseItem, NextErp.Application.DTOs.Purchase.Response.Get.PurchaseItemResponse>()
-                .ForMember(dest => dest.ProductTitle, opt => opt.MapFrom(src => src.Product != null ? src.Product.Title : "Unknown"))
+                .ForMember(dest => dest.ProductTitle, opt => opt.MapFrom(src =>
+                    src.ProductVariant != null && src.ProductVariant.Product != null
+                        ? src.ProductVariant.Product.Title
+                        : "Unknown"))
+                .ForMember(dest => dest.VariantSku, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.Sku : ""))
+                .ForMember(dest => dest.VariantTitle, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.Title : ""))
                 .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => src.Metadata));
 
             CreateMap<Entities.Purchase, NextErp.Application.DTOs.Purchase.Response.Create.Single>();
