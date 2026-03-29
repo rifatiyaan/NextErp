@@ -50,6 +50,18 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                         "At least one product variant is required when saving variation options.");
                 }
 
+                await ConfigurableProductVariantFactory.SyncVariationValuesFromRequestAsync(
+                    request.VariationOptions,
+                    optionByName,
+                    dbContext,
+                    cancellationToken);
+                await dbContext.SaveChangesAsync(cancellationToken);
+
+                optionByName = await ConfigurableProductVariantFactory.LoadActiveGlobalOptionsAsync(
+                    dbContext,
+                    request.VariationOptions.Select(o => o.Name),
+                    cancellationToken);
+
                 var valueKeyMap = ConfigurableProductVariantFactory.BuildValueKeyMap(
                     request.VariationOptions,
                     optionByName);

@@ -35,6 +35,18 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                     request.VariationOptions.Select(o => o.Name),
                     cancellationToken);
 
+                await ConfigurableProductVariantFactory.SyncVariationValuesFromRequestAsync(
+                    request.VariationOptions,
+                    optionByName,
+                    dbContext,
+                    cancellationToken);
+                await dbContext.SaveChangesAsync(cancellationToken);
+
+                optionByName = await ConfigurableProductVariantFactory.LoadActiveGlobalOptionsAsync(
+                    dbContext,
+                    request.VariationOptions.Select(o => o.Name),
+                    cancellationToken);
+
                 await AddProductVariationOptionsAsync(product.Id, request, optionByName, dbContext, cancellationToken);
                 await dbContext.SaveChangesAsync(cancellationToken);
 
