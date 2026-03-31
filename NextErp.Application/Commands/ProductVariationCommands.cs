@@ -19,6 +19,7 @@ namespace NextErp.Application.Commands
         int Stock, // Base stock (variants can override)
         bool IsActive,
         string? ImageUrl,
+        IReadOnlyList<Product.Request.GalleryResolvedSlot>? ImageGallery,
         string? Description,
         string? Color,
         string? Warranty,

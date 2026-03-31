@@ -15,6 +15,7 @@ namespace NextErp.Infrastructure
         }
 
         public DbSet<Product> Products { get; set; }
+        public DbSet<ProductImage> ProductImages { get; set; }
         public DbSet<ProductVariation> ProductVariations { get; set; }
         public DbSet<VariationOption> VariationOptions { get; set; }
         public DbSet<VariationValue> VariationValues { get; set; }

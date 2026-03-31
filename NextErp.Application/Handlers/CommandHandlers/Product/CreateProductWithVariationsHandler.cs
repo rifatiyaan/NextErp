@@ -2,6 +2,7 @@ using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Commands;
+using DTOs = NextErp.Application.DTOs;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Products;
 using Entities = NextErp.Domain.Entities;
@@ -29,6 +30,13 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
 
                 await unitOfWork.ProductRepository.AddAsync(product);
                 await unitOfWork.SaveAsync();
+
+                await ProductGallerySync.ApplyFullGalleryAsync(
+                    product,
+                    request.ImageGallery ?? Array.Empty<DTOs.Product.Request.GalleryResolvedSlot>(),
+                    dbContext,
+                    cancellationToken);
+                await dbContext.SaveChangesAsync(cancellationToken);
 
                 var optionByName = await ConfigurableProductVariantFactory.LoadActiveGlobalOptionsAsync(
                     dbContext,

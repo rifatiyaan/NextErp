@@ -6,76 +6,66 @@ using NextErp.Application.Commands;
 using NextErp.Application.DTOs;
 using NextErp.Application.Queries;
 
-namespace NextErp.API.Web.Api
+namespace NextErp.API.Web.Api;
+
+[Authorize]
+[Route("api/[controller]")]
+[ApiController]
+public class CustomerController(IMediator mediator, IMapper mapper) : ControllerBase
 {
-    [Authorize]
-    [Route("api/[controller]")]
-    [ApiController]
-    public class CustomerController : ControllerBase
+    // GET api/customer/{id}
+    [HttpGet("{id}")]
+    public async Task<IActionResult> Get(Guid id)
     {
-        private readonly IMediator _mediator;
-        private readonly IMapper _mapper;
+        var query = new GetCustomerByIdQuery(id);
+        var customer = await mediator.Send(query);
 
-        public CustomerController(IMediator mediator, IMapper mapper)
+        if (customer == null) return NotFound();
+
+        var dto = mapper.Map<Customer.Response.Get.Single>(customer);
+        return Ok(dto);
+    }
+
+    // GET api/customer
+    [HttpGet]
+    public async Task<IActionResult> GetPaged(
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? searchText = null,
+        [FromQuery] string? sortBy = null)
+    {
+        var query = new GetPagedCustomersQuery(pageIndex, pageSize, searchText, sortBy);
+        var pagedResult = await mediator.Send(query);
+
+        var dtoList = mapper.Map<List<Customer.Response.Get.Single>>(pagedResult.Records);
+
+        return Ok(new
         {
-            _mediator = mediator;
-            _mapper = mapper;
-        }
+            total = pagedResult.Total,
+            totalDisplay = pagedResult.TotalDisplay,
+            data = dtoList
+        });
+    }
 
-        // GET api/customer/{id}
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Get(Guid id)
-        {
-            var query = new GetCustomerByIdQuery(id);
-            var customer = await _mediator.Send(query);
+    // POST api/customer
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] Customer.Request.Create.Single dto)
+    {
+        var command = mapper.Map<CreateCustomerCommand>(dto);
+        var id = await mediator.Send(command);
 
-            if (customer == null) return NotFound();
+        var customer = await mediator.Send(new GetCustomerByIdQuery(id));
+        var response = mapper.Map<Customer.Response.Get.Single>(customer);
 
-            var dto = _mapper.Map<Customer.Response.Get.Single>(customer);
-            return Ok(dto);
-        }
+        return CreatedAtAction(nameof(Get), new { id }, response);
+    }
 
-        // GET api/customer
-        [HttpGet]
-        public async Task<IActionResult> GetPaged(
-            [FromQuery] int pageIndex = 1,
-            [FromQuery] int pageSize = 10,
-            [FromQuery] string? searchText = null,
-            [FromQuery] string? sortBy = null)
-        {
-            var query = new GetPagedCustomersQuery(pageIndex, pageSize, searchText, sortBy);
-            var pagedResult = await _mediator.Send(query);
-
-            var dtoList = _mapper.Map<List<Customer.Response.Get.Single>>(pagedResult.Records);
-
-            return Ok(new
-            {
-                total = pagedResult.Total,
-                totalDisplay = pagedResult.TotalDisplay,
-                data = dtoList
-            });
-        }
-
-        // POST api/customer
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Customer.Request.Create.Single dto)
-        {
-            var command = _mapper.Map<CreateCustomerCommand>(dto);
-            var id = await _mediator.Send(command);
-
-            var customer = await _mediator.Send(new GetCustomerByIdQuery(id));
-            var response = _mapper.Map<Customer.Response.Get.Single>(customer);
-
-            return CreatedAtAction(nameof(Get), new { id }, response);
-        }
-
-        // PUT api/customer/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] Customer.Request.Update.Single dto)
-        {
-            var command = _mapper.Map<UpdateCustomerCommand>(dto);
-            await _mediator.Send(command);
-            return NoContent();
-        }
+    // PUT api/customer/{id}
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] Customer.Request.Update.Single dto)
+    {
+        var command = mapper.Map<UpdateCustomerCommand>(dto);
+        await mediator.Send(command);
+        return NoContent();
     }
 }

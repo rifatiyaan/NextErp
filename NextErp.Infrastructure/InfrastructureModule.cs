@@ -2,6 +2,7 @@ using Autofac;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Services;
 
 namespace NextErp.Infrastructure
 {
@@ -51,8 +52,8 @@ namespace NextErp.Infrastructure
                 .As<IImageService>()
                 .InstancePerLifetimeScope();
 
-            builder.RegisterType<NextErp.Application.Services.StockService>()
-                .As<NextErp.Application.Interfaces.IStockService>()
+            builder.RegisterType<StockService>()
+                .As<IStockService>()
                 .InstancePerLifetimeScope();
 
             // Register Repositories

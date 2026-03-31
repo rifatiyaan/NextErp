@@ -3,6 +3,7 @@ using NextErp.Application.Commands;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Products;
 using Repositories = NextErp.Domain.Repositories;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Product
@@ -23,6 +24,24 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
 
             mapper.Map(request, existing);
             existing.UpdatedAt = DateTime.UtcNow;
+
+            if (request.ImageGallery != null)
+            {
+                await ProductGallerySync.ApplyFullGalleryAsync(
+                    existing,
+                    request.ImageGallery,
+                    dbContext,
+                    cancellationToken);
+            }
+            else if (request.ImageThumbnailUpdates is { Count: > 0 })
+            {
+                await ProductGallerySync.ApplyThumbnailUpdatesAsync(
+                    request.Id,
+                    request.ImageThumbnailUpdates,
+                    existing,
+                    dbContext,
+                    cancellationToken);
+            }
 
             await unitOfWork.ProductRepository.EditAsync(existing);
 

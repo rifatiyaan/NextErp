@@ -7,6 +7,7 @@ namespace NextErp.Application.Interfaces
     public interface IApplicationDbContext
     {
         DbSet<Product> Products { get; set; }
+        DbSet<ProductImage> ProductImages { get; set; }
         DbSet<Category> Categories { get; set; }
         DbSet<Module> Modules { get; set; }
 

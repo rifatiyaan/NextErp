@@ -30,7 +30,9 @@ namespace NextErp.Domain.Entities
 
         public ICollection<ProductVariationOption> ProductVariationOptions { get; set; } = new List<ProductVariationOption>();
         public ICollection<ProductVariant> ProductVariants { get; set; } = new List<ProductVariant>();
-        
+
+        public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
+
         // Legacy: Many-to-many relationship with ProductVariation (kept for backward compatibility)
         public ICollection<ProductVariation> Variations { get; set; } = new List<ProductVariation>();
 

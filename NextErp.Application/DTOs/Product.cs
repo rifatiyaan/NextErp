@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace NextErp.Application.DTOs
 {
@@ -6,6 +7,24 @@ namespace NextErp.Application.DTOs
     {
         public partial class Request
         {
+            /// <summary>Multipart slot: existing URL and/or new file; <see cref="IsThumbnail"/> marks the primary image for this request.</summary>
+            public class ImageSlot
+            {
+                public string? Url { get; set; }
+                public IFormFile? File { get; set; }
+                public bool IsThumbnail { get; set; }
+            }
+
+            /// <summary>Gallery row after the API resolves uploads (used by commands).</summary>
+            public record GalleryResolvedSlot(string Url, bool IsThumbnail);
+
+            /// <summary>Update existing product image rows: only IsThumbnail changes.</summary>
+            public class ProductImageThumbnailUpdate
+            {
+                public int Id { get; set; }
+                public bool IsThumbnail { get; set; }
+            }
+
             public abstract class Base
             {
                 public string Title { get; set; } = null!;
@@ -17,6 +36,19 @@ namespace NextErp.Application.DTOs
                 public IFormFile? Image { get; set; }
                 public int? ParentId { get; set; }
                 public Metadata Metadata { get; set; } = new();
+
+                /// <summary>Ordered gallery: model-bound as ImageSlots[i].Url, .File, .IsThumbnail.</summary>
+                public List<ImageSlot> ImageSlots { get; set; } = new();
+
+                /// <summary>When true, clears all product images (no slots required).</summary>
+                public bool ClearGallery { get; set; }
+
+                /// <summary>Per-image thumbnail flags for existing rows (update). Bound as ProductImageThumbnailUpdates[i].Id / .IsThumbnail.</summary>
+                public List<ProductImageThumbnailUpdate> ProductImageThumbnailUpdates { get; set; } = new();
+
+                /// <summary>Set by the API after resolving uploads.</summary>
+                [BindNever]
+                public List<GalleryResolvedSlot>? ResolvedGallery { get; set; }
             }
 
             public partial class Get
@@ -105,6 +137,14 @@ namespace NextErp.Application.DTOs
 
             public partial class Get
             {
+                public class ProductImageItem
+                {
+                    public int Id { get; set; }
+                    public string Url { get; set; } = null!;
+                    public int DisplayOrder { get; set; }
+                    public bool IsThumbnail { get; set; }
+                }
+
                 public class Single : Base
                 {
                     public Request.Metadata Metadata { get; set; } = new();
@@ -112,6 +152,7 @@ namespace NextErp.Application.DTOs
                     public bool HasVariations { get; set; }
                     public List<ProductVariation.Response.VariationOptionDto>? VariationOptions { get; set; }
                     public List<ProductVariation.Response.ProductVariantDto>? ProductVariants { get; set; }
+                    public List<ProductImageItem>? Images { get; set; }
 
                     /// <summary>Set when list API is called with includeStock=true (sum of variant ledger qty).</summary>
                     public decimal? TotalAvailableQuantity { get; set; }

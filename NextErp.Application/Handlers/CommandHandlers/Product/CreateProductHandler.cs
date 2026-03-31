@@ -2,6 +2,7 @@ using AutoMapper;
 using NextErp.Application.Commands;
 using MediatR;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Products;
 using Entities = NextErp.Domain.Entities;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Product
@@ -22,6 +23,13 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
 
             await unitOfWork.ProductRepository.AddAsync(product);
             await unitOfWork.SaveAsync();
+
+            await ProductGallerySync.ApplyFullGalleryAsync(
+                product,
+                request.ImageGallery,
+                dbContext,
+                cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             var variant = Entities.SimpleProductVariantFactory.CreateDefault(product);
             await dbContext.ProductVariants.AddAsync(variant, cancellationToken);

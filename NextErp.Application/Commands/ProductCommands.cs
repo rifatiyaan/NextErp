@@ -13,6 +13,7 @@ namespace NextErp.Application.Commands
         int Stock,
         bool IsActive = true,
         string? ImageUrl = null,
+        IReadOnlyList<Product.Request.GalleryResolvedSlot>? ImageGallery = null,
         string? Description = null,
         string? Color = null,
         string? Warranty = null
@@ -29,6 +30,8 @@ namespace NextErp.Application.Commands
         int Stock,
         bool IsActive = true,
         string? ImageUrl = null,
+        IReadOnlyList<Product.Request.GalleryResolvedSlot>? ImageGallery = null,
+        IReadOnlyList<Product.Request.ProductImageThumbnailUpdate>? ImageThumbnailUpdates = null,
         string? Description = null,
         string? Color = null,
         string? Warranty = null
@@ -45,6 +48,8 @@ namespace NextErp.Application.Commands
         int Stock,
         bool IsActive,
         string? ImageUrl,
+        IReadOnlyList<Product.Request.GalleryResolvedSlot>? ImageGallery,
+        IReadOnlyList<Product.Request.ProductImageThumbnailUpdate>? ImageThumbnailUpdates,
         string? Description,
         string? Color,
         string? Warranty,

@@ -14,6 +14,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Product
             return await productRepo.Query()
                 .AsNoTracking()
                 .Include(p => p.Category)
+                .Include(p => p.ProductImages)
                 .Include(p => p.Parent)
                 .Include(p => p.Children)
                 .Include(p => p.ProductVariationOptions)

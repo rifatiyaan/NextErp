@@ -36,6 +36,24 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                 mapper.Map(request, product);
                 product.UpdatedAt = DateTime.UtcNow;
 
+                if (request.ImageGallery != null)
+                {
+                    await ProductGallerySync.ApplyFullGalleryAsync(
+                        product,
+                        request.ImageGallery,
+                        dbContext,
+                        cancellationToken);
+                }
+                else if (request.ImageThumbnailUpdates is { Count: > 0 })
+                {
+                    await ProductGallerySync.ApplyThumbnailUpdatesAsync(
+                        request.Id,
+                        request.ImageThumbnailUpdates,
+                        product,
+                        dbContext,
+                        cancellationToken);
+                }
+
                 var optionByName = await ConfigurableProductVariantFactory.LoadActiveGlobalOptionsAsync(
                     dbContext,
                     request.VariationOptions.Select(o => o.Name),

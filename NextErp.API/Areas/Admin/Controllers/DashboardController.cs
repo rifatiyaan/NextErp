@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace NextErp.API.Web.Areas.Admin.Controllers
+namespace NextErp.API.Web.Areas.Admin.Controllers;
+
+[Area("Admin")]
+public class DashboardController() : Controller
 {
-    [Area("Admin")]
-    public class DashboardController : Controller
+    public IActionResult Index()
     {
-        public IActionResult Index()
-        {
-            return View();
-        }
+        return View();
     }
 }
