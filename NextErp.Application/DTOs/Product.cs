@@ -88,9 +88,9 @@ namespace NextErp.Application.DTOs
                 }
             }
 
-            public partial class Update : Create
+            public partial class Update
             {
-                public new class Single : Base
+                public class Single : Base
                 {
                     public int Id { get; set; }
                     public bool IsActive { get; set; } = true;
@@ -101,7 +101,7 @@ namespace NextErp.Application.DTOs
                     public List<ProductVariation.Request.ProductVariantDto>? ProductVariants { get; set; } // null = simple product
                 }
 
-                public new class Bulk
+                public class Bulk
                 {
                     public List<Single> Products { get; set; } = new();
                 }
@@ -187,14 +187,14 @@ namespace NextErp.Application.DTOs
                 }
             }
 
-            public partial class Update : Create
+            public partial class Update
             {
-                public new class Single : Base
+                public class Single : Base
                 {
                     public Request.Metadata Metadata { get; set; } = new();
                 }
 
-                public new class Bulk
+                public class Bulk
                 {
                     public List<Single> Products { get; set; } = new();
                     public int SuccessCount { get; set; }
