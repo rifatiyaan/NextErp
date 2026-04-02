@@ -10,8 +10,8 @@ namespace NextErp.Application.Mappings
         {
             // Entity -> Response DTOs
             CreateMap<Entities.Sale, NextErp.Application.DTOs.Sale.Response.Get.Single>()
-                .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Customer != null ? src.Customer.Title : "Unknown"))
-                .ForMember(dest => dest.CustomerId, opt => opt.MapFrom(src => src.CustomerId ?? Guid.Empty))
+                .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Party != null ? src.Party.Title : "Unknown"))
+                .ForMember(dest => dest.PartyId, opt => opt.MapFrom(src => src.PartyId))
                 .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items))
                 .ForMember(dest => dest.Payments, opt => opt.MapFrom(src =>
                     src.Payments.OrderBy(p => p.PaidAt).ThenBy(p => p.CreatedAt).ToList()))

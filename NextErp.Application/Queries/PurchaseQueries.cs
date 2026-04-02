@@ -22,6 +22,6 @@ namespace NextErp.Application.Queries
     public record GetPurchaseReportQuery(
         DateTime StartDate,
         DateTime EndDate,
-        int? SupplierId
+        Guid? PartyId
     ) : IRequest<Purchase.Response.Get.Report>;
 }

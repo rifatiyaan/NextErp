@@ -16,7 +16,7 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.TenantId, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
-                .ForMember(dest => dest.Tenant, opt => opt.Ignore());
+                .ForMember(dest => dest.Users, opt => opt.Ignore());
 
             // Update Request -> Entity
             CreateMap<NextErp.Application.DTOs.Branch.Request.Update.Single, NextErp.Domain.Entities.Branch>()
@@ -24,7 +24,7 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.TenantId, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
-                .ForMember(dest => dest.Tenant, opt => opt.Ignore());
+                .ForMember(dest => dest.Users, opt => opt.Ignore());
 
             // ===== Entity to Response DTOs =====
 

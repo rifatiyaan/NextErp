@@ -9,7 +9,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
     public class CreatePurchaseHandler(
         IApplicationUnitOfWork unitOfWork,
         IApplicationDbContext dbContext,
-        IStockService stockService)
+        IStockService stockService,
+        IBranchProvider branchProvider)
         : IRequestHandler<CreatePurchaseCommand, Guid>
     {
         public async Task<Guid> Handle(CreatePurchaseCommand request, CancellationToken cancellationToken)
@@ -44,7 +45,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
                     Id = Guid.NewGuid(),
                     Title = request.Title,
                     PurchaseNumber = purchaseNumber,
-                    SupplierId = request.SupplierId,
+                    PartyId = request.PartyId,
                     PurchaseDate = request.PurchaseDate,
                     TotalAmount = 0,
                     Discount = request.Discount,
@@ -58,7 +59,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
                     },
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
-                    TenantId = tenantId
+                    TenantId = tenantId,
+                    BranchId = ResolveWriteBranchId(variants.Values)
                 };
 
                 await unitOfWork.PurchaseRepository.AddAsync(purchase);
@@ -93,7 +95,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
                     purchase.Items.Add(item);
                     totalAmount += item.Total;
 
-                    await stockService.EnsureStockRecordExistsAsync(variant.Id, purchase.TenantId, cancellationToken);
+                    await stockService.EnsureStockRecordExistsAsync(variant.Id, cancellationToken);
                     await stockService.IncreaseStockAsync(variant.Id, itemDto.Quantity, cancellationToken);
                 }
 
@@ -113,6 +115,22 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
                 await transaction.RollbackAsync(cancellationToken);
                 throw;
             }
+        }
+
+        private Guid ResolveWriteBranchId(IEnumerable<Entities.ProductVariant> variants)
+        {
+            if (!branchProvider.IsGlobal())
+                return branchProvider.GetRequiredBranchId();
+
+            var claimBranchId = branchProvider.GetBranchId();
+            if (claimBranchId.HasValue)
+                return claimBranchId.Value;
+
+            var variantBranchId = variants.Select(v => v.BranchId).FirstOrDefault(b => b.HasValue);
+            if (variantBranchId.HasValue)
+                return variantBranchId.Value;
+
+            throw new InvalidOperationException("Global user must provide a branch context to create a purchase.");
         }
     }
 }

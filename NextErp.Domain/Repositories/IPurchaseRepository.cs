@@ -12,6 +12,7 @@ namespace NextErp.Domain.Repositories
             string? orderBy,
             IReadOnlyList<int>? supplierIds = null,
             bool? isActiveFilter = null);
+        // supplierIds parameter kept for signature compatibility (no longer filtered)
 
         Task<Purchase?> GetByIdWithDetailsAsync(Guid id);
 

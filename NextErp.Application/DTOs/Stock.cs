@@ -6,7 +6,7 @@ namespace NextErp.Application.DTOs
         {
             public class Single
             {
-                public int Id { get; set; }
+                public Guid Id { get; set; }
                 public int ProductVariantId { get; set; }
                 public int ProductId { get; set; }
                 public string ProductTitle { get; set; } = null!;
@@ -17,7 +17,7 @@ namespace NextErp.Application.DTOs
                 public DateTime CreatedAt { get; set; }
                 public DateTime? UpdatedAt { get; set; }
                 public Guid TenantId { get; set; }
-                public Guid? BranchId { get; set; }
+                public Guid BranchId { get; set; }
             }
 
             public class CurrentStockReport

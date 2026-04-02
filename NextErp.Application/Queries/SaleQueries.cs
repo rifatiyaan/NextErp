@@ -20,6 +20,6 @@ namespace NextErp.Application.Queries
     public record GetSalesReportQuery(
         DateTime StartDate,
         DateTime EndDate,
-        Guid? CustomerId
+        Guid? PartyId
     ) : IRequest<SaleDto.Response.Get.Report>;
 }

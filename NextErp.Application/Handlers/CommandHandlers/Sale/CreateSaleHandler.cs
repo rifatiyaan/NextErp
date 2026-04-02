@@ -9,9 +9,12 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
     public class CreateSaleHandler(
         IApplicationUnitOfWork unitOfWork,
         IApplicationDbContext dbContext,
-        IStockService stockService)
+        IStockService stockService,
+        IBranchProvider branchProvider)
         : IRequestHandler<CreateSaleCommand, Guid>
     {
+        private const decimal StandardTaxRate = 0.05m;
+
         public async Task<Guid> Handle(CreateSaleCommand request, CancellationToken cancellationToken)
         {
             using var transaction = await dbContext.Database.BeginTransactionAsync(
@@ -20,6 +23,9 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
 
             try
             {
+                if (request.Items.Count == 0)
+                    throw new InvalidOperationException("A sale must contain at least one line item.");
+
                 var variantIds = request.Items.Select(i => i.ProductVariantId).Distinct().ToList();
                 var variants = await dbContext.ProductVariants
                     .Include(v => v.Product)
@@ -34,16 +40,36 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
                 }
 
                 var tenantId = variants.Values.First().TenantId;
+                var branchId = ResolveWriteBranchId(variants.Values);
+                var discount = request.Discount < 0 ? 0 : request.Discount;
+                var tax = 0m;
+                var grossTotal = 0m;
 
+                var normalizedItems = new List<(Entities.ProductVariant Variant, decimal Quantity, decimal UnitPrice)>(request.Items.Count);
                 foreach (var itemDto in request.Items)
                 {
-                    var variant = variants[itemDto.ProductVariantId];
+                    if (itemDto.Quantity <= 0)
+                        throw new InvalidOperationException("Sale item quantity must be greater than zero.");
 
-                    await stockService.EnsureStockRecordExistsAsync(variant.Id, tenantId, cancellationToken);
+                    var variant = variants[itemDto.ProductVariantId];
+                    var unitPrice = variant.Price;
+                    grossTotal += unitPrice * itemDto.Quantity;
+                    normalizedItems.Add((variant, itemDto.Quantity, unitPrice));
+                }
+
+                tax = decimal.Round(grossTotal * StandardTaxRate, 2, MidpointRounding.AwayFromZero);
+                var finalAmount = decimal.Round(grossTotal + tax - discount, 2, MidpointRounding.AwayFromZero);
+                if (finalAmount < 0)
+                    finalAmount = 0;
+
+                foreach (var line in normalizedItems)
+                {
+                    var variant = line.Variant;
+                    await stockService.EnsureStockRecordExistsAsync(variant.Id, cancellationToken);
 
                     var isAvailable = await stockService.CheckStockAvailabilityAsync(
                         variant.Id,
-                        itemDto.Quantity,
+                        line.Quantity,
                         cancellationToken);
 
                     if (isAvailable)
@@ -52,7 +78,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
                     var available = await stockService.GetAvailableStockAsync(variant.Id, cancellationToken);
                     throw new InvalidOperationException(
                         $"Insufficient stock for SKU '{variant.Sku}' ({variant.Product?.Title}). " +
-                        $"Available: {available}, Required: {itemDto.Quantity}.");
+                        $"Available: {available}, Required: {line.Quantity}.");
                 }
 
                 var saleNumber = $"SALE-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
@@ -62,12 +88,12 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
                     Id = Guid.NewGuid(),
                     Title = $"Sale - {DateTime.UtcNow:yyyy-MM-dd HH:mm}",
                     SaleNumber = saleNumber,
-                    CustomerId = request.CustomerId,
+                    PartyId = request.PartyId,
                     SaleDate = DateTime.UtcNow,
-                    TotalAmount = request.TotalAmount,
-                    Discount = request.Discount,
-                    Tax = request.Tax,
-                    FinalAmount = request.FinalAmount,
+                    TotalAmount = grossTotal,
+                    Discount = discount,
+                    Tax = tax,
+                    FinalAmount = finalAmount,
                     Metadata = new Entities.Sale.SaleMetadata
                     {
                         PaymentMethod = request.PaymentMethod
@@ -75,14 +101,15 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
                     CreatedBy = null,
-                    TenantId = tenantId
+                    TenantId = tenantId,
+                    BranchId = branchId
                 };
 
                 await unitOfWork.SaleRepository.AddAsync(sale);
 
-                foreach (var itemDto in request.Items)
+                foreach (var line in normalizedItems)
                 {
-                    var variant = variants[itemDto.ProductVariantId];
+                    var variant = line.Variant;
                     var lineTitle = $"{variant.Product?.Title ?? "Product"} — {variant.Title}";
 
                     var item = new Entities.SaleItem
@@ -91,15 +118,33 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
                         Title = lineTitle,
                         SaleId = sale.Id,
                         ProductVariantId = variant.Id,
-                        Quantity = itemDto.Quantity,
-                        Price = itemDto.Price,
+                        Quantity = line.Quantity,
+                        Price = line.UnitPrice,
                         CreatedAt = DateTime.UtcNow,
                         TenantId = sale.TenantId
                     };
 
                     sale.Items.Add(item);
 
-                    await stockService.ReduceStockAsync(variant.Id, itemDto.Quantity, cancellationToken);
+                    await stockService.ReduceStockAsync(variant.Id, line.Quantity, cancellationToken);
+                }
+
+                if (ShouldCreatePayment(request, sale.FinalAmount))
+                {
+                    var paymentMethod = ResolvePaymentMethod(request.PaymentMethod);
+                    var amount = Math.Min(request.PaidAmount ?? 0m, sale.FinalAmount);
+                    var payment = new Entities.SalePayment
+                    {
+                        Id = Guid.NewGuid(),
+                        Title = $"Payment — {DateTime.UtcNow:yyyy-MM-dd}",
+                        SaleId = sale.Id,
+                        Amount = amount,
+                        PaymentMethod = paymentMethod,
+                        PaidAt = DateTime.UtcNow,
+                        TenantId = sale.TenantId,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await dbContext.SalePayments.AddAsync(payment, cancellationToken);
                 }
 
                 await unitOfWork.SaveAsync();
@@ -122,6 +167,38 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
                 await transaction.RollbackAsync(cancellationToken);
                 throw new InvalidOperationException($"Failed to create sale: {ex.Message}", ex);
             }
+        }
+
+        private static bool ShouldCreatePayment(CreateSaleCommand request, decimal finalAmount)
+        {
+            return !string.IsNullOrWhiteSpace(request.PaymentMethod)
+                   && request.PaidAmount.HasValue
+                   && request.PaidAmount.Value > 0
+                   && finalAmount > 0;
+        }
+
+        private static Entities.PaymentMethodType ResolvePaymentMethod(string? paymentMethod)
+        {
+            if (Enum.TryParse<Entities.PaymentMethodType>(paymentMethod, true, out var parsed))
+                return parsed;
+
+            return Entities.PaymentMethodType.Other;
+        }
+
+        private Guid ResolveWriteBranchId(IEnumerable<Entities.ProductVariant> variants)
+        {
+            if (!branchProvider.IsGlobal())
+                return branchProvider.GetRequiredBranchId();
+
+            var claimBranchId = branchProvider.GetBranchId();
+            if (claimBranchId.HasValue)
+                return claimBranchId.Value;
+
+            var variantBranchId = variants.Select(v => v.BranchId).FirstOrDefault(b => b.HasValue);
+            if (variantBranchId.HasValue)
+                return variantBranchId.Value;
+
+            throw new InvalidOperationException("Global user must provide a branch context to create a sale.");
         }
     }
 }

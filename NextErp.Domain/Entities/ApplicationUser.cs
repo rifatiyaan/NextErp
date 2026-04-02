@@ -16,6 +16,12 @@ namespace NextErp.Domain.Entities
         // Organization / Branch reference
         public int OrgUnitId { get; set; }
         public int? AreaId { get; set; }
+        public Guid BranchId { get; set; }
+        public Branch Branch { get; set; } = null!;
+
+        // Optional link to the shared Party record
+        public Guid? PartyId { get; set; }
+        public Party? Party { get; set; }
 
         // Audit fields
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

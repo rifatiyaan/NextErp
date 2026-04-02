@@ -1,13 +1,13 @@
 namespace NextErp.Domain.Entities
 {
-    public class Sale : IEntity<Guid>
+public class Sale : IEntity<Guid>, IBranchEntity
     {
         public Guid Id { get; set; }
         public string Title { get; set; } = null!;
         public string SaleNumber { get; set; } = null!;
 
-        public Guid? CustomerId { get; set; }
-        public Customer? Customer { get; set; }
+        public Guid? PartyId { get; set; }
+        public Party? Party { get; set; }
 
         public DateTime SaleDate { get; set; }
         public decimal TotalAmount { get; set; }
@@ -27,7 +27,7 @@ namespace NextErp.Domain.Entities
         public Guid? CreatedBy { get; set; }
 
         public Guid TenantId { get; set; }
-        public Guid? BranchId { get; set; }
+        public Guid BranchId { get; set; }
 
         public class SaleMetadata
         {

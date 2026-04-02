@@ -20,7 +20,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Stock
                 .Select(s => new DTOs.Stock.Response.Single
                 {
                     Id = s.Id,
-                    ProductVariantId = s.Id,
+                    ProductVariantId = s.ProductVariantId,
                     ProductId = s.ProductVariant != null ? s.ProductVariant.ProductId : 0,
                     ProductTitle = s.ProductVariant != null && s.ProductVariant.Product != null
                         ? s.ProductVariant.Product.Title

@@ -4,12 +4,10 @@ using NextErp.Application.DTOs;
 namespace NextErp.Application.Commands
 {
     public record CreateSaleCommand(
-        Guid? CustomerId,
-        decimal TotalAmount,
+        Guid? PartyId,
         decimal Discount,
-        decimal Tax,
-        decimal FinalAmount,
         string? PaymentMethod,
+        decimal? PaidAmount,
         List<Sale.Request.Create.SaleItemRequest> Items
     ) : IRequest<Guid>; // Returns Id of created sale
 }

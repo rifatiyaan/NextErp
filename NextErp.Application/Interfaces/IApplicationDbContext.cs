@@ -10,10 +10,11 @@ namespace NextErp.Application.Interfaces
         DbSet<ProductImage> ProductImages { get; set; }
         DbSet<Category> Categories { get; set; }
         DbSet<Module> Modules { get; set; }
+        DbSet<Branch> Branches { get; set; }
+        DbSet<Party> Parties { get; set; }
+        DbSet<RolePermission> RolePermissions { get; set; }
 
         // Inventory Module DbSets
-        DbSet<Supplier> Suppliers { get; set; }
-        DbSet<Customer> Customers { get; set; }
         DbSet<Stock> Stocks { get; set; }
         DbSet<Purchase> Purchases { get; set; }
         DbSet<PurchaseItem> PurchaseItems { get; set; }

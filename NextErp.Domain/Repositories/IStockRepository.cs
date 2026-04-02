@@ -2,9 +2,9 @@ using NextErp.Domain.Entities;
 
 namespace NextErp.Domain.Repositories
 {
-    public interface IStockRepository : IRepositoryBase<Stock, int>
+public interface IStockRepository : IRepositoryBase<Stock, Guid>
     {
-        Task<Stock?> GetByProductVariantIdAsync(int productVariantId);
+        Task<Stock?> GetByProductVariantIdAsync(int productVariantId, CancellationToken cancellationToken = default);
 
         Task<IList<Stock>> GetAllWithVariantsAsync();
 

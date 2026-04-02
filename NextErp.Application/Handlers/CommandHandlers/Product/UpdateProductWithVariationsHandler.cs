@@ -140,7 +140,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                     .ToListAsync(cancellationToken);
 
                 foreach (var variantId in variantIds)
-                    await stockService.EnsureStockRecordExistsAsync(variantId, product.TenantId, cancellationToken);
+                    await stockService.EnsureStockRecordExistsAsync(variantId, cancellationToken);
 
                 await dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);

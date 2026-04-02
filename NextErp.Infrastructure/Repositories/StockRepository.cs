@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace NextErp.Infrastructure.Repositories
 {
-    public class StockRepository : Repository<Stock, int>, IStockRepository
+    public class StockRepository : Repository<Stock, Guid>, IStockRepository
     {
         private readonly DbContext _db;
 
@@ -14,18 +14,12 @@ namespace NextErp.Infrastructure.Repositories
             _db = (DbContext)context;
         }
 
-        public async Task<Stock?> GetByProductVariantIdAsync(int productVariantId)
+        public async Task<Stock?> GetByProductVariantIdAsync(int productVariantId, CancellationToken cancellationToken = default)
         {
-            var tracked = _db.ChangeTracker.Entries<Stock>()
-                .FirstOrDefault(e => e.Entity.Id == productVariantId);
-
-            if (tracked != null)
-                return tracked.Entity;
-
             return await _db.Set<Stock>()
                 .Include(s => s.ProductVariant)
                     .ThenInclude(pv => pv.Product)
-                .FirstOrDefaultAsync(s => s.Id == productVariantId);
+                .FirstOrDefaultAsync(s => s.ProductVariantId == productVariantId, cancellationToken);
         }
 
         public async Task<IList<Stock>> GetAllWithVariantsAsync()
@@ -69,10 +63,8 @@ namespace NextErp.Infrastructure.Repositories
                 .Select(g => new
                 {
                     ProductId = g.Key,
-                    TotalAvailable = g.Sum(v =>
-                        v.StockRecord != null ? v.StockRecord.AvailableQuantity : 0m),
-                    HasLowStock = g.Any(v =>
-                        v.StockRecord != null && v.StockRecord.AvailableQuantity <= lowThreshold),
+                    TotalAvailable = g.SelectMany(v => v.StockRecords).Select(s => (decimal?)s.AvailableQuantity).Sum() ?? 0m,
+                    HasLowStock = g.SelectMany(v => v.StockRecords).Any(s => s.AvailableQuantity <= lowThreshold),
                 })
                 .ToListAsync(cancellationToken);
 

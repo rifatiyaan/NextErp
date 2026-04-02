@@ -13,8 +13,7 @@ namespace NextErp.Application
         IModuleRepository ModuleRepository { get; }
         
         // Inventory Module Repositories
-        ISupplierRepository SupplierRepository { get; }
-        ICustomerRepository CustomerRepository { get; }
+        IPartyRepository PartyRepository { get; }
         IStockRepository StockRepository { get; }
         IPurchaseRepository PurchaseRepository { get; }
         ISaleRepository SaleRepository { get; }

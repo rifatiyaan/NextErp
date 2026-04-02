@@ -16,7 +16,7 @@ namespace NextErp.Application.DTOs
                     public int Page { get; set; } = 1;
                     public int PageSize { get; set; } = 10;
                     public string? SearchTerm { get; set; }
-                    public int? SupplierId { get; set; }
+                    public Guid? PartyId { get; set; }
                     public DateTime? StartDate { get; set; }
                     public DateTime? EndDate { get; set; }
                     public string? SortBy { get; set; }
@@ -27,7 +27,7 @@ namespace NextErp.Application.DTOs
                 {
                     public DateTime StartDate { get; set; }
                     public DateTime EndDate { get; set; }
-                    public int? SupplierId { get; set; }
+                    public Guid? PartyId { get; set; }
                 }
             }
 
@@ -37,7 +37,7 @@ namespace NextErp.Application.DTOs
                 {
                     public string Title { get; set; } = null!;
                     public string PurchaseNumber { get; set; } = null!;
-                    public int SupplierId { get; set; }
+                    public Guid? PartyId { get; set; }
                     public DateTime PurchaseDate { get; set; }
                     public decimal Discount { get; set; }
                     public List<PurchaseItemRequest> Items { get; set; } = new();
@@ -81,7 +81,7 @@ namespace NextErp.Application.DTOs
                     public Guid Id { get; set; }
                     public string Title { get; set; } = null!;
                     public string PurchaseNumber { get; set; } = null!;
-                    public int SupplierId { get; set; }
+                    public Guid? PartyId { get; set; }
                     public string SupplierName { get; set; } = null!;
                     public DateTime PurchaseDate { get; set; }
                     public decimal TotalAmount { get; set; }

@@ -35,7 +35,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
             await dbContext.ProductVariants.AddAsync(variant, cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            await stockService.EnsureStockRecordExistsAsync(variant.Id, product.TenantId, cancellationToken);
+            await stockService.EnsureStockRecordExistsAsync(variant.Id, cancellationToken);
             await unitOfWork.SaveAsync();
 
             return product.Id;

@@ -19,12 +19,12 @@ namespace NextErp.Infrastructure.Repositories
             int pageIndex, int pageSize, string? searchText, string? orderBy)
         {
             Expression<Func<Sale, bool>> filter = x =>
-                string.IsNullOrEmpty(searchText) || 
-                x.Title.Contains(searchText) || 
+                string.IsNullOrEmpty(searchText) ||
+                x.Title.Contains(searchText) ||
                 x.SaleNumber.Contains(searchText);
 
             Func<IQueryable<Sale>, Microsoft.EntityFrameworkCore.Query.IIncludableQueryable<Sale, object>> include = q =>
-                q.Include(s => s.Customer)
+                q.Include(s => s.Party)
                  .Include(s => s.Items)
                     .ThenInclude(i => i.ProductVariant)
                         .ThenInclude(pv => pv.Product)
@@ -37,7 +37,7 @@ namespace NextErp.Infrastructure.Repositories
         {
             return await _db.Set<Sale>()
                 .AsNoTracking()
-                .Include(s => s.Customer)
+                .Include(s => s.Party)
                 .Include(s => s.Items)
                     .ThenInclude(i => i.ProductVariant)
                         .ThenInclude(pv => pv.Product)
@@ -50,7 +50,7 @@ namespace NextErp.Infrastructure.Repositories
         {
             return await _db.Set<Sale>()
                 .AsNoTracking()
-                .Include(s => s.Customer)
+                .Include(s => s.Party)
                 .Include(s => s.Items)
                     .ThenInclude(i => i.ProductVariant)
                         .ThenInclude(pv => pv.Product)

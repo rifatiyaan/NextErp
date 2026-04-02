@@ -71,7 +71,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
             def.Stock = stock;
             def.UpdatedAt = DateTime.UtcNow;
 
-            var stockRow = await dbContext.Stocks.FirstOrDefaultAsync(s => s.Id == def.Id, cancellationToken);
+            var stockRow = await dbContext.Stocks.FirstOrDefaultAsync(s => s.ProductVariantId == def.Id, cancellationToken);
             if (stockRow == null)
                 return;
 

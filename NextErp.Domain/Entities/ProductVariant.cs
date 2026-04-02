@@ -24,8 +24,8 @@ namespace NextErp.Domain.Entities
         // Many-to-many relationship with VariationValue
         public ICollection<VariationValue> VariationValues { get; set; } = new List<VariationValue>();
 
-        /// <summary>1:1 inventory ledger row; Id matches ProductVariant.Id.</summary>
-        public Stock? StockRecord { get; set; }
+        /// <summary>Branch-scoped inventory rows for this SKU.</summary>
+        public ICollection<Stock> StockRecords { get; set; } = new List<Stock>();
     }
 }
 

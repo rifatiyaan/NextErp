@@ -7,7 +7,8 @@ namespace NextErp.Application.Services
 {
     public class StockService(
         IStockRepository stockRepository,
-        IApplicationDbContext dbContext)
+        IApplicationDbContext dbContext,
+        IBranchProvider branchProvider)
         : IStockService
     {
         public Task<bool> CheckStockAvailabilityAsync(int productVariantId, decimal requiredQuantity, CancellationToken cancellationToken = default)
@@ -29,7 +30,7 @@ namespace NextErp.Application.Services
                 return;
 
             var variant = await RequireVariantAsync(productVariantId, cancellationToken);
-            var stock = await RequireStockRowAsync(productVariantId, cancellationToken);
+            var stock = await UpsertStockRowAsync(productVariantId, variant.TenantId, cancellationToken);
             var available = stock.AvailableQuantity;
 
             if (available < quantity)
@@ -46,22 +47,17 @@ namespace NextErp.Application.Services
                 return;
 
             var variant = await RequireVariantAsync(productVariantId, cancellationToken);
-            var stock = await RequireStockRowAsync(productVariantId, cancellationToken);
+            var stock = await UpsertStockRowAsync(productVariantId, variant.TenantId, cancellationToken);
 
             ApplyQuantityChange(stock, variant, quantity);
             await stockRepository.EditAsync(stock);
             await SyncProductAggregateStockAsync(variant.ProductId, cancellationToken);
         }
 
-        public async Task EnsureStockRecordExistsAsync(int productVariantId, Guid tenantId, CancellationToken cancellationToken = default)
+        public async Task EnsureStockRecordExistsAsync(int productVariantId, CancellationToken cancellationToken = default)
         {
-            var existing = await stockRepository.GetByProductVariantIdAsync(productVariantId);
-            if (existing != null)
-                return;
-
             var variant = await RequireVariantAsync(productVariantId, cancellationToken);
-            var row = CreateStockRow(variant, tenantId);
-            await stockRepository.AddAsync(row);
+            _ = await UpsertStockRowAsync(productVariantId, variant.TenantId, cancellationToken);
         }
 
         private async Task<bool> CheckAvailabilityInternalAsync(int productVariantId, decimal requiredQuantity, CancellationToken cancellationToken)
@@ -72,14 +68,9 @@ namespace NextErp.Application.Services
 
         private async Task<decimal> ResolveAvailableQuantityAsync(int productVariantId, CancellationToken cancellationToken)
         {
-            var stock = await stockRepository.GetByProductVariantIdAsync(productVariantId);
-            if (stock != null)
-                return stock.AvailableQuantity;
-
-            var variant = await dbContext.ProductVariants.AsNoTracking()
-                .FirstOrDefaultAsync(pv => pv.Id == productVariantId, cancellationToken);
-
-            return variant?.Stock ?? 0m;
+            var variant = await RequireVariantAsync(productVariantId, cancellationToken);
+            var stock = await UpsertStockRowAsync(productVariantId, variant.TenantId, cancellationToken);
+            return stock.AvailableQuantity;
         }
 
         private async Task<ProductVariant> RequireVariantAsync(int productVariantId, CancellationToken cancellationToken)
@@ -93,27 +84,28 @@ namespace NextErp.Application.Services
             return variant;
         }
 
-        private async Task<Stock> RequireStockRowAsync(int productVariantId, CancellationToken cancellationToken)
+        private async Task<Stock> UpsertStockRowAsync(int productVariantId, Guid tenantId, CancellationToken cancellationToken)
         {
-            var stock = await stockRepository.GetByProductVariantIdAsync(productVariantId);
+            var stock = await stockRepository.GetByProductVariantIdAsync(productVariantId, cancellationToken);
             if (stock != null)
                 return stock;
 
             var variant = await RequireVariantAsync(productVariantId, cancellationToken);
-            var row = CreateStockRow(variant, variant.TenantId);
+            var row = CreateStockRow(variant, tenantId, branchProvider.GetRequiredBranchId());
             await stockRepository.AddAsync(row);
             return row;
         }
 
-        private static Stock CreateStockRow(ProductVariant variant, Guid tenantId)
+        private static Stock CreateStockRow(ProductVariant variant, Guid tenantId, Guid branchId)
         {
             return new Stock
             {
-                Id = variant.Id,
+                Id = Guid.NewGuid(),
                 Title = $"Stock — {variant.Sku}",
+                ProductVariantId = variant.Id,
                 AvailableQuantity = variant.Stock > 0 ? variant.Stock : 0,
                 TenantId = tenantId,
-                BranchId = variant.BranchId,
+                BranchId = branchId,
                 CreatedAt = DateTime.UtcNow
             };
         }

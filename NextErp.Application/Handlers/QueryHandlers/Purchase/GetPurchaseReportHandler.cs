@@ -15,16 +15,16 @@ namespace NextErp.Application.Handlers.QueryHandlers.Purchase
         {
             var query = unitOfWork.PurchaseRepository.Query()
                 .AsNoTracking()
-                .Include(p => p.Supplier)
+                .Include(p => p.Party)
                 .Include(p => p.Items)
                     .ThenInclude(i => i.ProductVariant)
                         .ThenInclude(pv => pv.Product)
                             .ThenInclude(pr => pr.Category)
                 .Where(p => p.PurchaseDate >= request.StartDate && p.PurchaseDate <= request.EndDate);
 
-            if (request.SupplierId.HasValue)
+            if (request.PartyId.HasValue)
             {
-                query = query.Where(p => p.SupplierId == request.SupplierId.Value);
+                query = query.Where(p => p.PartyId == request.PartyId.Value);
             }
 
             var purchaseDtos = await query
@@ -33,8 +33,8 @@ namespace NextErp.Application.Handlers.QueryHandlers.Purchase
                     Id = p.Id,
                     Title = p.Title,
                     PurchaseNumber = p.PurchaseNumber,
-                    SupplierId = p.SupplierId,
-                    SupplierName = p.Supplier != null ? p.Supplier.Title : "Unknown",
+                    PartyId = p.PartyId,
+                    SupplierName = p.Party != null ? p.Party.Title : "Unknown",
                     PurchaseDate = p.PurchaseDate,
                     TotalAmount = p.TotalAmount,
                     Discount = p.Discount,

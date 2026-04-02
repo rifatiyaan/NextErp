@@ -11,6 +11,7 @@ using NextErp.Domain.Entities;
 using NextErp.Infrastructure;
 using Serilog;
 using Serilog.Events;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -117,11 +118,14 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+        NameClaimType = ClaimTypes.Name,
+        RoleClaimType = ClaimTypes.Role
     };
 });
 
 builder.Services.AddAuthorization();
+builder.Services.AddHttpContextAccessor();
 
 // =======================================================
 // 🔹 MVC / CONTROLLERS

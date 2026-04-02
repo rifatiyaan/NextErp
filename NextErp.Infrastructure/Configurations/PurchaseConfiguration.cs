@@ -8,52 +8,29 @@ namespace NextErp.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<Purchase> builder)
         {
-            // Primary key
             builder.HasKey(p => p.Id);
 
-            // Required fields
-            builder.Property(p => p.Title)
-                .IsRequired()
-                .HasMaxLength(200);
+            builder.Property(p => p.Title).IsRequired().HasMaxLength(200);
+            builder.Property(p => p.PurchaseNumber).IsRequired().HasMaxLength(50);
 
-            builder.Property(p => p.PurchaseNumber)
-                .IsRequired()
-                .HasMaxLength(50);
+            builder.Property(p => p.TotalAmount).HasPrecision(18, 2);
+            builder.Property(p => p.Discount).HasPrecision(18, 2);
 
-            // Decimal precision
-            builder.Property(p => p.TotalAmount)
-                .HasPrecision(18, 2);
-
-            builder.Property(p => p.Discount)
-                .HasPrecision(18, 2);
-
-            // Computed column (NetTotal) - ignored in database
+            // NetTotal is computed — not stored
             builder.Ignore(p => p.NetTotal);
 
-            // Relationship with Supplier
-            builder.HasOne(p => p.Supplier)
-                .WithMany() // Supplier has collection navigation in entity
-                .HasForeignKey(p => p.SupplierId)
-                .OnDelete(DeleteBehavior.Restrict);
+            // FK to Party (the supplier) — relationship is owned by PartyConfiguration
+            builder.HasIndex(p => p.PartyId);
+            builder.HasIndex(p => p.PurchaseNumber).IsUnique();
+            builder.HasIndex(p => p.PurchaseDate);
+            builder.HasIndex(p => p.IsActive);
 
-            // Relationship with PurchaseItems
             builder.HasMany(p => p.Items)
                 .WithOne(i => i.Purchase)
                 .HasForeignKey(i => i.PurchaseId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // JSON column for Metadata
-            builder.OwnsOne(p => p.Metadata, meta =>
-            {
-                meta.ToJson();
-            });
-
-            // Indexes
-            builder.HasIndex(p => p.PurchaseNumber)
-                .IsUnique();
-            builder.HasIndex(p => p.SupplierId);
-            builder.HasIndex(p => p.PurchaseDate);
-            builder.HasIndex(p => p.IsActive);
+            builder.OwnsOne(p => p.Metadata, meta => { meta.ToJson(); });
         }
     }
 }

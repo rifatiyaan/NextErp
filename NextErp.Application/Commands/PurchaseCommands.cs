@@ -6,7 +6,7 @@ namespace NextErp.Application.Commands
     public record CreatePurchaseCommand(
         string Title,
         string PurchaseNumber,
-        int SupplierId,
+        Guid? PartyId,
         DateTime PurchaseDate,
         decimal Discount,
         List<Purchase.Request.Create.PurchaseItemRequest> Items,

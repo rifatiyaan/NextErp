@@ -15,7 +15,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Stock
                 .AsNoTracking()
                 .Include(s => s.ProductVariant)
                     .ThenInclude(pv => pv.Product)
-                .FirstOrDefaultAsync(s => s.Id == request.ProductVariantId, cancellationToken);
+                .FirstOrDefaultAsync(s => s.ProductVariantId == request.ProductVariantId, cancellationToken);
         }
     }
 }

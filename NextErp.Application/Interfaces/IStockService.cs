@@ -10,6 +10,6 @@ namespace NextErp.Application.Interfaces
 
         Task IncreaseStockAsync(int productVariantId, decimal quantity, CancellationToken cancellationToken = default);
 
-        Task EnsureStockRecordExistsAsync(int productVariantId, Guid tenantId, CancellationToken cancellationToken = default);
+        Task EnsureStockRecordExistsAsync(int productVariantId, CancellationToken cancellationToken = default);
     }
 }

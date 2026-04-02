@@ -14,8 +14,7 @@ namespace NextErp.Infrastructure
         public IModuleRepository ModuleRepository { get; private set; }
 
         // Inventory Module Repositories
-        public ISupplierRepository SupplierRepository { get; private set; }
-        public ICustomerRepository CustomerRepository { get; private set; }
+        public IPartyRepository PartyRepository { get; private set; }
         public IStockRepository StockRepository { get; private set; }
         public IPurchaseRepository PurchaseRepository { get; private set; }
         public ISaleRepository SaleRepository { get; private set; }
@@ -25,8 +24,7 @@ namespace NextErp.Infrastructure
             ICategoryRepository categoryRepository,
             IUserRepository userRepository,
             IModuleRepository moduleRepository,
-            ISupplierRepository supplierRepository,
-            ICustomerRepository customerRepository,
+            IPartyRepository partyRepository,
             IStockRepository stockRepository,
             IPurchaseRepository purchaseRepository,
             ISaleRepository saleRepository,
@@ -37,8 +35,7 @@ namespace NextErp.Infrastructure
             CategoryRepository = categoryRepository;
             UserRepository = userRepository;
             ModuleRepository = moduleRepository;
-            SupplierRepository = supplierRepository;
-            CustomerRepository = customerRepository;
+            PartyRepository = partyRepository;
             StockRepository = stockRepository;
             PurchaseRepository = purchaseRepository;
             SaleRepository = saleRepository;

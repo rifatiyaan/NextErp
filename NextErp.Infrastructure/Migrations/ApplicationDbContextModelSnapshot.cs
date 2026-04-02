@@ -220,6 +220,9 @@ namespace NextErp.Infrastructure.Migrations
                     b.Property<int?>("AreaId")
                         .HasColumnType("int");
 
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
@@ -262,6 +265,9 @@ namespace NextErp.Infrastructure.Migrations
                     b.Property<int>("OrgUnitId")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("PartyId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
 
@@ -292,6 +298,8 @@ namespace NextErp.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BranchId");
+
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
 
@@ -300,7 +308,47 @@ namespace NextErp.Infrastructure.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
+                    b.HasIndex("PartyId")
+                        .IsUnique()
+                        .HasFilter("[PartyId] IS NOT NULL");
+
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("NextErp.Domain.Entities.Branch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Title");
+
+                    b.HasIndex("TenantId", "IsActive");
+
+                    b.ToTable("Branches");
                 });
 
             modelBuilder.Entity("NextErp.Domain.Entities.Category", b =>
@@ -341,55 +389,6 @@ namespace NextErp.Infrastructure.Migrations
                     b.HasIndex("ParentId");
 
                     b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("NextErp.Domain.Entities.Customer", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Address")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<Guid?>("BranchId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Email");
-
-                    b.HasIndex("IsActive");
-
-                    b.HasIndex("Title");
-
-                    b.ToTable("Customers");
                 });
 
             modelBuilder.Entity("NextErp.Domain.Entities.Module", b =>
@@ -466,6 +465,91 @@ namespace NextErp.Infrastructure.Migrations
                     b.HasIndex("TenantId", "IsActive");
 
                     b.ToTable("Modules");
+                });
+
+            modelBuilder.Entity("NextErp.Domain.Entities.Party", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ContactPerson")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("FirstName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LastName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("LoyaltyCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NationalId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("PartyType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("TaxId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("VatNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("Email");
+
+                    b.HasIndex("PartyType");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("Parties");
                 });
 
             modelBuilder.Entity("NextErp.Domain.Entities.Product", b =>
@@ -712,7 +796,7 @@ namespace NextErp.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("BranchId")
+                    b.Property<Guid>("BranchId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
@@ -725,6 +809,9 @@ namespace NextErp.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<Guid?>("PartyId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("PurchaseDate")
                         .HasColumnType("datetime2");
 
@@ -732,9 +819,6 @@ namespace NextErp.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<int>("SupplierId")
-                        .HasColumnType("int");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uniqueidentifier");
@@ -755,12 +839,12 @@ namespace NextErp.Infrastructure.Migrations
 
                     b.HasIndex("IsActive");
 
+                    b.HasIndex("PartyId");
+
                     b.HasIndex("PurchaseDate");
 
                     b.HasIndex("PurchaseNumber")
                         .IsUnique();
-
-                    b.HasIndex("SupplierId");
 
                     b.ToTable("Purchases");
                 });
@@ -809,22 +893,48 @@ namespace NextErp.Infrastructure.Migrations
                     b.ToTable("PurchaseItems");
                 });
 
+            modelBuilder.Entity("NextErp.Domain.Entities.RolePermission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PermissionKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("RoleId", "PermissionKey")
+                        .IsUnique();
+
+                    b.ToTable("RolePermissions");
+                });
+
             modelBuilder.Entity("NextErp.Domain.Entities.Sale", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("BranchId")
+                    b.Property<Guid>("BranchId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("CustomerId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("Discount")
@@ -837,6 +947,9 @@ namespace NextErp.Infrastructure.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
+
+                    b.Property<Guid?>("PartyId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("SaleDate")
                         .HasColumnType("datetime2");
@@ -867,9 +980,9 @@ namespace NextErp.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CustomerId");
-
                     b.HasIndex("IsActive");
+
+                    b.HasIndex("PartyId");
 
                     b.HasIndex("SaleDate");
 
@@ -968,18 +1081,21 @@ namespace NextErp.Infrastructure.Migrations
 
             modelBuilder.Entity("NextErp.Domain.Entities.Stock", b =>
                 {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("AvailableQuantity")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<Guid?>("BranchId")
+                    b.Property<Guid>("BranchId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("ProductVariantId")
+                        .HasColumnType("int");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -999,60 +1115,14 @@ namespace NextErp.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("ProductVariantId", "BranchId")
+                        .IsUnique();
+
                     b.ToTable("Stocks");
-                });
-
-            modelBuilder.Entity("NextErp.Domain.Entities.Supplier", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Address")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<Guid?>("BranchId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ContactPerson")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IsActive");
-
-                    b.HasIndex("Title");
-
-                    b.ToTable("Suppliers");
                 });
 
             modelBuilder.Entity("NextErp.Domain.Entities.VariationOption", b =>
@@ -1251,6 +1321,54 @@ namespace NextErp.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("NextErp.Domain.Entities.ApplicationUser", b =>
+                {
+                    b.HasOne("NextErp.Domain.Entities.Branch", "Branch")
+                        .WithMany("Users")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("NextErp.Domain.Entities.Party", "Party")
+                        .WithOne("User")
+                        .HasForeignKey("NextErp.Domain.Entities.ApplicationUser", "PartyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Party");
+                });
+
+            modelBuilder.Entity("NextErp.Domain.Entities.Branch", b =>
+                {
+                    b.OwnsOne("NextErp.Domain.Entities.Branch+BranchMetadata", "Metadata", b1 =>
+                        {
+                            b1.Property<Guid>("BranchId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("BranchCode")
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<string>("ManagerName")
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<string>("Phone")
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.HasKey("BranchId");
+
+                            b1.ToTable("Branches");
+
+                            b1.ToJson("Metadata");
+
+                            b1.WithOwner()
+                                .HasForeignKey("BranchId");
+                        });
+
+                    b.Navigation("Metadata")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("NextErp.Domain.Entities.Category", b =>
                 {
                     b.HasOne("NextErp.Domain.Entities.Category", "Parent")
@@ -1322,36 +1440,6 @@ namespace NextErp.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("NextErp.Domain.Entities.Customer", b =>
-                {
-                    b.OwnsOne("NextErp.Domain.Entities.Customer+CustomerMetadata", "Metadata", b1 =>
-                        {
-                            b1.Property<Guid>("CustomerId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<string>("LoyaltyCode")
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<string>("NationalId")
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<string>("Notes")
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.HasKey("CustomerId");
-
-                            b1.ToTable("Customers");
-
-                            b1.ToJson("Metadata");
-
-                            b1.WithOwner()
-                                .HasForeignKey("CustomerId");
-                        });
-
-                    b.Navigation("Metadata")
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("NextErp.Domain.Entities.Module", b =>
@@ -1497,11 +1585,10 @@ namespace NextErp.Infrastructure.Migrations
 
             modelBuilder.Entity("NextErp.Domain.Entities.Purchase", b =>
                 {
-                    b.HasOne("NextErp.Domain.Entities.Supplier", "Supplier")
-                        .WithMany()
-                        .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.HasOne("NextErp.Domain.Entities.Party", "Party")
+                        .WithMany("Purchases")
+                        .HasForeignKey("PartyId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.OwnsOne("NextErp.Domain.Entities.Purchase+PurchaseMetadata", "Metadata", b1 =>
                         {
@@ -1536,7 +1623,7 @@ namespace NextErp.Infrastructure.Migrations
                     b.Navigation("Metadata")
                         .IsRequired();
 
-                    b.Navigation("Supplier");
+                    b.Navigation("Party");
                 });
 
             modelBuilder.Entity("NextErp.Domain.Entities.PurchaseItem", b =>
@@ -1560,9 +1647,9 @@ namespace NextErp.Infrastructure.Migrations
 
             modelBuilder.Entity("NextErp.Domain.Entities.Sale", b =>
                 {
-                    b.HasOne("NextErp.Domain.Entities.Customer", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
+                    b.HasOne("NextErp.Domain.Entities.Party", "Party")
+                        .WithMany("Sales")
+                        .HasForeignKey("PartyId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.OwnsOne("NextErp.Domain.Entities.Sale+SaleMetadata", "Metadata", b1 =>
@@ -1589,10 +1676,10 @@ namespace NextErp.Infrastructure.Migrations
                                 .HasForeignKey("SaleId");
                         });
 
-                    b.Navigation("Customer");
-
                     b.Navigation("Metadata")
                         .IsRequired();
+
+                    b.Navigation("Party");
                 });
 
             modelBuilder.Entity("NextErp.Domain.Entities.SaleItem", b =>
@@ -1628,42 +1715,12 @@ namespace NextErp.Infrastructure.Migrations
             modelBuilder.Entity("NextErp.Domain.Entities.Stock", b =>
                 {
                     b.HasOne("NextErp.Domain.Entities.ProductVariant", "ProductVariant")
-                        .WithOne("StockRecord")
-                        .HasForeignKey("NextErp.Domain.Entities.Stock", "Id")
+                        .WithMany("StockRecords")
+                        .HasForeignKey("ProductVariantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("ProductVariant");
-                });
-
-            modelBuilder.Entity("NextErp.Domain.Entities.Supplier", b =>
-                {
-                    b.OwnsOne("NextErp.Domain.Entities.Supplier+SupplierMetadata", "Metadata", b1 =>
-                        {
-                            b1.Property<int>("SupplierId")
-                                .HasColumnType("int");
-
-                            b1.Property<string>("Notes")
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<string>("TaxId")
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<string>("VatNumber")
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.HasKey("SupplierId");
-
-                            b1.ToTable("Suppliers");
-
-                            b1.ToJson("Metadata");
-
-                            b1.WithOwner()
-                                .HasForeignKey("SupplierId");
-                        });
-
-                    b.Navigation("Metadata")
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("NextErp.Domain.Entities.VariationValue", b =>
@@ -1718,6 +1775,11 @@ namespace NextErp.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("NextErp.Domain.Entities.Branch", b =>
+                {
+                    b.Navigation("Users");
+                });
+
             modelBuilder.Entity("NextErp.Domain.Entities.Category", b =>
                 {
                     b.Navigation("Children");
@@ -1728,6 +1790,15 @@ namespace NextErp.Infrastructure.Migrations
             modelBuilder.Entity("NextErp.Domain.Entities.Module", b =>
                 {
                     b.Navigation("Children");
+                });
+
+            modelBuilder.Entity("NextErp.Domain.Entities.Party", b =>
+                {
+                    b.Navigation("Purchases");
+
+                    b.Navigation("Sales");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("NextErp.Domain.Entities.Product", b =>
@@ -1743,7 +1814,7 @@ namespace NextErp.Infrastructure.Migrations
 
             modelBuilder.Entity("NextErp.Domain.Entities.ProductVariant", b =>
                 {
-                    b.Navigation("StockRecord");
+                    b.Navigation("StockRecords");
                 });
 
             modelBuilder.Entity("NextErp.Domain.Entities.Purchase", b =>

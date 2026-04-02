@@ -8,53 +8,28 @@ namespace NextErp.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<Sale> builder)
         {
-            // Primary key
             builder.HasKey(s => s.Id);
 
-            // Required fields
-            builder.Property(s => s.Title)
-                .IsRequired()
-                .HasMaxLength(200);
+            builder.Property(s => s.Title).IsRequired().HasMaxLength(200);
+            builder.Property(s => s.SaleNumber).IsRequired().HasMaxLength(50);
 
-            builder.Property(s => s.SaleNumber)
-                .IsRequired()
-                .HasMaxLength(50);
+            builder.Property(s => s.TotalAmount).HasPrecision(18, 2);
+            builder.Property(s => s.Discount).HasPrecision(18, 2);
+            builder.Property(s => s.Tax).HasPrecision(18, 2);
+            builder.Property(s => s.FinalAmount).HasPrecision(18, 2);
 
-            // Decimal precision
-            builder.Property(s => s.TotalAmount)
-                .HasPrecision(18, 2);
-            builder.Property(s => s.Discount)
-                .HasPrecision(18, 2);
-            builder.Property(s => s.Tax)
-                .HasPrecision(18, 2);
-            builder.Property(s => s.FinalAmount)
-                .HasPrecision(18, 2);
+            // FK to Party (the customer) — relationship is owned by PartyConfiguration
+            builder.HasIndex(s => s.PartyId);
+            builder.HasIndex(s => s.SaleNumber).IsUnique();
+            builder.HasIndex(s => s.SaleDate);
+            builder.HasIndex(s => s.IsActive);
 
-            // Relationship with Customer (optional)
-            builder.HasOne(s => s.Customer)
-                .WithMany() // Customer has collection navigation in entity
-                .HasForeignKey(s => s.CustomerId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .IsRequired(false);
-
-            // Relationship with SaleItems
             builder.HasMany(s => s.Items)
                 .WithOne(i => i.Sale)
                 .HasForeignKey(i => i.SaleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // JSON column for Metadata
-            builder.OwnsOne(s => s.Metadata, meta =>
-            {
-                meta.ToJson();
-            });
-
-            // Indexes
-            builder.HasIndex(s => s.SaleNumber)
-                .IsUnique();
-            builder.HasIndex(s => s.CustomerId);
-            builder.HasIndex(s => s.SaleDate);
-            builder.HasIndex(s => s.IsActive);
+            builder.OwnsOne(s => s.Metadata, meta => { meta.ToJson(); });
         }
     }
 }

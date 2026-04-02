@@ -10,7 +10,7 @@ namespace NextErp.Application.Mappings
         {
             // Entity -> Response DTOs
             CreateMap<Entities.Purchase, NextErp.Application.DTOs.Purchase.Response.Get.Single>()
-                .ForMember(dest => dest.SupplierName, opt => opt.MapFrom(src => src.Supplier != null ? src.Supplier.Title : "Unknown"))
+                .ForMember(dest => dest.SupplierName, opt => opt.MapFrom(src => src.Party != null ? src.Party.Title : "Unknown"))
                 .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));
 
             CreateMap<Entities.PurchaseItem, NextErp.Application.DTOs.Purchase.Response.Get.PurchaseItemResponse>()

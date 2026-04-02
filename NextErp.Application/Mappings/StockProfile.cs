@@ -9,7 +9,7 @@ namespace NextErp.Application.Mappings
         public StockProfile()
         {
             CreateMap<Entities.Stock, NextErp.Application.DTOs.Stock.Response.Single>()
-                .ForMember(dest => dest.ProductVariantId, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.ProductVariantId, opt => opt.MapFrom(src => src.ProductVariantId))
                 .ForMember(dest => dest.ProductId, opt => opt.MapFrom(src =>
                     src.ProductVariant != null ? src.ProductVariant.ProductId : 0))
                 .ForMember(dest => dest.ProductTitle, opt => opt.MapFrom(src =>

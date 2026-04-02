@@ -16,7 +16,7 @@ namespace NextErp.Application.DTOs
                     public int Page { get; set; } = 1;
                     public int PageSize { get; set; } = 10;
                     public string? SearchTerm { get; set; }
-                    public Guid? CustomerId { get; set; }
+                    public Guid? PartyId { get; set; }
                     public DateTime? StartDate { get; set; }
                     public DateTime? EndDate { get; set; }
                     public string? SortBy { get; set; }
@@ -27,7 +27,7 @@ namespace NextErp.Application.DTOs
                 {
                     public DateTime StartDate { get; set; }
                     public DateTime EndDate { get; set; }
-                    public Guid? CustomerId { get; set; }
+                    public Guid? PartyId { get; set; }
                 }
             }
 
@@ -35,12 +35,13 @@ namespace NextErp.Application.DTOs
             {
                 public class Single
                 {
-                    public Guid? CustomerId { get; set; }
+                    public Guid? PartyId { get; set; }
                     public decimal TotalAmount { get; set; }
                     public decimal Discount { get; set; } = 0;
                     public decimal Tax { get; set; } = 0;
                     public decimal FinalAmount { get; set; }
                     public string? PaymentMethod { get; set; }
+                    public decimal? PaidAmount { get; set; }
                     public List<SaleItemRequest> Items { get; set; } = new();
                 }
 
@@ -70,7 +71,7 @@ namespace NextErp.Application.DTOs
                     public Guid Id { get; set; }
                     public string Title { get; set; } = null!;
                     public string SaleNumber { get; set; } = null!;
-                    public Guid CustomerId { get; set; }
+                    public Guid? PartyId { get; set; }
                     public string CustomerName { get; set; } = null!;
                     public DateTime SaleDate { get; set; }
                     public decimal TotalAmount { get; set; }

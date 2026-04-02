@@ -1,4 +1,5 @@
 using Autofac;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application;
 using NextErp.Application.Interfaces;
@@ -37,7 +38,8 @@ namespace NextErp.Infrastructure
                         sqlOptions => sqlOptions.MigrationsAssembly(_migrationAssembly));
                 }
 
-                return new ApplicationDbContext(optionsBuilder.Options);
+                var branchProvider = context.ResolveOptional<IBranchProvider>();
+                return new ApplicationDbContext(optionsBuilder.Options, branchProvider);
             })
             .As<IApplicationDbContext>()
             .AsSelf()
@@ -50,6 +52,14 @@ namespace NextErp.Infrastructure
 
             builder.RegisterType<Services.CloudinaryService>()
                 .As<IImageService>()
+                .InstancePerLifetimeScope();
+
+            builder.RegisterType<HttpContextAccessor>()
+                .As<IHttpContextAccessor>()
+                .SingleInstance();
+
+            builder.RegisterType<Services.BranchProvider>()
+                .As<IBranchProvider>()
                 .InstancePerLifetimeScope();
 
             builder.RegisterType<StockService>()

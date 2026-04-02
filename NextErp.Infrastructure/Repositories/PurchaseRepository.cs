@@ -27,12 +27,11 @@ namespace NextErp.Infrastructure.Repositories
                 (string.IsNullOrEmpty(searchText) ||
                  x.Title.Contains(searchText) ||
                  x.PurchaseNumber.Contains(searchText) ||
-                 (x.Supplier != null && x.Supplier.Title.Contains(searchText)))
-                && (supplierIds == null || supplierIds.Count == 0 || supplierIds.Contains(x.SupplierId))
+                 (x.Party != null && x.Party.Title.Contains(searchText)))
                 && (!isActiveFilter.HasValue || x.IsActive == isActiveFilter.Value);
 
             Func<IQueryable<Purchase>, Microsoft.EntityFrameworkCore.Query.IIncludableQueryable<Purchase, object>> include = q =>
-                q.Include(p => p.Supplier)
+                q.Include(p => p.Party)
                  .Include(p => p.Items)
                     .ThenInclude(i => i.ProductVariant)
                         .ThenInclude(pv => pv.Product)
@@ -45,7 +44,7 @@ namespace NextErp.Infrastructure.Repositories
         {
             return await _db.Set<Purchase>()
                 .AsNoTracking()
-                .Include(p => p.Supplier)
+                .Include(p => p.Party)
                 .Include(p => p.Items)
                     .ThenInclude(i => i.ProductVariant)
                         .ThenInclude(pv => pv.Product)
@@ -57,7 +56,7 @@ namespace NextErp.Infrastructure.Repositories
         {
             return await _db.Set<Purchase>()
                 .AsNoTracking()
-                .Include(p => p.Supplier)
+                .Include(p => p.Party)
                 .Include(p => p.Items)
                     .ThenInclude(i => i.ProductVariant)
                         .ThenInclude(pv => pv.Product)

@@ -21,7 +21,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Sale
                 baseQuery = baseQuery.Where(s =>
                     s.Title.Contains(term) ||
                     s.SaleNumber.Contains(term) ||
-                    (s.Customer != null && s.Customer.Title.Contains(term)));
+                    (s.Party != null && s.Party.Title.Contains(term)));
             }
 
             var total = await baseQuery.CountAsync(cancellationToken);
@@ -41,7 +41,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Sale
                 {
                     Id = s.Id,
                     SaleNumber = s.SaleNumber,
-                    CustomerName = s.Customer != null ? s.Customer.Title : string.Empty,
+                    CustomerName = s.Party != null ? s.Party.Title : string.Empty,
                     SaleDate = s.SaleDate,
                     FinalAmount = s.FinalAmount,
                     TotalPaid = s.Payments.Sum(p => p.Amount),

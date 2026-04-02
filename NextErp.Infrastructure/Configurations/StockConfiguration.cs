@@ -14,8 +14,8 @@ namespace NextErp.Infrastructure.Configurations
                 .ValueGeneratedNever();
 
             builder.HasOne(s => s.ProductVariant)
-                .WithOne(pv => pv.StockRecord)
-                .HasForeignKey<Stock>(s => s.Id)
+                .WithMany(pv => pv.StockRecords)
+                .HasForeignKey(s => s.ProductVariantId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Property(s => s.RowVersion)
@@ -24,6 +24,15 @@ namespace NextErp.Infrastructure.Configurations
 
             builder.Property(s => s.AvailableQuantity)
                 .HasPrecision(18, 2);
+
+            builder.Property(s => s.BranchId)
+                .IsRequired();
+
+            builder.HasIndex(s => new { s.ProductVariantId, s.BranchId })
+                .IsUnique();
+
+            builder.HasIndex(s => s.ProductVariantId);
+            builder.HasIndex(s => s.BranchId);
         }
     }
 }

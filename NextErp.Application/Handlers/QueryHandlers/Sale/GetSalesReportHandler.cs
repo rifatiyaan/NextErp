@@ -15,16 +15,16 @@ namespace NextErp.Application.Handlers.QueryHandlers.Sale
         {
             var query = unitOfWork.SaleRepository.Query()
                 .AsNoTracking()
-                .Include(s => s.Customer)
+                .Include(s => s.Party)
                 .Include(s => s.Items)
                     .ThenInclude(i => i.ProductVariant)
                         .ThenInclude(pv => pv.Product)
                 .Include(s => s.Payments)
                 .Where(s => s.SaleDate >= request.StartDate && s.SaleDate <= request.EndDate);
 
-            if (request.CustomerId.HasValue)
+            if (request.PartyId.HasValue)
             {
-                query = query.Where(s => s.CustomerId == request.CustomerId.Value);
+                query = query.Where(s => s.PartyId == request.PartyId.Value);
             }
 
             var saleDtos = await query
@@ -33,8 +33,8 @@ namespace NextErp.Application.Handlers.QueryHandlers.Sale
                     Id = s.Id,
                     Title = s.Title,
                     SaleNumber = s.SaleNumber,
-                    CustomerId = s.CustomerId ?? Guid.Empty,
-                    CustomerName = s.Customer != null ? s.Customer.Title : "Unknown",
+                    PartyId = s.PartyId,
+                    CustomerName = s.Party != null ? s.Party.Title : "Unknown",
                     SaleDate = s.SaleDate,
                     TotalAmount = s.TotalAmount,
                     Discount = s.Discount,
