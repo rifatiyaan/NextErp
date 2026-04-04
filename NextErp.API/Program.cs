@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NextErp.API;
 using NextErp.Application;
+using NextErp.Application.Common.Behaviors;
 using NextErp.Application.Interfaces;
 using NextErp.Domain.Entities;
 using NextErp.Infrastructure;
@@ -167,7 +168,10 @@ builder.Services.AddAutoMapper(cfg =>
 // 🔹 MEDIATR
 // =======================================================
 builder.Services.AddMediatR(cfg =>
-    cfg.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly));
+{
+    cfg.AddOpenBehavior(typeof(TransactionBehavior<,>));
+    cfg.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly);
+});
 
 // =======================================================
 // 🔹 SWAGGER

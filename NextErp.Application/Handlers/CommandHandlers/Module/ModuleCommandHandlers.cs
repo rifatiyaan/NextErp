@@ -2,7 +2,6 @@ using AutoMapper;
 using NextErp.Application.Commands.Module;
 using NextErp.Domain.Entities;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Interfaces;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Module
@@ -24,7 +23,6 @@ namespace NextErp.Application.Handlers.CommandHandlers.Module
 
     public class CreateBulkModulesHandler(
         IApplicationUnitOfWork unitOfWork,
-        IApplicationDbContext dbContext,
         IMapper mapper)
         : IRequestHandler<CreateBulkModulesCommand, DTOs.Module.Response.Create.Bulk>
     {
@@ -32,10 +30,6 @@ namespace NextErp.Application.Handlers.CommandHandlers.Module
             CreateBulkModulesCommand request,
             CancellationToken cancellationToken)
         {
-            using var transaction = await dbContext.Database.BeginTransactionAsync(
-                System.Data.IsolationLevel.ReadCommitted,
-                cancellationToken);
-
             var response = new DTOs.Module.Response.Create.Bulk
             {
                 Modules = new List<DTOs.Module.Response.Create.Hierarchical>(),
@@ -44,81 +38,72 @@ namespace NextErp.Application.Handlers.CommandHandlers.Module
                 Errors = new List<string>()
             };
 
-            try
+            var parentModules = new List<(DTOs.Module.Request.Create.Hierarchical Dto, NextErp.Domain.Entities.Module Entity)>();
+
+            foreach (var moduleDto in request.Dto.Modules)
             {
-                var parentModules = new List<(DTOs.Module.Request.Create.Hierarchical Dto, NextErp.Domain.Entities.Module Entity)>();
-
-                foreach (var moduleDto in request.Dto.Modules)
+                try
                 {
-                    try
-                    {
-                        var module = mapper.Map<NextErp.Domain.Entities.Module>(moduleDto);
-                        module.ParentId = null;
-                        module.CreatedAt = DateTime.UtcNow;
-                        module.TenantId = Guid.Empty;
+                    var module = mapper.Map<NextErp.Domain.Entities.Module>(moduleDto);
+                    module.ParentId = null;
+                    module.CreatedAt = DateTime.UtcNow;
+                    module.TenantId = Guid.Empty;
 
-                        await unitOfWork.ModuleRepository.AddAsync(module);
-                        parentModules.Add((moduleDto, module));
-                    }
-                    catch (Exception ex)
-                    {
-                        response.FailureCount++;
-                        response.Errors.Add($"Failed to create parent module '{moduleDto.Title}': {ex.Message}");
-                    }
+                    await unitOfWork.ModuleRepository.AddAsync(module);
+                    parentModules.Add((moduleDto, module));
                 }
-
-                await unitOfWork.SaveAsync();
-
-                var allChildren = new List<(DTOs.Module.Request.Create.Hierarchical ChildDto, int ParentId)>();
-
-                foreach (var (dto, entity) in parentModules)
+                catch (Exception ex)
                 {
-                    if (dto.Children != null && dto.Children.Any())
-                    {
-                        foreach (var childDto in dto.Children)
-                        {
-                            allChildren.Add((childDto, entity.Id));
-                        }
-                    }
+                    response.FailureCount++;
+                    response.Errors.Add($"Failed to create parent module '{moduleDto.Title}': {ex.Message}");
                 }
-
-                foreach (var (childDto, parentId) in allChildren)
-                {
-                    try
-                    {
-                        var childModule = mapper.Map<NextErp.Domain.Entities.Module>(childDto);
-                        childModule.ParentId = parentId;
-                        childModule.CreatedAt = DateTime.UtcNow;
-                        childModule.TenantId = Guid.Empty;
-
-                        await unitOfWork.ModuleRepository.AddAsync(childModule);
-                    }
-                    catch (Exception ex)
-                    {
-                        response.FailureCount++;
-                        response.Errors.Add($"Failed to create child module '{childDto.Title}': {ex.Message}");
-                    }
-                }
-
-                await unitOfWork.SaveAsync();
-                await transaction.CommitAsync(cancellationToken);
-
-                var childErrorCount = response.Errors.Count(e => e.Contains("child module"));
-                response.SuccessCount = parentModules.Count + (allChildren.Count - childErrorCount);
-
-                foreach (var (dto, entity) in parentModules)
-                {
-                    var responseModule = mapper.Map<DTOs.Module.Response.Create.Hierarchical>(entity);
-                    response.Modules.Add(responseModule);
-                }
-
-                return response;
             }
-            catch
+
+            await unitOfWork.SaveAsync();
+
+            var allChildren = new List<(DTOs.Module.Request.Create.Hierarchical ChildDto, int ParentId)>();
+
+            foreach (var (dto, entity) in parentModules)
             {
-                await transaction.RollbackAsync(cancellationToken);
-                throw;
+                if (dto.Children != null && dto.Children.Any())
+                {
+                    foreach (var childDto in dto.Children)
+                    {
+                        allChildren.Add((childDto, entity.Id));
+                    }
+                }
             }
+
+            foreach (var (childDto, parentId) in allChildren)
+            {
+                try
+                {
+                    var childModule = mapper.Map<NextErp.Domain.Entities.Module>(childDto);
+                    childModule.ParentId = parentId;
+                    childModule.CreatedAt = DateTime.UtcNow;
+                    childModule.TenantId = Guid.Empty;
+
+                    await unitOfWork.ModuleRepository.AddAsync(childModule);
+                }
+                catch (Exception ex)
+                {
+                    response.FailureCount++;
+                    response.Errors.Add($"Failed to create child module '{childDto.Title}': {ex.Message}");
+                }
+            }
+
+            await unitOfWork.SaveAsync();
+
+            var childErrorCount = response.Errors.Count(e => e.Contains("child module"));
+            response.SuccessCount = parentModules.Count + (allChildren.Count - childErrorCount);
+
+            foreach (var (dto, entity) in parentModules)
+            {
+                var responseModule = mapper.Map<DTOs.Module.Response.Create.Hierarchical>(entity);
+                response.Modules.Add(responseModule);
+            }
+
+            return response;
         }
     }
 

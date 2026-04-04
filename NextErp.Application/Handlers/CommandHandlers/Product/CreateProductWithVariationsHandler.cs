@@ -19,84 +19,71 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
     {
         public async Task<int> Handle(CreateProductWithVariationsCommand request, CancellationToken cancellationToken)
         {
-            using var transaction = await dbContext.Database.BeginTransactionAsync(
-                System.Data.IsolationLevel.ReadCommitted,
+            var product = mapper.Map<Entities.Product>(request);
+            await ProductBranchScope.ApplyToProductAsync(product, dbContext, branchProvider, cancellationToken);
+            product.HasVariations = true;
+            product.CreatedAt = DateTime.UtcNow;
+
+            await unitOfWork.ProductRepository.AddAsync(product);
+            await unitOfWork.SaveAsync();
+
+            await ProductGallerySync.ApplyFullGalleryAsync(
+                product,
+                request.ImageGallery ?? Array.Empty<DTOs.Product.Request.GalleryResolvedSlot>(),
+                dbContext,
+                cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            var optionByName = await ConfigurableProductVariantFactory.LoadActiveGlobalOptionsAsync(
+                dbContext,
+                request.VariationOptions.Select(o => o.Name),
                 cancellationToken);
 
-            try
+            await ConfigurableProductVariantFactory.SyncVariationValuesFromRequestAsync(
+                request.VariationOptions,
+                optionByName,
+                dbContext,
+                cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            optionByName = await ConfigurableProductVariantFactory.LoadActiveGlobalOptionsAsync(
+                dbContext,
+                request.VariationOptions.Select(o => o.Name),
+                cancellationToken);
+
+            await AddProductVariationOptionsAsync(product.Id, request, optionByName, dbContext, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            var valueKeyMap = ConfigurableProductVariantFactory.BuildValueKeyMap(
+                request.VariationOptions,
+                optionByName);
+
+            foreach (var variantDto in request.ProductVariants)
             {
-                var product = mapper.Map<Entities.Product>(request);
-                await ProductBranchScope.ApplyToProductAsync(product, dbContext, branchProvider, cancellationToken);
-                product.HasVariations = true;
-                product.CreatedAt = DateTime.UtcNow;
+                var values = ConfigurableProductVariantFactory.ResolveVariationValues(
+                    variantDto.VariationValueKeys,
+                    valueKeyMap);
 
-                await unitOfWork.ProductRepository.AddAsync(product);
-                await unitOfWork.SaveAsync();
+                var title = ConfigurableProductVariantFactory.BuildDisplayTitle(values);
+                var productVariant = mapper.Map<Entities.ProductVariant>(variantDto);
+                productVariant.Title = title;
+                productVariant.Name = title;
+                productVariant.ProductId = product.Id;
+                productVariant.CreatedAt = DateTime.UtcNow;
+                productVariant.TenantId = product.TenantId;
+                productVariant.BranchId = product.BranchId;
+                productVariant.VariationValues = values;
 
-                await ProductGallerySync.ApplyFullGalleryAsync(
-                    product,
-                    request.ImageGallery ?? Array.Empty<DTOs.Product.Request.GalleryResolvedSlot>(),
-                    dbContext,
-                    cancellationToken);
-                await dbContext.SaveChangesAsync(cancellationToken);
-
-                var optionByName = await ConfigurableProductVariantFactory.LoadActiveGlobalOptionsAsync(
-                    dbContext,
-                    request.VariationOptions.Select(o => o.Name),
-                    cancellationToken);
-
-                await ConfigurableProductVariantFactory.SyncVariationValuesFromRequestAsync(
-                    request.VariationOptions,
-                    optionByName,
-                    dbContext,
-                    cancellationToken);
-                await dbContext.SaveChangesAsync(cancellationToken);
-
-                optionByName = await ConfigurableProductVariantFactory.LoadActiveGlobalOptionsAsync(
-                    dbContext,
-                    request.VariationOptions.Select(o => o.Name),
-                    cancellationToken);
-
-                await AddProductVariationOptionsAsync(product.Id, request, optionByName, dbContext, cancellationToken);
-                await dbContext.SaveChangesAsync(cancellationToken);
-
-                var valueKeyMap = ConfigurableProductVariantFactory.BuildValueKeyMap(
-                    request.VariationOptions,
-                    optionByName);
-
-                foreach (var variantDto in request.ProductVariants)
-                {
-                    var values = ConfigurableProductVariantFactory.ResolveVariationValues(
-                        variantDto.VariationValueKeys,
-                        valueKeyMap);
-
-                    var title = ConfigurableProductVariantFactory.BuildDisplayTitle(values);
-                    var productVariant = mapper.Map<Entities.ProductVariant>(variantDto);
-                    productVariant.Title = title;
-                    productVariant.Name = title;
-                    productVariant.ProductId = product.Id;
-                    productVariant.CreatedAt = DateTime.UtcNow;
-                    productVariant.TenantId = product.TenantId;
-                    productVariant.BranchId = product.BranchId;
-                    productVariant.VariationValues = values;
-
-                    await dbContext.ProductVariants.AddAsync(productVariant, cancellationToken);
-                }
-
-                await dbContext.SaveChangesAsync(cancellationToken);
-
-                product.Stock = await SumVariantStockAsync(product.Id, dbContext, cancellationToken);
-                await EnsureStockRowsForProductVariantsAsync(product, dbContext, stockService, cancellationToken);
-
-                await dbContext.SaveChangesAsync(cancellationToken);
-                await transaction.CommitAsync(cancellationToken);
-                return product.Id;
+                await dbContext.ProductVariants.AddAsync(productVariant, cancellationToken);
             }
-            catch
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                throw;
-            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            product.Stock = await SumVariantStockAsync(product.Id, dbContext, cancellationToken);
+            await EnsureStockRowsForProductVariantsAsync(product, dbContext, stockService, cancellationToken);
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return product.Id;
         }
 
         private static async Task AddProductVariationOptionsAsync(
