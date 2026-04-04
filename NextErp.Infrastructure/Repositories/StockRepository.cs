@@ -8,18 +8,38 @@ namespace NextErp.Infrastructure.Repositories
     public class StockRepository : Repository<Stock, Guid>, IStockRepository
     {
         private readonly DbContext _db;
+        private readonly IBranchProvider _branchProvider;
 
-        public StockRepository(IApplicationDbContext context) : base((DbContext)context)
+        public StockRepository(IApplicationDbContext context, IBranchProvider branchProvider) : base((DbContext)context)
         {
             _db = (DbContext)context;
+            _branchProvider = branchProvider;
         }
 
         public async Task<Stock?> GetByProductVariantIdAsync(int productVariantId, CancellationToken cancellationToken = default)
         {
-            return await _db.Set<Stock>()
+            var query = _db.Set<Stock>()
                 .Include(s => s.ProductVariant)
                     .ThenInclude(pv => pv.Product)
-                .FirstOrDefaultAsync(s => s.ProductVariantId == productVariantId, cancellationToken);
+                .Where(s => s.ProductVariantId == productVariantId);
+
+            if (!_branchProvider.IsGlobal())
+                query = query.Where(s => s.BranchId == _branchProvider.GetRequiredBranchId());
+
+            return await query.FirstOrDefaultAsync(cancellationToken);
+        }
+
+        public Task<Stock?> GetByProductVariantIdAndBranchIdAsync(
+            int productVariantId,
+            Guid branchId,
+            CancellationToken cancellationToken = default)
+        {
+            return _db.Set<Stock>()
+                .Include(s => s.ProductVariant)
+                    .ThenInclude(pv => pv.Product)
+                .FirstOrDefaultAsync(
+                    s => s.ProductVariantId == productVariantId && s.BranchId == branchId,
+                    cancellationToken);
         }
 
         public async Task<IList<Stock>> GetAllWithVariantsAsync()

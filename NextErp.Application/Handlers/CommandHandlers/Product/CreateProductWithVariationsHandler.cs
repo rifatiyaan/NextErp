@@ -13,6 +13,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
         IApplicationUnitOfWork unitOfWork,
         IApplicationDbContext dbContext,
         IStockService stockService,
+        IBranchProvider branchProvider,
         IMapper mapper)
         : IRequestHandler<CreateProductWithVariationsCommand, int>
     {
@@ -25,6 +26,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
             try
             {
                 var product = mapper.Map<Entities.Product>(request);
+                await ProductBranchScope.ApplyToProductAsync(product, dbContext, branchProvider, cancellationToken);
                 product.HasVariations = true;
                 product.CreatedAt = DateTime.UtcNow;
 

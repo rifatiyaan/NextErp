@@ -1,6 +1,9 @@
+using NextErp.Domain.Common;
+
 namespace NextErp.Domain.Entities
 {
-public class Purchase : IEntity<Guid>, IBranchEntity
+[BranchScoped]
+public class Purchase : IEntity<Guid>
     {
         public Guid Id { get; set; }
         public string Title { get; set; } = null!;

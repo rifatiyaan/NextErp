@@ -1,5 +1,8 @@
+using NextErp.Domain.Common;
+
 namespace NextErp.Domain.Entities
 {
+    [BranchScoped]
     public class Product : IEntity<int>
     {
         public int Id { get; set; }
@@ -23,7 +26,7 @@ namespace NextErp.Domain.Entities
         public DateTime? UpdatedAt { get; set; }
 
         public Guid TenantId { get; set; }
-        public Guid? BranchId { get; set; }
+        public Guid BranchId { get; set; }
 
         // Variation system support
         public bool HasVariations { get; set; } = false;

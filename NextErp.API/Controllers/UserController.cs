@@ -31,7 +31,10 @@ public class UserController(
 
             var result = await userManager.CreateAsync(user, dto.Password);
             if (!result.Succeeded)
-                return BadRequest(result.Errors);
+            {
+                var detail = string.Join("; ", result.Errors.Select(e => e.Description));
+                return Problem(title: "User creation failed", detail: detail, statusCode: StatusCodes.Status400BadRequest);
+            }
 
             return Ok(new
             {
@@ -43,7 +46,7 @@ public class UserController(
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return Problem(title: "Bad request", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
         }
     }
 

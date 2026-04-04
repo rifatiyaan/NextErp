@@ -13,8 +13,6 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
         IBranchProvider branchProvider)
         : IRequestHandler<CreateSaleCommand, Guid>
     {
-        private const decimal StandardTaxRate = 0.05m;
-
         public async Task<Guid> Handle(CreateSaleCommand request, CancellationToken cancellationToken)
         {
             using var transaction = await dbContext.Database.BeginTransactionAsync(
@@ -41,9 +39,6 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
 
                 var tenantId = variants.Values.First().TenantId;
                 var branchId = ResolveWriteBranchId(variants.Values);
-                var discount = request.Discount < 0 ? 0 : request.Discount;
-                var tax = 0m;
-                var grossTotal = 0m;
 
                 var normalizedItems = new List<(Entities.ProductVariant Variant, decimal Quantity, decimal UnitPrice)>(request.Items.Count);
                 foreach (var itemDto in request.Items)
@@ -53,14 +48,10 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
 
                     var variant = variants[itemDto.ProductVariantId];
                     var unitPrice = variant.Price;
-                    grossTotal += unitPrice * itemDto.Quantity;
                     normalizedItems.Add((variant, itemDto.Quantity, unitPrice));
                 }
 
-                tax = decimal.Round(grossTotal * StandardTaxRate, 2, MidpointRounding.AwayFromZero);
-                var finalAmount = decimal.Round(grossTotal + tax - discount, 2, MidpointRounding.AwayFromZero);
-                if (finalAmount < 0)
-                    finalAmount = 0;
+                var grossTotal = normalizedItems.Sum(l => l.UnitPrice * l.Quantity);
 
                 foreach (var line in normalizedItems)
                 {
@@ -83,27 +74,21 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
 
                 var saleNumber = $"SALE-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
 
-                var sale = new Entities.Sale
-                {
-                    Id = Guid.NewGuid(),
-                    Title = $"Sale - {DateTime.UtcNow:yyyy-MM-dd HH:mm}",
-                    SaleNumber = saleNumber,
-                    PartyId = request.PartyId,
-                    SaleDate = DateTime.UtcNow,
-                    TotalAmount = grossTotal,
-                    Discount = discount,
-                    Tax = tax,
-                    FinalAmount = finalAmount,
-                    Metadata = new Entities.Sale.SaleMetadata
+                var sale = Entities.Sale.Create(
+                    id: Guid.NewGuid(),
+                    saleNumber: saleNumber,
+                    title: $"Sale - {DateTime.UtcNow:yyyy-MM-dd HH:mm}",
+                    tenantId: tenantId,
+                    branchId: branchId,
+                    partyId: request.PartyId,
+                    itemsGrossTotal: grossTotal,
+                    discountRequested: request.Discount,
+                    taxRate: Entities.Sale.DefaultTaxRate,
+                    saleDate: DateTime.UtcNow,
+                    metadata: new Entities.Sale.SaleMetadata
                     {
                         PaymentMethod = request.PaymentMethod
-                    },
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = null,
-                    TenantId = tenantId,
-                    BranchId = branchId
-                };
+                    });
 
                 await unitOfWork.SaleRepository.AddAsync(sale);
 
@@ -126,7 +111,14 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale
 
                     sale.Items.Add(item);
 
-                    await stockService.ReduceStockAsync(variant.Id, line.Quantity, cancellationToken);
+                    await stockService.RecordMovementAsync(
+                        variant.Id,
+                        sale.TenantId,
+                        sale.BranchId,
+                        -line.Quantity,
+                        Entities.StockMovementType.Sale,
+                        sale.Id,
+                        cancellationToken);
                 }
 
                 if (ShouldCreatePayment(request, sale.FinalAmount))

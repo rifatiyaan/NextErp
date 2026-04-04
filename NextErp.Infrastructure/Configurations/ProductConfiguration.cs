@@ -9,6 +9,8 @@ namespace NextErp.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<Product> builder)
         {
+            builder.Property(p => p.BranchId).IsRequired();
+
             builder.Property(p => p.Price)
                 .HasPrecision(18, 2);
 

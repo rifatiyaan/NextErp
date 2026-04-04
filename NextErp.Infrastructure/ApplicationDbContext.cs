@@ -1,10 +1,12 @@
+using System.Linq.Expressions;
+using System.Reflection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Interfaces;
+using NextErp.Domain.Common;
 using NextErp.Domain.Entities;
 using NextErp.Infrastructure.Entities;
-using System.Linq.Expressions;
 
 namespace NextErp.Infrastructure
 {
@@ -31,7 +33,7 @@ namespace NextErp.Infrastructure
         public DbSet<ProductVariant> ProductVariants { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
-        public DbSet<Module> Modules { get; set; }
+        public DbSet<NextErp.Domain.Entities.Module> Modules { get; set; }
         public DbSet<Branch> Branches { get; set; }
         public DbSet<Party> Parties { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
@@ -43,6 +45,7 @@ namespace NextErp.Infrastructure
         public DbSet<Sale> Sales { get; set; }
         public DbSet<SaleItem> SaleItems { get; set; }
         public DbSet<SalePayment> SalePayments { get; set; }
+        public DbSet<StockMovement> StockMovements { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -66,22 +69,38 @@ namespace NextErp.Infrastructure
         {
             foreach (var entityType in builder.Model.GetEntityTypes())
             {
-                if (!typeof(IBranchEntity).IsAssignableFrom(entityType.ClrType))
+                var clr = entityType.ClrType;
+                if (clr == null || entityType.IsOwned() || entityType.IsKeyless)
                     continue;
 
+                if (!Attribute.IsDefined(clr, typeof(BranchScopedAttribute), inherit: false))
+                    continue;
+
+                const string branchPropertyName = "BranchId";
+                var branchProp = clr.GetProperty(
+                    branchPropertyName,
+                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                if (branchProp == null || branchProp.PropertyType != typeof(Guid))
+                {
+                    throw new InvalidOperationException(
+                        $"[BranchScoped] type '{clr.Name}' must declare a public Guid {branchPropertyName} property.");
+                }
+
                 var method = typeof(ApplicationDbContext)
-                    .GetMethod(nameof(SetBranchFilter), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)?
-                    .MakeGenericMethod(entityType.ClrType);
+                    .GetMethod(nameof(SetBranchFilter), BindingFlags.Instance | BindingFlags.NonPublic)?
+                    .MakeGenericMethod(clr);
 
                 method?.Invoke(this, new object[] { builder });
             }
         }
 
         private void SetBranchFilter<TEntity>(ModelBuilder builder)
-            where TEntity : class, IBranchEntity
+            where TEntity : class
         {
-            Expression<Func<TEntity, bool>> filter = entity =>
-                IsGlobalScope || (CurrentBranchId.HasValue && entity.BranchId == CurrentBranchId.Value);
+            Expression<Func<TEntity, bool>> filter = e =>
+                IsGlobalScope
+                || (CurrentBranchId.HasValue && EF.Property<Guid>(e, "BranchId") == CurrentBranchId.Value);
+
             builder.Entity<TEntity>().HasQueryFilter(filter);
         }
     }

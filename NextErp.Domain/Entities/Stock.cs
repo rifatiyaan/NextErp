@@ -1,7 +1,10 @@
+using NextErp.Domain.Common;
+
 namespace NextErp.Domain.Entities
 {
     /// <summary>Branch-scoped stock row per sellable SKU.</summary>
-    public class Stock : IEntity<Guid>, IBranchEntity
+    [BranchScoped]
+    public class Stock : IEntity<Guid>
     {
         public Guid Id { get; set; }
         public string Title { get; set; } = "Stock";

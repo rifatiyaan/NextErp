@@ -6,6 +6,11 @@ public interface IStockRepository : IRepositoryBase<Stock, Guid>
     {
         Task<Stock?> GetByProductVariantIdAsync(int productVariantId, CancellationToken cancellationToken = default);
 
+        Task<Stock?> GetByProductVariantIdAndBranchIdAsync(
+            int productVariantId,
+            Guid branchId,
+            CancellationToken cancellationToken = default);
+
         Task<IList<Stock>> GetAllWithVariantsAsync();
 
         Task<IList<Stock>> GetLowStockAsync();

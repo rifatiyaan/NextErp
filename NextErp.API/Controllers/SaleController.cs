@@ -20,7 +20,8 @@ public class SaleController(IMediator mediator, IMapper mapper) : ControllerBase
         var query = new GetSaleByIdQuery(id);
         var sale = await mediator.Send(query);
 
-        if (sale == null) return NotFound();
+        if (sale == null)
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Not found", detail: "Sale was not found.");
 
         var dto = mapper.Map<Sale.Response.Get.Single>(sale);
         return Ok(dto);
@@ -56,31 +57,20 @@ public class SaleController(IMediator mediator, IMapper mapper) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] Sale.Request.Create.Single dto)
     {
-        try
-        {
-            var command = new CreateSaleCommand(
-                dto.PartyId,
-                dto.Discount,
-                dto.PaymentMethod,
-                dto.PaidAmount,
-                dto.Items
-            );
+        var command = new CreateSaleCommand(
+            dto.PartyId,
+            dto.Discount,
+            dto.PaymentMethod,
+            dto.PaidAmount,
+            dto.Items
+        );
 
-            var id = await mediator.Send(command);
+        var id = await mediator.Send(command);
 
-            var sale = await mediator.Send(new GetSaleByIdQuery(id));
-            var response = mapper.Map<Sale.Response.Get.Single>(sale);
+        var sale = await mediator.Send(new GetSaleByIdQuery(id));
+        var response = mapper.Map<Sale.Response.Get.Single>(sale);
 
-            return CreatedAtAction(nameof(Get), new { id }, response);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = ex.Message });
-        }
+        return CreatedAtAction(nameof(Get), new { id }, response);
     }
 
     // GET api/sale/report

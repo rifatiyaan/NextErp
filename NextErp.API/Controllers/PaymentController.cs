@@ -24,26 +24,19 @@ public class PaymentController(IMediator mediator) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Record([FromBody] Payment.Request.Record dto)
     {
-        try
-        {
-            var command = new RecordSalePaymentCommand(
-                dto.SaleId,
-                dto.Amount,
-                dto.PaymentMethod,
-                dto.PaidAt,
-                dto.Reference);
+        var command = new RecordSalePaymentCommand(
+            dto.SaleId,
+            dto.Amount,
+            dto.PaymentMethod,
+            dto.PaidAt,
+            dto.Reference);
 
-            var id = await mediator.Send(command);
-            var lines = await mediator.Send(new GetPaymentsBySaleIdQuery(dto.SaleId));
-            var created = lines.FirstOrDefault(p => p.Id == id);
+        var id = await mediator.Send(command);
+        var lines = await mediator.Send(new GetPaymentsBySaleIdQuery(dto.SaleId));
+        var created = lines.FirstOrDefault(p => p.Id == id);
 
-            return created != null
-                ? CreatedAtAction(nameof(GetBySaleId), new { saleId = dto.SaleId }, created)
-                : Ok(new { id });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        return created != null
+            ? CreatedAtAction(nameof(GetBySaleId), new { saleId = dto.SaleId }, created)
+            : Ok(new { id });
     }
 }

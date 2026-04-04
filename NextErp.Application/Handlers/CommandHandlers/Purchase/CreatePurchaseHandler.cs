@@ -95,8 +95,14 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase
                     purchase.Items.Add(item);
                     totalAmount += item.Total;
 
-                    await stockService.EnsureStockRecordExistsAsync(variant.Id, cancellationToken);
-                    await stockService.IncreaseStockAsync(variant.Id, itemDto.Quantity, cancellationToken);
+                    await stockService.RecordMovementAsync(
+                        variant.Id,
+                        purchase.TenantId,
+                        purchase.BranchId,
+                        itemDto.Quantity,
+                        Entities.StockMovementType.Purchase,
+                        purchase.Id,
+                        cancellationToken);
                 }
 
                 purchase.TotalAmount = totalAmount;

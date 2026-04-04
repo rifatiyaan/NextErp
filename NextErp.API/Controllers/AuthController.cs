@@ -30,7 +30,10 @@ public class AuthController(
         }
         else if (dto.BranchId == Guid.Empty)
         {
-            return BadRequest("BranchId is required.");
+            return Problem(
+                title: "Bad request",
+                detail: "BranchId is required.",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         // Allow either {username,email,password} OR {email,password}
@@ -56,7 +59,11 @@ public class AuthController(
                     dto.Email,
                     string.Join("; ", result.Errors.Select(e => $"{e.Code}:{e.Description}")));
 
-                return BadRequest(result.Errors);
+                var detail = string.Join("; ", result.Errors.Select(e => e.Description));
+                return Problem(
+                    title: "Registration failed",
+                    detail: detail,
+                    statusCode: StatusCodes.Status400BadRequest);
             }
 
             var token = await GenerateJwtToken(user);

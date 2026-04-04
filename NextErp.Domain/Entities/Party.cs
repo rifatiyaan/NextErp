@@ -1,3 +1,5 @@
+using NextErp.Domain.Common;
+
 namespace NextErp.Domain.Entities
 {
     public enum PartyType
@@ -11,7 +13,8 @@ namespace NextErp.Domain.Entities
     /// Unified contact record for customers, suppliers, and linked users.
     /// PartyType determines the role; a single party holds exactly one type.
     /// </summary>
-    public class Party : IEntity<Guid>, IBranchEntity
+    [BranchScoped]
+    public class Party : IEntity<Guid>
     {
         public Guid Id { get; set; }
 

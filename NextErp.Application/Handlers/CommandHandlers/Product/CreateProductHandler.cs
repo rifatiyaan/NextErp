@@ -11,12 +11,14 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
         IApplicationUnitOfWork unitOfWork,
         IApplicationDbContext dbContext,
         IStockService stockService,
+        IBranchProvider branchProvider,
         IMapper mapper)
         : IRequestHandler<CreateProductCommand, int>
     {
         public async Task<int> Handle(CreateProductCommand request, CancellationToken cancellationToken)
         {
             var product = mapper.Map<Entities.Product>(request);
+            await ProductBranchScope.ApplyToProductAsync(product, dbContext, branchProvider, cancellationToken);
             product.IsActive = true;
             product.HasVariations = false;
             product.CreatedAt = DateTime.UtcNow;
