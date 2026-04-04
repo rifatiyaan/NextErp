@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NextErp.API;
 using NextErp.Application;
+using NextErp.Application.Interfaces;
 using NextErp.Domain.Entities;
 using NextErp.Infrastructure;
 using Serilog;
@@ -58,10 +59,7 @@ var dbProvider =
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 {
-    containerBuilder.RegisterModule(
-        new InfrastructureModule(connectionString, migrationAssembly, dbProvider));
-
-    containerBuilder.RegisterModule(new ApplicationModule());
+    containerBuilder.RegisterModule(new InfrastructureModule());
     containerBuilder.RegisterModule(new WebModule());
 });
 
@@ -82,6 +80,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     }
 });
 
+// Same scoped instance as ApplicationDbContext (repositories and handlers use IApplicationDbContext).
+builder.Services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // =======================================================
@@ -90,11 +91,11 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
-    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 8;
+    options.Password.RequireDigit = true;
+    options.Password.RequireUppercase = true;
     options.Password.RequireLowercase = false;
-    options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequiredLength = 6;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
@@ -201,13 +202,20 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // =======================================================
-// 🔹 CORS
+// 🔹 CORS (configure Cors:AllowedOrigins in appsettings / env; Development adds localhost in appsettings.Development.json)
 // =======================================================
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+if (corsOrigins.Length == 0)
+{
+    throw new InvalidOperationException(
+        "CORS is not configured: add at least one origin under Cors:AllowedOrigins (see appsettings.Development.json for local dev).");
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(corsOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -292,43 +300,6 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
-
-app.MapGet("/debug", async context =>
-{
-    try
-    {
-        using var scope = app.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.Database.CanConnectAsync();
-        await context.Response.WriteAsync("Database connected successfully");
-    }
-    catch (Exception ex)
-    {
-        await context.Response.WriteAsync($"Exception: {ex.Message}\n{ex.StackTrace}");
-    }
-});
-
-app.MapGet("/debug-all", async (HttpContext context) =>
-{
-    try
-    {
-        // Example: simulate calling the failing endpoint code
-        // Replace this with the actual code that usually causes the 500
-        // For example: await someService.DoSomethingAsync();
-
-        await context.Response.WriteAsync("No exception thrown. Everything works!");
-    }
-    catch (Exception ex)
-    {
-        // This will show the exception message and stack trace in the browser
-        context.Response.ContentType = "text/plain";
-        await context.Response.WriteAsync($"Exception: {ex.GetType().Name}\n");
-        await context.Response.WriteAsync($"Message: {ex.Message}\n\n");
-        await context.Response.WriteAsync($"Stack Trace:\n{ex.StackTrace}");
-    }
-});
-
-
 
 // =======================================================
 // 🔹 RUN
