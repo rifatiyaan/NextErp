@@ -1,6 +1,8 @@
+using NextErp.Domain.Common;
+
 namespace NextErp.Domain.Entities
 {
-    public class Category : IEntity<int>
+    public class Category : IEntity<int>, ISoftDeletable
     {
         public int Id { get; set; }
         public string Title { get; set; } = null!;

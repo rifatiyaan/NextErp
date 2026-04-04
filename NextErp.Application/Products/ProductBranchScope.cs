@@ -15,10 +15,8 @@ internal static class ProductBranchScope
         var branchId = branchProvider.GetRequiredBranchId();
         var branch = await dbContext.Branches
             .AsNoTracking()
-            .FirstOrDefaultAsync(b => b.Id == branchId, cancellationToken);
-
-        if (branch == null)
-            throw new InvalidOperationException($"Branch '{branchId}' was not found.");
+            .FirstOrDefaultAsync(b => b.Id == branchId, cancellationToken)
+            ?? throw new InvalidOperationException($"Branch '{branchId}' was not found.");
 
         product.BranchId = branchId;
         product.TenantId = branch.TenantId;

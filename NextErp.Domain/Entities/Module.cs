@@ -1,3 +1,5 @@
+using NextErp.Domain.Common;
+
 namespace NextErp.Domain.Entities
 {
     public enum ModuleType
@@ -6,7 +8,7 @@ namespace NextErp.Domain.Entities
         Link = 2       // Menu link/navigation item
     }
 
-    public class Module : IEntity<int>
+    public class Module : IEntity<int>, ISoftDeletable
     {
         public int Id { get; set; }
         public string Title { get; set; } = null!;

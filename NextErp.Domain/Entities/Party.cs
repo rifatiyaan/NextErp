@@ -14,7 +14,7 @@ namespace NextErp.Domain.Entities
     /// PartyType determines the role; a single party holds exactly one type.
     /// </summary>
     [BranchScoped]
-    public class Party : IEntity<Guid>
+    public class Party : IEntity<Guid>, ISoftDeletable
     {
         public Guid Id { get; set; }
 

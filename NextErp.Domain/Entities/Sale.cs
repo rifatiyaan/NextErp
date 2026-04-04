@@ -3,7 +3,7 @@ using NextErp.Domain.Common;
 namespace NextErp.Domain.Entities
 {
     [BranchScoped]
-    public class Sale : IEntity<Guid>
+    public class Sale : IEntity<Guid>, ISoftDeletable
     {
         public const decimal DefaultTaxRate = 0.05m;
 

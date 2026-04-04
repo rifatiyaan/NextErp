@@ -3,7 +3,7 @@ using NextErp.Domain.Common;
 namespace NextErp.Domain.Entities
 {
 [BranchScoped]
-public class Purchase : IEntity<Guid>
+public class Purchase : IEntity<Guid>, ISoftDeletable
     {
         public Guid Id { get; set; }
         public string Title { get; set; } = null!;

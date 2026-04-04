@@ -1,7 +1,7 @@
+using NextErp.Domain.Common;
 using NextErp.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
-using System.Data;
 using System.Linq.Dynamic.Core;
 using System.Linq.Expressions;
 
@@ -27,12 +27,24 @@ namespace NextErp.Infrastructure.Repositories
 
         public virtual async Task RemoveAsync(TKey id)
         {
-            var entityToDelete = _dbSet.Find(id);
+            var entityToDelete = await _dbSet.FindAsync(new object[] { id! });
+            if (entityToDelete == null)
+                return;
             await RemoveAsync(entityToDelete);
         }
 
         public virtual async Task RemoveAsync(TEntity entityToDelete)
         {
+            if (entityToDelete == null)
+                return;
+
+            if (entityToDelete is ISoftDeletable soft)
+            {
+                soft.IsActive = false;
+                await EditAsync(entityToDelete);
+                return;
+            }
+
             await Task.Run(() =>
             {
                 if (_dbContext.Entry(entityToDelete).State == EntityState.Detached)
@@ -45,10 +57,14 @@ namespace NextErp.Infrastructure.Repositories
 
         public virtual async Task RemoveAsync(Expression<Func<TEntity, bool>> filter)
         {
-            await Task.Run(() =>
+            if (!typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity)))
             {
-                _dbSet.RemoveRange(_dbSet.Where(filter));
-            });
+                await Task.Run(() => _dbSet.RemoveRange(_dbSet.Where(filter)));
+                return;
+            }
+
+            var matches = await _dbSet.Where(filter).ToListAsync();
+            await SoftDeactivateAsync(matches);
         }
 
         public virtual async Task EditAsync(TEntity entityToUpdate)
@@ -56,26 +72,19 @@ namespace NextErp.Infrastructure.Repositories
             await Task.Run(() =>
             {
                 var entry = _dbContext.Entry(entityToUpdate);
-                
-                // If entity is not tracked, attach it
                 if (entry.State == EntityState.Detached)
                 {
                     _dbSet.Attach(entityToUpdate);
                     entry = _dbContext.Entry(entityToUpdate);
                 }
-                
-                // Mark as modified, but exclude key properties from being marked as modified
+
                 entry.State = EntityState.Modified;
-                
-                // Ensure key properties are not marked as modified
                 var keyProperties = _dbContext.Model.FindEntityType(typeof(TEntity))?.FindPrimaryKey()?.Properties;
-                if (keyProperties != null)
-                {
-                    foreach (var keyProperty in keyProperties)
-                    {
-                        entry.Property(keyProperty.Name).IsModified = false;
-                    }
-                }
+                if (keyProperties == null)
+                    return;
+
+                foreach (var keyProperty in keyProperties)
+                    entry.Property(keyProperty.Name).IsModified = false;
             });
         }
 
@@ -176,14 +185,25 @@ namespace NextErp.Infrastructure.Repositories
             Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null,
             int pageIndex = 1,
             int pageSize = 10,
+            bool isTrackingOff = false) =>
+            await GetDynamicFromQueryAsync(_dbSet, filter, orderBy, include, pageIndex, pageSize, isTrackingOff);
+
+        /// <summary>
+        /// Same as <see cref="GetDynamicAsync"/> but starts from an arbitrary root query (e.g. after <c>IgnoreQueryFilters()</c>).
+        /// </summary>
+        protected async Task<(IList<TEntity> data, int total, int totalDisplay)> GetDynamicFromQueryAsync(
+            IQueryable<TEntity> rootQuery,
+            Expression<Func<TEntity, bool>> filter = null,
+            string orderBy = null,
+            Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null,
+            int pageIndex = 1,
+            int pageSize = 10,
             bool isTrackingOff = false)
         {
-            IQueryable<TEntity> baseQuery = _dbSet;
-            
+            IQueryable<TEntity> baseQuery = rootQuery;
+
             if (filter != null)
-            {
                 baseQuery = baseQuery.Where(filter);
-            }
 
             var total = await baseQuery.CountAsync();
             var totalDisplay = total;
@@ -196,8 +216,8 @@ namespace NextErp.Infrastructure.Repositories
             if (isTrackingOff)
                 query = query.AsNoTracking();
 
-            IQueryable<TEntity> orderedQuery = orderBy != null 
-                ? query.OrderBy(orderBy) 
+            IQueryable<TEntity> orderedQuery = orderBy != null
+                ? query.OrderBy(orderBy)
                 : query;
 
             var data = await orderedQuery
@@ -284,11 +304,23 @@ namespace NextErp.Infrastructure.Repositories
         public virtual void Remove(TKey id)
         {
             var entityToDelete = _dbSet.Find(id);
+            if (entityToDelete == null)
+                return;
             Remove(entityToDelete);
         }
 
         public virtual void Remove(TEntity entityToDelete)
         {
+            if (entityToDelete == null)
+                return;
+
+            if (entityToDelete is ISoftDeletable soft)
+            {
+                soft.IsActive = false;
+                Edit(entityToDelete);
+                return;
+            }
+
             if (_dbContext.Entry(entityToDelete).State == EntityState.Detached)
             {
                 _dbSet.Attach(entityToDelete);
@@ -298,7 +330,17 @@ namespace NextErp.Infrastructure.Repositories
 
         public virtual void Remove(Expression<Func<TEntity, bool>> filter)
         {
-            _dbSet.RemoveRange(_dbSet.Where(filter));
+            if (!typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity)))
+            {
+                _dbSet.RemoveRange(_dbSet.Where(filter));
+                return;
+            }
+
+            foreach (var entity in _dbSet.Where(filter).ToList())
+            {
+                ((ISoftDeletable)entity).IsActive = false;
+                Edit(entity);
+            }
         }
 
         public virtual void Edit(TEntity entityToUpdate)
@@ -508,6 +550,15 @@ namespace NextErp.Infrastructure.Repositories
         public Task<(IList<TEntity>, int total, int totalDisplay)> GetDynamicAsync(IQueryable<TEntity> query, string? orderBy, object? includes, int pageIndex, int pageSize)
         {
             throw new NotImplementedException();
+        }
+
+        private async Task SoftDeactivateAsync(List<TEntity> entities)
+        {
+            foreach (var entity in entities)
+            {
+                ((ISoftDeletable)entity).IsActive = false;
+                await EditAsync(entity);
+            }
         }
     }
 }

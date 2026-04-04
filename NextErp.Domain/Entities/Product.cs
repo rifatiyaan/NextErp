@@ -3,7 +3,7 @@ using NextErp.Domain.Common;
 namespace NextErp.Domain.Entities
 {
     [BranchScoped]
-    public class Product : IEntity<int>
+    public class Product : IEntity<int>, ISoftDeletable
     {
         public int Id { get; set; }
         public string Title { get; set; } = null!;
@@ -20,7 +20,7 @@ namespace NextErp.Domain.Entities
         public string? ImageUrl { get; set; }
         public ProductMetadataClass Metadata { get; set; } = new ProductMetadataClass();
 
-        public bool IsActive { get; set; }
+        public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

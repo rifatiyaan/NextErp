@@ -86,6 +86,16 @@ namespace NextErp.Infrastructure
                         $"[BranchScoped] type '{clr.Name}' must declare a public Guid {branchPropertyName} property.");
                 }
 
+                const string activePropertyName = "IsActive";
+                var activeProp = clr.GetProperty(
+                    activePropertyName,
+                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                if (activeProp == null || activeProp.PropertyType != typeof(bool))
+                {
+                    throw new InvalidOperationException(
+                        $"[BranchScoped] type '{clr.Name}' must declare a public bool {activePropertyName} property for soft-delete filtering.");
+                }
+
                 var method = typeof(ApplicationDbContext)
                     .GetMethod(nameof(SetBranchFilter), BindingFlags.Instance | BindingFlags.NonPublic)?
                     .MakeGenericMethod(clr);
@@ -99,7 +109,9 @@ namespace NextErp.Infrastructure
         {
             Expression<Func<TEntity, bool>> filter = e =>
                 IsGlobalScope
-                || (CurrentBranchId.HasValue && EF.Property<Guid>(e, "BranchId") == CurrentBranchId.Value);
+                || (CurrentBranchId.HasValue
+                    && EF.Property<Guid>(e, "BranchId") == CurrentBranchId.Value
+                    && EF.Property<bool>(e, "IsActive"));
 
             builder.Entity<TEntity>().HasQueryFilter(filter);
         }

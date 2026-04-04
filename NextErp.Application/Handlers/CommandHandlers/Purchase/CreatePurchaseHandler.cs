@@ -1,132 +1,149 @@
-using NextErp.Application.Commands;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using NextErp.Application.Commands;
 using NextErp.Application.Interfaces;
 using Entities = NextErp.Domain.Entities;
 
-namespace NextErp.Application.Handlers.CommandHandlers.Purchase
+namespace NextErp.Application.Handlers.CommandHandlers.Purchase;
+
+public class CreatePurchaseHandler(
+    IApplicationUnitOfWork unitOfWork,
+    IApplicationDbContext dbContext,
+    IStockService stockService,
+    IBranchProvider branchProvider)
+    : IRequestHandler<CreatePurchaseCommand, Guid>
 {
-    public class CreatePurchaseHandler(
-        IApplicationUnitOfWork unitOfWork,
-        IApplicationDbContext dbContext,
-        IStockService stockService,
-        IBranchProvider branchProvider)
-        : IRequestHandler<CreatePurchaseCommand, Guid>
+    public async Task<Guid> Handle(CreatePurchaseCommand request, CancellationToken cancellationToken)
     {
-        public async Task<Guid> Handle(CreatePurchaseCommand request, CancellationToken cancellationToken)
+        if (request.Items.Count == 0)
+            throw new InvalidOperationException("A purchase must contain at least one line item.");
+
+        var variants = await LoadVariantsAsync(request, cancellationToken);
+        var tenantId = variants.Values.First().TenantId;
+        var branchId = ResolveWriteBranchId(variants.Values);
+
+        var purchase = CreatePurchaseHeader(request, tenantId, branchId);
+        await unitOfWork.PurchaseRepository.AddAsync(purchase);
+
+        purchase.TotalAmount = await AddLineItemsAndMovementsAsync(purchase, request, variants, cancellationToken);
+
+        await unitOfWork.SaveAsync();
+        return purchase.Id;
+    }
+
+    private async Task<Dictionary<int, Entities.ProductVariant>> LoadVariantsAsync(
+        CreatePurchaseCommand request,
+        CancellationToken cancellationToken)
+    {
+        var variantIds = request.Items.Select(i => i.ProductVariantId).Distinct().ToList();
+        var variants = await dbContext.ProductVariants
+            .Include(v => v.Product)
+            .Where(v => variantIds.Contains(v.Id))
+            .ToDictionaryAsync(v => v.Id, cancellationToken);
+
+        if (variants.Count == variantIds.Count)
+            return variants;
+
+        var missing = string.Join(", ", variantIds.Except(variants.Keys));
+        throw new InvalidOperationException($"Product variant(s) not found: {missing}.");
+    }
+
+    private static Entities.Purchase CreatePurchaseHeader(
+        CreatePurchaseCommand request,
+        Guid tenantId,
+        Guid branchId)
+    {
+        var number = string.IsNullOrWhiteSpace(request.PurchaseNumber)
+            ? $"PUR-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpperInvariant()}"
+            : request.PurchaseNumber;
+
+        return new Entities.Purchase
         {
-            var variantIds = request.Items.Select(i => i.ProductVariantId).Distinct().ToList();
-            var variants = await dbContext.ProductVariants
-                .Include(v => v.Product)
-                .Where(v => variantIds.Contains(v.Id))
-                .ToDictionaryAsync(v => v.Id, cancellationToken);
-
-            if (variants.Count != variantIds.Count)
+            Id = Guid.NewGuid(),
+            Title = request.Title,
+            PurchaseNumber = number,
+            PartyId = request.PartyId,
+            PurchaseDate = request.PurchaseDate,
+            TotalAmount = 0,
+            Discount = request.Discount,
+            Metadata = new Entities.Purchase.PurchaseMetadata
             {
-                var missing = variantIds.Except(variants.Keys).ToList();
-                throw new InvalidOperationException(
-                    $"Product variant(s) not found: {string.Join(", ", missing)}.");
-            }
+                BatchNo = request.Metadata?.BatchNo,
+                BillNo = request.Metadata?.BillNo,
+                ChallanNo = request.Metadata?.ChallanNo,
+                ReferenceNo = request.Metadata?.ReferenceNo,
+                Notes = request.Metadata?.Notes
+            },
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            TenantId = tenantId,
+            BranchId = branchId
+        };
+    }
 
-            var purchaseNumber = string.IsNullOrWhiteSpace(request.PurchaseNumber)
-                ? $"PUR-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}"
-                : request.PurchaseNumber;
+    private async Task<decimal> AddLineItemsAndMovementsAsync(
+        Entities.Purchase purchase,
+        CreatePurchaseCommand request,
+        IReadOnlyDictionary<int, Entities.ProductVariant> variants,
+        CancellationToken cancellationToken)
+    {
+        decimal total = 0;
 
-            var tenantId = variants.Values.First().TenantId;
+        foreach (var dto in request.Items)
+        {
+            var variant = variants[dto.ProductVariantId];
+            var title = string.IsNullOrWhiteSpace(dto.Title)
+                ? $"{variant.Product?.Title ?? "Product"} — {variant.Title}"
+                : dto.Title;
 
-            var purchase = new Entities.Purchase
+            var item = new Entities.PurchaseItem
             {
                 Id = Guid.NewGuid(),
-                Title = request.Title,
-                PurchaseNumber = purchaseNumber,
-                PartyId = request.PartyId,
-                PurchaseDate = request.PurchaseDate,
-                TotalAmount = 0,
-                Discount = request.Discount,
-                Metadata = new Entities.Purchase.PurchaseMetadata
+                Title = title,
+                PurchaseId = purchase.Id,
+                ProductVariantId = variant.Id,
+                Quantity = dto.Quantity,
+                UnitCost = dto.UnitCost,
+                Metadata = new Entities.PurchaseItem.PurchaseItemMetadata
                 {
-                    BatchNo = request.Metadata?.BatchNo,
-                    BillNo = request.Metadata?.BillNo,
-                    ChallanNo = request.Metadata?.ChallanNo,
-                    ReferenceNo = request.Metadata?.ReferenceNo,
-                    Notes = request.Metadata?.Notes
+                    Description = dto.Metadata?.Description,
+                    Weight = dto.Metadata?.Weight,
+                    ExpiryDate = dto.Metadata?.ExpiryDate,
+                    BatchNumber = dto.Metadata?.BatchNumber
                 },
-                IsActive = true,
                 CreatedAt = DateTime.UtcNow,
-                TenantId = tenantId,
-                BranchId = ResolveWriteBranchId(variants.Values)
+                TenantId = purchase.TenantId
             };
 
-            await unitOfWork.PurchaseRepository.AddAsync(purchase);
+            purchase.Items.Add(item);
+            total += item.Total;
 
-            decimal totalAmount = 0;
-            foreach (var itemDto in request.Items)
-            {
-                var variant = variants[itemDto.ProductVariantId];
-                var lineTitle = string.IsNullOrWhiteSpace(itemDto.Title)
-                    ? $"{variant.Product?.Title ?? "Product"} — {variant.Title}"
-                    : itemDto.Title;
-
-                var item = new Entities.PurchaseItem
-                {
-                    Id = Guid.NewGuid(),
-                    Title = lineTitle,
-                    PurchaseId = purchase.Id,
-                    ProductVariantId = variant.Id,
-                    Quantity = itemDto.Quantity,
-                    UnitCost = itemDto.UnitCost,
-                    Metadata = new Entities.PurchaseItem.PurchaseItemMetadata
-                    {
-                        Description = itemDto.Metadata?.Description,
-                        Weight = itemDto.Metadata?.Weight,
-                        ExpiryDate = itemDto.Metadata?.ExpiryDate,
-                        BatchNumber = itemDto.Metadata?.BatchNumber
-                    },
-                    CreatedAt = DateTime.UtcNow,
-                    TenantId = purchase.TenantId
-                };
-
-                purchase.Items.Add(item);
-                totalAmount += item.Total;
-
-                await stockService.RecordMovementAsync(
-                    variant.Id,
-                    purchase.TenantId,
-                    purchase.BranchId,
-                    itemDto.Quantity,
-                    Entities.StockMovementType.Purchase,
-                    purchase.Id,
-                    cancellationToken);
-            }
-
-            purchase.TotalAmount = totalAmount;
-
-            try
-            {
-                await unitOfWork.SaveAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                throw new InvalidOperationException("Stock was modified by another transaction. Please retry.");
-            }
-
-            return purchase.Id;
+            await stockService.RecordMovementAsync(
+                variant.Id,
+                purchase.TenantId,
+                purchase.BranchId,
+                dto.Quantity,
+                Entities.StockMovementType.Purchase,
+                purchase.Id,
+                cancellationToken);
         }
 
-        private Guid ResolveWriteBranchId(IEnumerable<Entities.ProductVariant> variants)
-        {
-            if (!branchProvider.IsGlobal())
-                return branchProvider.GetRequiredBranchId();
+        return total;
+    }
 
-            var claimBranchId = branchProvider.GetBranchId();
-            if (claimBranchId.HasValue)
-                return claimBranchId.Value;
+    private Guid ResolveWriteBranchId(IEnumerable<Entities.ProductVariant> variants)
+    {
+        if (!branchProvider.IsGlobal())
+            return branchProvider.GetRequiredBranchId();
 
-            var variantBranchId = variants.Select(v => v.BranchId).FirstOrDefault(b => b.HasValue);
-            if (variantBranchId.HasValue)
-                return variantBranchId.Value;
+        var claimBranchId = branchProvider.GetBranchId();
+        if (claimBranchId.HasValue)
+            return claimBranchId.Value;
 
-            throw new InvalidOperationException("Global user must provide a branch context to create a purchase.");
-        }
+        var fromVariant = variants.Select(v => v.BranchId).FirstOrDefault(b => b.HasValue);
+        if (fromVariant.HasValue)
+            return fromVariant.Value;
+
+        throw new InvalidOperationException("Global user must provide a branch context to create a purchase.");
     }
 }
