@@ -1,6 +1,5 @@
 namespace NextErp.Domain.Entities
 {
-    /// <summary>Gallery image for a product; one row is marked as thumbnail (mirrored on <see cref="Product.ImageUrl"/>).</summary>
     public class ProductImage : IEntity<int>
     {
         public int Id { get; set; }

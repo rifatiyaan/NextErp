@@ -5,14 +5,10 @@ using NextErp.Domain.Repositories;
 
 namespace NextErp.Infrastructure.Repositories;
 
-public class ProductRepository : Repository<Product, int>, IProductRepository
+public class ProductRepository(IApplicationDbContext context)
+    : Repository<Product, int>((DbContext)context), IProductRepository
 {
-    private readonly DbSet<Product> _products;
-
-    public ProductRepository(IApplicationDbContext context) : base((DbContext)context)
-    {
-        _products = ((DbContext)context).Set<Product>();
-    }
+    private readonly DbSet<Product> _products = ((DbContext)context).Set<Product>();
 
     public IQueryable<Product> Query() => _products.AsQueryable();
 

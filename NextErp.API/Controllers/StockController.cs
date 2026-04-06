@@ -12,7 +12,6 @@ namespace NextErp.API.Controllers;
 [ApiController]
 public class StockController(IMediator mediator, IMapper mapper) : ControllerBase
 {
-    /// <summary>Stock ledger row for a single SKU (shared id with ProductVariant).</summary>
     [HttpGet("variant/{productVariantId:int}")]
     public async Task<IActionResult> GetByProductVariantId(int productVariantId)
     {
@@ -24,7 +23,6 @@ public class StockController(IMediator mediator, IMapper mapper) : ControllerBas
         return Ok(mapper.Map<Stock.Response.Single>(stock));
     }
 
-    /// <summary>All variant stock rows for a product.</summary>
     [HttpGet("product/{productId:int}")]
     public async Task<IActionResult> GetByProductId(int productId)
     {

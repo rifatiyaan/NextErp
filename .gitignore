@@ -21,6 +21,7 @@ Debug/
 Release/
 [Bb]uild/
 artifacts/
+_buildtmp/
 
 # Razor generated
 *.rz.scp.css

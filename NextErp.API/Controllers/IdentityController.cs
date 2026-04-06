@@ -15,9 +15,6 @@ public class SetPermissionsDto
     public List<string> PermissionKeys { get; set; } = new();
 }
 
-/// <summary>
-/// Identity Command Center — SuperAdmin sees all branches; Admin is scoped to their branch in the handler.
-/// </summary>
 [Authorize(Roles = "SuperAdmin,Admin")]
 [Route("api/[controller]")]
 [ApiController]

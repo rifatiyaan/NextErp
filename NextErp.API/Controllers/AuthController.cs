@@ -3,8 +3,10 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using NextErp.API.DTO;
+using NextErp.Application.Common.Security;
+using NextErp.Application.DTOs;
 using NextErp.Application.Interfaces;
 using NextErp.Domain.Entities;
 
@@ -15,6 +17,8 @@ namespace NextErp.API.Controllers;
 public class AuthController(
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
+    RoleManager<IdentityRole<Guid>> roleManager,
+    IApplicationDbContext dbContext,
     IBranchProvider branchProvider,
     IConfiguration configuration,
     ILogger<AuthController> logger) : ControllerBase
@@ -66,7 +70,8 @@ public class AuthController(
                     statusCode: StatusCodes.Status400BadRequest);
             }
 
-            var token = await GenerateJwtToken(user);
+            var (roles, primaryRoleId, isSuperAdmin) = await ResolveRoleContextAsync(user);
+            var token = await GenerateJwtTokenAsync(user, roles, primaryRoleId, isSuperAdmin);
 
             logger.LogInformation(
                 "Register succeeded for Email={Email} in {ElapsedMs}ms",
@@ -96,32 +101,85 @@ public class AuthController(
         if (!result.Succeeded)
             return Unauthorized();
 
-        var token = await GenerateJwtToken(user);
-
-        return Ok(new { token });
+        var response = await BuildLoginResponseAsync(user);
+        return Ok(response);
     }
 
-    private async Task<string> GenerateJwtToken(ApplicationUser user)
+    private async Task<(IList<string> Roles, Guid? PrimaryRoleId, bool IsSuperAdmin)> ResolveRoleContextAsync(
+        ApplicationUser user)
     {
         var roles = await userManager.GetRolesAsync(user);
-        var isGlobal = roles.Any(r => string.Equals(r, "SuperAdmin", StringComparison.OrdinalIgnoreCase));
+        var primaryRoleName = roles.FirstOrDefault();
+        var roleEntity = !string.IsNullOrEmpty(primaryRoleName)
+            ? await roleManager.FindByNameAsync(primaryRoleName)
+            : null;
+        var primaryRoleId = roleEntity?.Id;
+        var isSuperAdmin = SuperAdminRules.IsSuperAdmin(primaryRoleName, primaryRoleId);
+        return (roles, primaryRoleId, isSuperAdmin);
+    }
+
+    private async Task<LoginResponseDto> BuildLoginResponseAsync(ApplicationUser user)
+    {
+        var (roles, primaryRoleId, isSuperAdmin) = await ResolveRoleContextAsync(user);
+
+        IReadOnlyList<string> permissionKeys;
+        if (isSuperAdmin)
+        {
+            permissionKeys = await dbContext.RolePermissions
+                .AsNoTracking()
+                .Select(rp => rp.PermissionKey)
+                .Distinct()
+                .ToListAsync();
+        }
+        else if (primaryRoleId.HasValue)
+        {
+            permissionKeys = await dbContext.RolePermissions
+                .AsNoTracking()
+                .Where(rp => rp.RoleId == primaryRoleId.Value)
+                .Select(rp => rp.PermissionKey)
+                .ToListAsync();
+        }
+        else
+        {
+            permissionKeys = Array.Empty<string>();
+        }
+
+        var token = await GenerateJwtTokenAsync(user, roles, primaryRoleId, isSuperAdmin);
+
+        return new LoginResponseDto
+        {
+            Token = token,
+            IsSuperAdmin = isSuperAdmin,
+            PermissionKeys = permissionKeys
+        };
+    }
+
+    private async Task<string> GenerateJwtTokenAsync(
+        ApplicationUser user,
+        IList<string> roles,
+        Guid? primaryRoleId,
+        bool isSuperAdmin)
+    {
+        var isGlobal = isSuperAdmin;
 
         var userClaims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.UserName),
+            new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+            new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
             new Claim("branchId", user.BranchId.ToString())
         };
+
+        if (primaryRoleId.HasValue)
+            userClaims.Add(new Claim("primaryRoleId", primaryRoleId.Value.ToString()));
+
+        userClaims.Add(new Claim("isSuperAdmin", isSuperAdmin ? "true" : "false"));
 
         if (isGlobal)
             userClaims.Add(new Claim("isGlobal", "true"));
 
-        // roles (optional)
         foreach (var role in roles)
-        {
             userClaims.Add(new Claim(ClaimTypes.Role, role));
-        }
 
         var authSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));

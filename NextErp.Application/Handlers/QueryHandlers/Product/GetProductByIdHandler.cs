@@ -6,7 +6,7 @@ using Repositories = NextErp.Domain.Repositories;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Product
 {
-    public class GetProductByIdHandler(Repositories.IProductRepository productRepo) 
+    public class GetProductByIdHandler(Repositories.IProductRepository productRepo)
         : IRequestHandler<GetProductByIdQuery, Entities.Product?>
     {
         public async Task<Entities.Product?> Handle(GetProductByIdQuery request, CancellationToken cancellationToken)

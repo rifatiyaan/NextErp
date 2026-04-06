@@ -1,6 +1,5 @@
 namespace NextErp.Application.Services
 {
-    /// <summary>Validates payment amounts against a sale total.</summary>
     public static class SalePaymentRules
     {
         public static void RequirePositiveAmount(decimal amount)

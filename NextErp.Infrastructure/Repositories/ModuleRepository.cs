@@ -5,12 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace NextErp.Infrastructure.Repositories
 {
-    public class ModuleRepository : Repository<Module, int>, IModuleRepository
+    public class ModuleRepository(IApplicationDbContext context)
+        : Repository<Module, int>((DbContext)context), IModuleRepository
     {
-        public ModuleRepository(IApplicationDbContext context) : base((DbContext)context)
-        {
-        }
-
         public async Task<IEnumerable<Module>> GetMenuByUserRolesAsync(string[] roles, Guid tenantId)
         {
             // Get all active menu links (Type = Link) for the tenant
@@ -22,9 +19,9 @@ namespace NextErp.Infrastructure.Repositories
 
             // Filter by roles (if roles are defined on the item)
             // If item has no roles defined, it's visible to everyone
-            return allItems.Where(item => 
-                item.Metadata.Roles == null || 
-                !item.Metadata.Roles.Any() || 
+            return allItems.Where(item =>
+                item.Metadata.Roles == null ||
+                !item.Metadata.Roles.Any() ||
                 item.Metadata.Roles.Intersect(roles).Any()
             ).ToList();
         }

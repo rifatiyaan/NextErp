@@ -1,4 +1,4 @@
-namespace NextErp.API.DTO
+namespace NextErp.Application.DTOs
 {
     public class RegisterDto
     {
@@ -12,5 +12,12 @@ namespace NextErp.API.DTO
     {
         public string Email { get; set; } = null!;
         public string Password { get; set; } = null!;
+    }
+
+    public class LoginResponseDto
+    {
+        public string Token { get; set; } = null!;
+        public bool IsSuperAdmin { get; set; }
+        public IReadOnlyList<string> PermissionKeys { get; set; } = Array.Empty<string>();
     }
 }

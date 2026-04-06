@@ -14,7 +14,6 @@ public class StockMovement : ISoftDeletable
 
     public bool IsActive { get; set; } = true;
 
-    /// <summary>Signed quantity change (negative reduces on-hand stock, positive increases).</summary>
     public decimal Quantity { get; set; }
 
     public StockMovementType Type { get; set; }

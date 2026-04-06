@@ -1,6 +1,5 @@
 namespace NextErp.Domain.Entities
 {
-    /// <summary>Creates the default SKU for products without explicit variations.</summary>
     public static class SimpleProductVariantFactory
     {
         public static ProductVariant CreateDefault(Product product)

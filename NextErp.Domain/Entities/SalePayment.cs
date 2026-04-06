@@ -1,6 +1,5 @@
 namespace NextErp.Domain.Entities
 {
-    /// <summary>Recorded payment against a sale (supports partial payments).</summary>
     public class SalePayment : IEntity<Guid>
     {
         public Guid Id { get; set; }

@@ -3,19 +3,10 @@ using NextErp.Application.Interfaces;
 
 namespace NextErp.Application.Common.Behaviors;
 
-/// <summary>
-/// Wraps write-style MediatR requests in a single database transaction (commit on success, rollback on any exception).
-/// </summary>
-public sealed class TransactionBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+public sealed class TransactionBehavior<TRequest, TResponse>(IApplicationDbContext db)
+    : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
-    private readonly IApplicationDbContext _db;
-
-    public TransactionBehavior(IApplicationDbContext db)
-    {
-        _db = db;
-    }
-
     public async Task<TResponse> Handle(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
@@ -24,10 +15,10 @@ public sealed class TransactionBehavior<TRequest, TResponse> : IPipelineBehavior
         if (!ShouldWrapInTransaction(typeof(TRequest)))
             return await next(cancellationToken).ConfigureAwait(false);
 
-        if (_db.Database.CurrentTransaction != null)
+        if (db.Database.CurrentTransaction != null)
             return await next(cancellationToken).ConfigureAwait(false);
 
-        await using var transaction = await _db.Database
+        await using var transaction = await db.Database
             .BeginTransactionAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -44,9 +35,6 @@ public sealed class TransactionBehavior<TRequest, TResponse> : IPipelineBehavior
         }
     }
 
-    /// <summary>
-    /// Treats requests whose type name suggests a command (Create / Update / Delete) as transactional; excludes queries.
-    /// </summary>
     private static bool ShouldWrapInTransaction(Type requestType)
     {
         var name = requestType.Name;

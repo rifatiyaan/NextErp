@@ -29,13 +29,13 @@ namespace NextErp.Application.Commands
     ) : IRequest<int>; // Returns Id of created product
 
     public record UpdateVariationOptionCommand(int Id, string Name, int DisplayOrder) : IRequest;
-    
+
     public record DeleteVariationOptionCommand(int Id) : IRequest;
 
     public record CreateVariationValueCommand(int VariationOptionId, string Value, int DisplayOrder) : IRequest<int>;
-    
+
     public record UpdateVariationValueCommand(int Id, string Value, int DisplayOrder) : IRequest;
-    
+
     public record DeleteVariationValueCommand(int Id) : IRequest;
 }
 

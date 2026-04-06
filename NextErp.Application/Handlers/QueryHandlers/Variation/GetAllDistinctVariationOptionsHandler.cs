@@ -10,7 +10,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Variation
         : IRequestHandler<GetAllDistinctVariationOptionsQuery, List<ProductVariation.Response.BulkVariationOptionDto>>
     {
         public async Task<List<ProductVariation.Response.BulkVariationOptionDto>> Handle(
-            GetAllDistinctVariationOptionsQuery request, 
+            GetAllDistinctVariationOptionsQuery request,
             CancellationToken cancellationToken)
         {
             return await dbContext.VariationOptions

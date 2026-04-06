@@ -58,11 +58,6 @@ public class GetPagedProductsHandler(
         return new PagedResult<ProductDto.Response.Get.Single>(dtos, total, total);
     }
 
-    /// <summary>
-    /// Default list: branch users rely on the global query filter (active + branch).
-    /// Global users need an explicit active filter. "closed" may require
-    /// <see cref="EntityFrameworkQueryableExtensions.IgnoreQueryFilters"/> plus manual branch predicate.
-    /// </summary>
     private IQueryable<Entities.Product> ApplyStatusFilter(IQueryable<Entities.Product> query, string? status)
     {
         if (string.IsNullOrWhiteSpace(status))
@@ -77,9 +72,6 @@ public class GetPagedProductsHandler(
         };
     }
 
-    /// <summary>
-    /// Inactive rows are excluded by the global filter for branch users; bypass filters only here and pin <see cref="Entities.Product.BranchId"/>.
-    /// </summary>
     private IQueryable<Entities.Product> ApplyInactiveProductsForCurrentScope(IQueryable<Entities.Product> query)
     {
         if (branchProvider.IsGlobal())

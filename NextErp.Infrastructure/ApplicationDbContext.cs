@@ -10,19 +10,13 @@ using NextErp.Infrastructure.Entities;
 
 namespace NextErp.Infrastructure
 {
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>, IApplicationDbContext
+    public class ApplicationDbContext(
+        DbContextOptions<ApplicationDbContext> options,
+        IBranchProvider? branchProvider = null)
+        : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options), IApplicationDbContext
     {
-        private readonly IBranchProvider? _branchProvider;
-        private Guid? CurrentBranchId => _branchProvider?.GetBranchId();
-        private bool IsGlobalScope => _branchProvider?.IsGlobal() ?? true;
-
-        public ApplicationDbContext(
-            DbContextOptions<ApplicationDbContext> options,
-            IBranchProvider? branchProvider = null)
-            : base(options)
-        {
-            _branchProvider = branchProvider;
-        }
+        private Guid? CurrentBranchId => branchProvider?.GetBranchId();
+        private bool IsGlobalScope => branchProvider?.IsGlobal() ?? true;
 
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductImage> ProductImages { get; set; }

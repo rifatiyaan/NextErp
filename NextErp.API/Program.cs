@@ -11,6 +11,7 @@ using NextErp.Application.Common.Behaviors;
 using NextErp.Application.Interfaces;
 using NextErp.Domain.Entities;
 using NextErp.Infrastructure;
+using NextErp.Infrastructure.Services;
 using Serilog;
 using Serilog.Events;
 using System.Security.Claims;
@@ -84,6 +85,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Same scoped instance as ApplicationDbContext (repositories and handlers use IApplicationDbContext).
 builder.Services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
+builder.Services.AddScoped<IUserContext, HttpContextUserContext>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -169,6 +171,7 @@ builder.Services.AddAutoMapper(cfg =>
 // =======================================================
 builder.Services.AddMediatR(cfg =>
 {
+    cfg.AddOpenBehavior(typeof(PermissionBehavior<,>));
     cfg.AddOpenBehavior(typeof(TransactionBehavior<,>));
     cfg.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly);
 });

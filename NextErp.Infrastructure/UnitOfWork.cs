@@ -3,17 +3,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace NextErp.Infrastructure
 {
-    public abstract class UnitOfWork : IUnitOfWork
+    public abstract class UnitOfWork(DbContext dbContext) : IUnitOfWork
     {
-        private readonly DbContext _dbContext;
+        public virtual void Dispose() => dbContext?.Dispose();
 
-        public UnitOfWork(DbContext dbContext) => _dbContext = dbContext;
+        public virtual async ValueTask DisposeAsync() => await dbContext.DisposeAsync();
 
-        public virtual void Dispose() => _dbContext?.Dispose();
-
-        public virtual async ValueTask DisposeAsync() => await _dbContext.DisposeAsync();
-
-        public virtual void Save() => _dbContext?.SaveChanges();
-        public virtual async Task SaveAsync() => await _dbContext.SaveChangesAsync();
+        public virtual void Save() => dbContext?.SaveChanges();
+        public virtual async Task SaveAsync() => await dbContext.SaveChangesAsync();
     }
 }

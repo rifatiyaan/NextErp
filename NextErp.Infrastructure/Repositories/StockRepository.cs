@@ -5,17 +5,10 @@ using NextErp.Domain.Repositories;
 
 namespace NextErp.Infrastructure.Repositories;
 
-public class StockRepository : Repository<Stock, Guid>, IStockRepository
+public class StockRepository(IApplicationDbContext applicationContext, IBranchProvider branchProvider)
+    : Repository<Stock, Guid>((DbContext)applicationContext), IStockRepository
 {
-    private readonly DbContext _db;
-    private readonly IBranchProvider _branchProvider;
-
-    public StockRepository(IApplicationDbContext context, IBranchProvider branchProvider)
-        : base((DbContext)context)
-    {
-        _db = (DbContext)context;
-        _branchProvider = branchProvider;
-    }
+    private readonly DbContext _db = (DbContext)applicationContext;
 
     public async Task<Stock?> GetByProductVariantIdAsync(int productVariantId, CancellationToken cancellationToken = default)
     {
@@ -24,8 +17,8 @@ public class StockRepository : Repository<Stock, Guid>, IStockRepository
             .ThenInclude(pv => pv.Product)
             .Where(s => s.ProductVariantId == productVariantId);
 
-        if (!_branchProvider.IsGlobal())
-            query = query.Where(s => s.BranchId == _branchProvider.GetRequiredBranchId());
+        if (!branchProvider.IsGlobal())
+            query = query.Where(s => s.BranchId == branchProvider.GetRequiredBranchId());
 
         return await query.FirstOrDefaultAsync(cancellationToken);
     }

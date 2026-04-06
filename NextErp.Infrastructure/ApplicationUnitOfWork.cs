@@ -5,40 +5,25 @@ using Microsoft.EntityFrameworkCore;
 
 namespace NextErp.Infrastructure
 {
-    public class ApplicationUnitOfWork : UnitOfWork, IApplicationUnitOfWork
+    public class ApplicationUnitOfWork(
+        IProductRepository productRepository,
+        ICategoryRepository categoryRepository,
+        IUserRepository userRepository,
+        IModuleRepository moduleRepository,
+        IPartyRepository partyRepository,
+        IStockRepository stockRepository,
+        IPurchaseRepository purchaseRepository,
+        ISaleRepository saleRepository,
+        IApplicationDbContext dbContext)
+        : UnitOfWork((DbContext)dbContext), IApplicationUnitOfWork
     {
-        //public IBookRepository BookRepository { get; private set; }
-        public IProductRepository ProductRepository { get; private set; }
-        public ICategoryRepository CategoryRepository { get; private set; }
-        public IUserRepository UserRepository { get; private set; }
-        public IModuleRepository ModuleRepository { get; private set; }
-
-        // Inventory Module Repositories
-        public IPartyRepository PartyRepository { get; private set; }
-        public IStockRepository StockRepository { get; private set; }
-        public IPurchaseRepository PurchaseRepository { get; private set; }
-        public ISaleRepository SaleRepository { get; private set; }
-
-        public ApplicationUnitOfWork(
-            IProductRepository productRepository,
-            ICategoryRepository categoryRepository,
-            IUserRepository userRepository,
-            IModuleRepository moduleRepository,
-            IPartyRepository partyRepository,
-            IStockRepository stockRepository,
-            IPurchaseRepository purchaseRepository,
-            ISaleRepository saleRepository,
-            IApplicationDbContext dbContext
-        ) : base((DbContext)dbContext)
-        {
-            ProductRepository = productRepository;
-            CategoryRepository = categoryRepository;
-            UserRepository = userRepository;
-            ModuleRepository = moduleRepository;
-            PartyRepository = partyRepository;
-            StockRepository = stockRepository;
-            PurchaseRepository = purchaseRepository;
-            SaleRepository = saleRepository;
-        }
+        public IProductRepository ProductRepository { get; } = productRepository;
+        public ICategoryRepository CategoryRepository { get; } = categoryRepository;
+        public IUserRepository UserRepository { get; } = userRepository;
+        public IModuleRepository ModuleRepository { get; } = moduleRepository;
+        public IPartyRepository PartyRepository { get; } = partyRepository;
+        public IStockRepository StockRepository { get; } = stockRepository;
+        public IPurchaseRepository PurchaseRepository { get; } = purchaseRepository;
+        public ISaleRepository SaleRepository { get; } = saleRepository;
     }
 }

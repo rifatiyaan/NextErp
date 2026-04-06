@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using NextErp.API.DTO;
+using NextErp.Application.DTOs;
 using NextErp.Application.Interfaces;
 using NextErp.Domain.Entities;
 

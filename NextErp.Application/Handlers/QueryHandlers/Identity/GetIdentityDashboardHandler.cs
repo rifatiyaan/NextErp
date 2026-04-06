@@ -8,24 +8,20 @@ using NextErp.Domain.Entities;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Identity
 {
-    /// <summary>
-    /// Aggregates roles (with DB-driven permission keys), users, and branches
-    /// for the Identity Command Center in a single round-trip.
-    /// </summary>
     public class GetIdentityDashboardHandler(
-        UserManager<ApplicationUser> userManager,
-        RoleManager<IdentityRole<Guid>> roleManager,
-        IApplicationDbContext dbContext,
-        IBranchProvider branchProvider)
-        : IRequestHandler<GetIdentityDashboardQuery, IdentityCommandCenterDto>
+            UserManager<ApplicationUser> userManager,
+            RoleManager<IdentityRole<Guid>> roleManager,
+            IApplicationDbContext dbContext,
+            IBranchProvider branchProvider)
+            : IRequestHandler<GetIdentityDashboardQuery, IdentityCommandCenterDto>
     {
         private static string ResolveSummary(int permCount) => permCount switch
         {
             >= 20 => "Full Access",
             >= 14 => "Full Access (Branch)",
-            >= 8  => "Operational",
-            >= 3  => "Limited",
-            _     => "Read Only"
+            >= 8 => "Operational",
+            >= 3 => "Limited",
+            _ => "Read Only"
         };
 
         public async Task<IdentityCommandCenterDto> Handle(
@@ -76,7 +72,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Identity
             foreach (var user in allUsers)
             {
                 var roles = await userManager.GetRolesAsync(user);
-                var primary    = roles.FirstOrDefault() ?? string.Empty;
+                var primary = roles.FirstOrDefault() ?? string.Empty;
                 var roleEntity = allRoles.FirstOrDefault(r =>
                     string.Equals(r.Name, primary, StringComparison.OrdinalIgnoreCase));
                 userRoleMap[user.Id] = (roleEntity?.Id.ToString() ?? string.Empty, primary);
@@ -94,16 +90,16 @@ namespace NextErp.Application.Handlers.QueryHandlers.Identity
 
                 return new IdentityRoleEntry
                 {
-                    Id               = role.Id.ToString(),
-                    Name             = role.Name ?? string.Empty,
-                    UserCount        = count,
+                    Id = role.Id.ToString(),
+                    Name = role.Name ?? string.Empty,
+                    UserCount = count,
                     PermissionSummary = ResolveSummary(perms.Count),
-                    Permissions      = perms
+                    Permissions = perms
                 };
             }).ToList();
 
             // Build user entries
-            var branchMap  = branches.ToDictionary(b => b.Id, b => b.Name);
+            var branchMap = branches.ToDictionary(b => b.Id, b => b.Name);
             var userEntries = allUsers.Select(user =>
             {
                 userRoleMap.TryGetValue(user.Id, out var roleInfo);
@@ -111,24 +107,24 @@ namespace NextErp.Application.Handlers.QueryHandlers.Identity
 
                 return new IdentityUserEntry
                 {
-                    Id               = user.Id,
-                    UserName         = user.UserName ?? string.Empty,
-                    Email            = user.Email ?? string.Empty,
-                    FirstName        = user.FirstName,
-                    LastName         = user.LastName,
-                    AvatarUrl        = string.IsNullOrWhiteSpace(user.Photo) ? null : user.Photo,
-                    BranchId         = user.BranchId,
-                    BranchName       = branchName,
-                    RoleId           = roleInfo.RoleId,
-                    RoleName         = roleInfo.RoleName,
+                    Id = user.Id,
+                    UserName = user.UserName ?? string.Empty,
+                    Email = user.Email ?? string.Empty,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    AvatarUrl = string.IsNullOrWhiteSpace(user.Photo) ? null : user.Photo,
+                    BranchId = user.BranchId,
+                    BranchName = branchName,
+                    RoleId = roleInfo.RoleId,
+                    RoleName = roleInfo.RoleName,
                     IsEmailConfirmed = user.EmailConfirmed
                 };
             }).ToList();
 
             return new IdentityCommandCenterDto
             {
-                Roles    = roleEntries,
-                Users    = userEntries,
+                Roles = roleEntries,
+                Users = userEntries,
                 Branches = branches
             };
         }

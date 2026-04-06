@@ -7,7 +7,6 @@ namespace NextErp.Application.DTOs
     {
         public partial class Request
         {
-            /// <summary>Multipart slot: existing URL and/or new file; <see cref="IsThumbnail"/> marks the primary image for this request.</summary>
             public class ImageSlot
             {
                 public string? Url { get; set; }
@@ -15,10 +14,8 @@ namespace NextErp.Application.DTOs
                 public bool IsThumbnail { get; set; }
             }
 
-            /// <summary>Gallery row after the API resolves uploads (used by commands).</summary>
             public record GalleryResolvedSlot(string Url, bool IsThumbnail);
 
-            /// <summary>Update existing product image rows: only IsThumbnail changes.</summary>
             public class ProductImageThumbnailUpdate
             {
                 public int Id { get; set; }
@@ -37,16 +34,12 @@ namespace NextErp.Application.DTOs
                 public int? ParentId { get; set; }
                 public Metadata Metadata { get; set; } = new();
 
-                /// <summary>Ordered gallery: model-bound as ImageSlots[i].Url, .File, .IsThumbnail.</summary>
                 public List<ImageSlot> ImageSlots { get; set; } = new();
 
-                /// <summary>When true, clears all product images (no slots required).</summary>
                 public bool ClearGallery { get; set; }
 
-                /// <summary>Per-image thumbnail flags for existing rows (update). Bound as ProductImageThumbnailUpdates[i].Id / .IsThumbnail.</summary>
                 public List<ProductImageThumbnailUpdate> ProductImageThumbnailUpdates { get; set; } = new();
 
-                /// <summary>Set by the API after resolving uploads.</summary>
                 [BindNever]
                 public List<GalleryResolvedSlot>? ResolvedGallery { get; set; }
             }
@@ -75,7 +68,7 @@ namespace NextErp.Application.DTOs
                 public class Single : Base
                 {
                     public bool IsActive { get; set; } = true;
-                    
+
                     // Variation system support (optional - if null/empty, product has no variations)
                     public bool HasVariations { get; set; } = false;
                     public List<ProductVariation.Request.VariationOptionDto>? VariationOptions { get; set; } // null = simple product
@@ -94,7 +87,7 @@ namespace NextErp.Application.DTOs
                 {
                     public int Id { get; set; }
                     public bool IsActive { get; set; } = true;
-                    
+
                     // Variation system support (optional - if null/empty, product has no variations)
                     public bool HasVariations { get; set; } = false;
                     public List<ProductVariation.Request.VariationOptionDto>? VariationOptions { get; set; } // null = simple product
@@ -154,10 +147,8 @@ namespace NextErp.Application.DTOs
                     public List<ProductVariation.Response.ProductVariantDto>? ProductVariants { get; set; }
                     public List<ProductImageItem>? Images { get; set; }
 
-                    /// <summary>Set when list API is called with includeStock=true (sum of variant ledger qty).</summary>
                     public decimal? TotalAvailableQuantity { get; set; }
 
-                    /// <summary>True if any variant ledger is at or below low threshold.</summary>
                     public bool? HasLowStock { get; set; }
                 }
 

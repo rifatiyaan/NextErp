@@ -90,7 +90,6 @@ namespace NextErp.Application.DTOs
                     public Guid? BranchId { get; set; }
                 }
 
-                /// <summary>Lightweight row for paged sale list (no line items or payment lines).</summary>
                 public class ListRow
                 {
                     public Guid Id { get; set; }

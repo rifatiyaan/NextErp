@@ -8,12 +8,11 @@ namespace NextErp.Application.Products;
 
 public static class ProductGallerySync
 {
-    /// <summary>Replace all gallery rows. Pass null to leave the gallery unchanged (update only).</summary>
     public static async Task ApplyFullGalleryAsync(
-        DomainProduct product,
-        IReadOnlyList<Product.Request.GalleryResolvedSlot>? gallery,
-        IApplicationDbContext db,
-        CancellationToken cancellationToken)
+            DomainProduct product,
+            IReadOnlyList<Product.Request.GalleryResolvedSlot>? gallery,
+            IApplicationDbContext db,
+            CancellationToken cancellationToken)
     {
         if (gallery == null)
             return;
@@ -56,13 +55,12 @@ public static class ProductGallerySync
         product.ImageUrl = items[thumbIndex].Url;
     }
 
-    /// <summary>Updates only IsThumbnail for existing rows (no URL changes).</summary>
     public static async Task ApplyThumbnailUpdatesAsync(
-        int productId,
-        IReadOnlyList<Product.Request.ProductImageThumbnailUpdate> updates,
-        DomainProduct product,
-        IApplicationDbContext db,
-        CancellationToken cancellationToken)
+            int productId,
+            IReadOnlyList<Product.Request.ProductImageThumbnailUpdate> updates,
+            DomainProduct product,
+            IApplicationDbContext db,
+            CancellationToken cancellationToken)
     {
         if (updates == null || updates.Count == 0)
             return;

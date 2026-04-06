@@ -7,14 +7,10 @@ using NextErp.Domain.Entities;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Identity
 {
-    /// <summary>
-    /// Atomically replaces all permission keys for a role:
-    /// delete old rows, insert new rows, all in one SaveChanges call.
-    /// </summary>
     public class SetRolePermissionsHandler(
-        IApplicationDbContext dbContext,
-        RoleManager<IdentityRole<Guid>> roleManager)
-        : IRequestHandler<SetRolePermissionsCommand, bool>
+            IApplicationDbContext dbContext,
+            RoleManager<IdentityRole<Guid>> roleManager)
+            : IRequestHandler<SetRolePermissionsCommand, bool>
     {
         public async Task<bool> Handle(
             SetRolePermissionsCommand request,

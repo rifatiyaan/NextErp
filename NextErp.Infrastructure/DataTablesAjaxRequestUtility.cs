@@ -4,10 +4,8 @@ using System.Text;
 
 namespace NextErp.Infrastructure
 {
-    public class DataTablesAjaxRequestUtility
+    public class DataTablesAjaxRequestUtility(HttpRequest request)
     {
-        private HttpRequest _request;
-
         public int Start
         {
             get
@@ -32,11 +30,6 @@ namespace NextErp.Infrastructure
                 return RequestData.Where(x => x.Key == "search[value]")
                     .FirstOrDefault().Value;
             }
-        }
-
-        public DataTablesAjaxRequestUtility(HttpRequest request)
-        {
-            _request = request;
         }
 
         public int PageIndex
@@ -65,11 +58,11 @@ namespace NextErp.Infrastructure
         {
             get
             {
-                var method = _request.Method.ToLower();
+                var method = request.Method.ToLower();
                 if (method == "get")
-                    return _request.Query;
+                    return request.Query;
                 else if (method == "post")
-                    return _request.Form;
+                    return request.Form;
                 else
                     throw new InvalidOperationException("Http method not supported, use get or post");
             }

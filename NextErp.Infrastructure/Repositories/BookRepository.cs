@@ -9,9 +9,7 @@
 //        public BookRepository(IApplicationDbContext context) : base((DbContext)context)
 //        {
 
-
 //        }
-
 
 //        public async Task<(IList<Book> records, int total, int totalDisplay)> GetTableDataAsync(int pageIndex, int pageSize, string searchText, string orderBy)
 //        {

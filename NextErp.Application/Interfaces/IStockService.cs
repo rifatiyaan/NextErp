@@ -14,16 +14,13 @@ namespace NextErp.Application.Interfaces
 
         Task EnsureStockRecordExistsAsync(int productVariantId, CancellationToken cancellationToken = default);
 
-        /// <summary>
-        /// Persists a stock movement and updates <see cref="Stock.AvailableQuantity"/> for the variant and branch in the current unit of work.
-        /// </summary>
         Task RecordMovementAsync(
-            int productVariantId,
-            Guid tenantId,
-            Guid branchId,
-            decimal quantityDelta,
-            StockMovementType type,
-            Guid referenceId,
-            CancellationToken cancellationToken = default);
+                    int productVariantId,
+                    Guid tenantId,
+                    Guid branchId,
+                    decimal quantityDelta,
+                    StockMovementType type,
+                    Guid referenceId,
+                    CancellationToken cancellationToken = default);
     }
 }

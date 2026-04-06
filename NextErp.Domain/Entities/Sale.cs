@@ -41,9 +41,8 @@ namespace NextErp.Domain.Entities
             public string? Notes { get; set; }
         }
 
-        /// <summary>Non-negative discount clamp.</summary>
         public static decimal NormalizeDiscount(decimal discountRequested) =>
-            discountRequested < 0 ? 0 : discountRequested;
+                    discountRequested < 0 ? 0 : discountRequested;
 
         public static decimal CalculateTax(decimal grossTotal, decimal taxRate)
         {
@@ -61,19 +60,18 @@ namespace NextErp.Domain.Entities
             return final < 0 ? 0 : final;
         }
 
-        /// <summary>Creates a sale header with totals derived from line gross, discount, and tax rate.</summary>
         public static Sale Create(
-            Guid id,
-            string saleNumber,
-            string title,
-            Guid tenantId,
-            Guid branchId,
-            Guid? partyId,
-            decimal itemsGrossTotal,
-            decimal discountRequested,
-            decimal taxRate,
-            DateTime saleDate,
-            SaleMetadata? metadata)
+                    Guid id,
+                    string saleNumber,
+                    string title,
+                    Guid tenantId,
+                    Guid branchId,
+                    Guid? partyId,
+                    decimal itemsGrossTotal,
+                    decimal discountRequested,
+                    decimal taxRate,
+                    DateTime saleDate,
+                    SaleMetadata? metadata)
         {
             if (itemsGrossTotal < 0)
                 throw new ArgumentOutOfRangeException(nameof(itemsGrossTotal), "Items gross total cannot be negative.");

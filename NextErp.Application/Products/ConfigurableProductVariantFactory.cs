@@ -5,10 +5,6 @@ using Entities = NextErp.Domain.Entities;
 
 namespace NextErp.Application.Products
 {
-    /// <summary>
-    /// Composes sellable <see cref="Entities.ProductVariant"/> rows from global options/values
-    /// and request payloads (option order + per-variant "optIdx:valIdx" keys).
-    /// </summary>
     public static class ConfigurableProductVariantFactory
     {
         public static async Task<Dictionary<string, Entities.VariationOption>> LoadActiveGlobalOptionsAsync(
@@ -25,16 +21,11 @@ namespace NextErp.Application.Products
             return options.ToDictionary(vo => vo.Name, vo => vo);
         }
 
-        /// <summary>
-        /// Ensures every value string in the product payload exists as an active global
-        /// <see cref="Entities.VariationValue"/> (product edit/create can add new values before variants are saved).
-        /// Call <see cref="LoadActiveGlobalOptionsAsync"/> again after <c>SaveChanges</c> so navigations include new rows.
-        /// </summary>
         public static async Task SyncVariationValuesFromRequestAsync(
-            IReadOnlyList<ProductVariation.Request.VariationOptionDto> optionsInRequestOrder,
-            IReadOnlyDictionary<string, Entities.VariationOption> optionByName,
-            IApplicationDbContext dbContext,
-            CancellationToken cancellationToken)
+                    IReadOnlyList<ProductVariation.Request.VariationOptionDto> optionsInRequestOrder,
+                    IReadOnlyDictionary<string, Entities.VariationOption> optionByName,
+                    IApplicationDbContext dbContext,
+                    CancellationToken cancellationToken)
         {
             foreach (var dto in optionsInRequestOrder)
             {
@@ -52,49 +43,37 @@ namespace NextErp.Application.Products
             }
         }
 
-        /// <summary>
-        /// Maps "optionIndex:valueIndex" → <see cref="Entities.VariationValue"/>.
-        /// Indices match the client: <c>optIdx</c> is the position in <paramref name="optionsInRequestOrder"/>,
-        /// <c>valIdx</c> is the position in that option's <c>Values</c> list (same as the UI cartesian product).
-        /// Each slot resolves by value string on the global option (not by sorted DisplayOrder index).
-        /// </summary>
         public static Dictionary<string, Entities.VariationValue> BuildValueKeyMap(
-            IReadOnlyList<ProductVariation.Request.VariationOptionDto> optionsInRequestOrder,
-            IReadOnlyDictionary<string, Entities.VariationOption> optionByName) =>
-            optionsInRequestOrder
-                .Select((dto, optIdx) => (dto, optIdx, Global: RequireGlobalOption(optionByName, dto.Name)))
-                .SelectMany(t => t.dto.Values.Select((valDto, valIdx) => (
-                    Key: $"{t.optIdx}:{valIdx}",
-                    Entity: MatchActiveVariationValue(t.Global, t.dto.Name, t.optIdx, valIdx, valDto.Value))))
-                .ToDictionary(x => x.Key, x => x.Entity);
+                    IReadOnlyList<ProductVariation.Request.VariationOptionDto> optionsInRequestOrder,
+                    IReadOnlyDictionary<string, Entities.VariationOption> optionByName) =>
+                    optionsInRequestOrder
+                        .Select((dto, optIdx) => (dto, optIdx, Global: RequireGlobalOption(optionByName, dto.Name)))
+                        .SelectMany(t => t.dto.Values.Select((valDto, valIdx) => (
+                            Key: $"{t.optIdx}:{valIdx}",
+                            Entity: MatchActiveVariationValue(t.Global, t.dto.Name, t.optIdx, valIdx, valDto.Value))))
+                        .ToDictionary(x => x.Key, x => x.Entity);
 
-        /// <summary>
-        /// Resolves keys to entities; throws if any key is unknown.
-        /// </summary>
         public static List<Entities.VariationValue> ResolveVariationValues(
-            IEnumerable<string> variationValueKeys,
-            IReadOnlyDictionary<string, Entities.VariationValue> keyMap) =>
-            variationValueKeys.Select(key => RequireKey(keyMap, key)).ToList();
+                    IEnumerable<string> variationValueKeys,
+                    IReadOnlyDictionary<string, Entities.VariationValue> keyMap) =>
+                    variationValueKeys.Select(key => RequireKey(keyMap, key)).ToList();
 
         public static string BuildDisplayTitle(IEnumerable<Entities.VariationValue> values) =>
             string.Join(" / ", values.Select(v => v.Value));
 
-        /// <summary>Stable key for matching the same combination across create/update.</summary>
         public static string BuildCombinationKey(IEnumerable<string> variationValueKeys)
         {
             var ordered = variationValueKeys.Order(StringComparer.Ordinal).ToList();
             return ordered.Count == 0 ? string.Empty : string.Join(",", ordered);
         }
 
-        /// <summary>variation value id → "optIdx:valIdx".</summary>
         public static Dictionary<int, string> BuildVariationValueIdToKeyMap(
-            IReadOnlyDictionary<string, Entities.VariationValue> keyMap) =>
-            keyMap.ToDictionary(kvp => kvp.Value.Id, kvp => kvp.Key);
+                    IReadOnlyDictionary<string, Entities.VariationValue> keyMap) =>
+                    keyMap.ToDictionary(kvp => kvp.Value.Id, kvp => kvp.Key);
 
-        /// <summary>Existing variants keyed by the same combination key as <see cref="BuildCombinationKey"/>.</summary>
         public static Dictionary<string, Entities.ProductVariant> IndexExistingVariantsByCombinationKey(
-            IEnumerable<Entities.ProductVariant> existingVariants,
-            IReadOnlyDictionary<int, string> variationValueIdToKey)
+                    IEnumerable<Entities.ProductVariant> existingVariants,
+                    IReadOnlyDictionary<int, string> variationValueIdToKey)
         {
             return existingVariants
                 .Select(v =>

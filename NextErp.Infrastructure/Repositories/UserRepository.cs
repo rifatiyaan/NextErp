@@ -5,12 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace NextErp.Infrastructure.Repositories
 {
-    public class UserRepository : Repository<User, Guid>, IUserRepository
+    public class UserRepository(IApplicationDbContext context)
+        : Repository<User, Guid>((DbContext)context), IUserRepository
     {
-        public UserRepository(IApplicationDbContext context) : base((DbContext)context)
-        {
-        }
-
         public async Task<User?> GetByEmailAsync(string email)
         {
             var (users, _, _) = await GetAsync(

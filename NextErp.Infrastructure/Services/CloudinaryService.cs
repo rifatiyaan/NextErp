@@ -8,20 +8,12 @@ using System.Linq;
 
 namespace NextErp.Infrastructure.Services
 {
-    public class CloudinaryService : IImageService
+    public class CloudinaryService(IConfiguration configuration) : IImageService
     {
-        private readonly Cloudinary _cloudinary;
-
-        public CloudinaryService(IConfiguration configuration)
-        {
-            var account = new Account(
-                configuration["Cloudinary:CloudName"],
-                configuration["Cloudinary:ApiKey"],
-                configuration["Cloudinary:ApiSecret"]
-            );
-
-            _cloudinary = new Cloudinary(account);
-        }
+        private readonly Cloudinary _cloudinary = new(new Account(
+            configuration["Cloudinary:CloudName"],
+            configuration["Cloudinary:ApiKey"],
+            configuration["Cloudinary:ApiSecret"]));
 
         public async Task<string> UploadImageAsync(IFormFile file)
         {
@@ -59,8 +51,8 @@ namespace NextErp.Infrastructure.Services
         {
             var deleteParams = new DeletionParams(publicId);
             var result = await _cloudinary.DestroyAsync(deleteParams);
-            
-             if (result.Error != null)
+
+            if (result.Error != null)
             {
                 throw new Exception(result.Error.Message);
             }

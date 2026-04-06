@@ -5,13 +5,8 @@ using NextErp.Domain.Entities;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Identity
 {
-    /// <summary>
-    /// Handles quick-swap of a user's branch, role, or both.
-    /// Removes the existing role before assigning the new one to keep
-    /// each user to a single primary role.
-    /// </summary>
     public class PatchUserHandler(UserManager<ApplicationUser> userManager)
-        : IRequestHandler<PatchUserCommand, bool>
+            : IRequestHandler<PatchUserCommand, bool>
     {
         public async Task<bool> Handle(PatchUserCommand request, CancellationToken cancellationToken)
         {

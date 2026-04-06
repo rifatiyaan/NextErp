@@ -9,7 +9,7 @@ namespace NextErp.Application.Mappings
         public TenantProfile()
         {
             // ===== Request DTOs to Entity =====
-            
+
             // Create Request -> Entity
             CreateMap<NextErp.Application.DTOs.Tenant.Request.Create.Single, NextErp.Domain.Entities.Tenant>()
                 .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Name))
@@ -26,7 +26,7 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Branches, opt => opt.Ignore());
 
             // ===== Entity to Response DTOs =====
-            
+
             // Entity -> Get Single Response
             CreateMap<NextErp.Domain.Entities.Tenant, NextErp.Application.DTOs.Tenant.Response.Get.Single>()
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Title))
@@ -41,7 +41,7 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Title));
 
             // ===== Metadata Mappings =====
-            
+
             CreateMap<NextErp.Domain.Entities.Tenant.TenantMetadata, NextErp.Application.DTOs.Tenant.Request.Metadata>()
                 .ReverseMap();
         }

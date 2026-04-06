@@ -7,18 +7,12 @@ using System.Linq.Expressions;
 
 namespace NextErp.Infrastructure.Repositories
 {
-    public abstract class Repository<TEntity, TKey>
+    public abstract class Repository<TEntity, TKey>(DbContext context)
         : IRepository<TEntity, TKey> where TKey : IComparable
         where TEntity : class, IEntity<TKey>
     {
-        protected DbContext _dbContext;
-        protected DbSet<TEntity> _dbSet;
-
-        public Repository(DbContext context)
-        {
-            _dbContext = context;
-            _dbSet = _dbContext.Set<TEntity>();
-        }
+        protected DbContext _dbContext = context;
+        protected DbSet<TEntity> _dbSet = context.Set<TEntity>();
 
         public virtual async Task AddAsync(TEntity entity)
         {
@@ -150,7 +144,7 @@ namespace NextErp.Infrastructure.Repositories
             bool isTrackingOff = false)
         {
             IQueryable<TEntity> baseQuery = _dbSet;
-            
+
             if (filter != null)
             {
                 baseQuery = baseQuery.Where(filter);
@@ -167,8 +161,8 @@ namespace NextErp.Infrastructure.Repositories
             if (isTrackingOff)
                 query = query.AsNoTracking();
 
-            IQueryable<TEntity> orderedQuery = orderBy != null 
-                ? orderBy(query) 
+            IQueryable<TEntity> orderedQuery = orderBy != null
+                ? orderBy(query)
                 : query;
 
             var data = await orderedQuery
@@ -188,17 +182,14 @@ namespace NextErp.Infrastructure.Repositories
             bool isTrackingOff = false) =>
             await GetDynamicFromQueryAsync(_dbSet, filter, orderBy, include, pageIndex, pageSize, isTrackingOff);
 
-        /// <summary>
-        /// Same as <see cref="GetDynamicAsync"/> but starts from an arbitrary root query (e.g. after <c>IgnoreQueryFilters()</c>).
-        /// </summary>
         protected async Task<(IList<TEntity> data, int total, int totalDisplay)> GetDynamicFromQueryAsync(
-            IQueryable<TEntity> rootQuery,
-            Expression<Func<TEntity, bool>> filter = null,
-            string orderBy = null,
-            Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null,
-            int pageIndex = 1,
-            int pageSize = 10,
-            bool isTrackingOff = false)
+                    IQueryable<TEntity> rootQuery,
+                    Expression<Func<TEntity, bool>> filter = null,
+                    string orderBy = null,
+                    Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null,
+                    int pageIndex = 1,
+                    int pageSize = 10,
+                    bool isTrackingOff = false)
         {
             IQueryable<TEntity> baseQuery = rootQuery;
 

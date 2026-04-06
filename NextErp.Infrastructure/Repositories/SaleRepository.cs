@@ -6,14 +6,10 @@ using System.Linq.Expressions;
 
 namespace NextErp.Infrastructure.Repositories
 {
-    public class SaleRepository : Repository<Sale, Guid>, ISaleRepository
+    public class SaleRepository(IApplicationDbContext context)
+        : Repository<Sale, Guid>((DbContext)context), ISaleRepository
     {
-        private readonly DbContext _db;
-
-        public SaleRepository(IApplicationDbContext context) : base((DbContext)context)
-        {
-            _db = (DbContext)context;
-        }
+        private readonly DbContext _db = (DbContext)context;
 
         public async Task<(IList<Sale> records, int total, int totalDisplay)> GetTableDataAsync(
             int pageIndex, int pageSize, string? searchText, string? orderBy)

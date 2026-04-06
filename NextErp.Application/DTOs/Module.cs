@@ -13,17 +13,17 @@ namespace NextErp.Application.DTOs
                 public string? Url { get; set; }
                 public int? ParentId { get; set; }
                 public ModuleType Type { get; set; } = ModuleType.Link;
-                
+
                 // Module-specific (used when Type = Module)
                 public string? Description { get; set; }
                 public string? Version { get; set; }
                 public bool IsInstalled { get; set; }
                 public bool IsEnabled { get; set; }
-                
+
                 // Common
                 public int Order { get; set; }
                 public bool IsExternal { get; set; }
-                
+
                 public Metadata Metadata { get; set; } = new();
             }
 
@@ -108,19 +108,19 @@ namespace NextErp.Application.DTOs
                 public string? Url { get; set; }
                 public int? ParentId { get; set; }
                 public ModuleType Type { get; set; }
-                
+
                 // Module-specific
                 public string? Description { get; set; }
                 public string? Version { get; set; }
                 public bool IsInstalled { get; set; }
                 public bool IsEnabled { get; set; }
                 public DateTime? InstalledAt { get; set; }
-                
+
                 // Common
                 public int Order { get; set; }
                 public bool IsActive { get; set; }
                 public bool IsExternal { get; set; }
-                
+
                 public DateTime CreatedAt { get; set; }
                 public DateTime? UpdatedAt { get; set; }
                 public Guid TenantId { get; set; }

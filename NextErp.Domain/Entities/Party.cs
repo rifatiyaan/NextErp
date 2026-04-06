@@ -9,16 +9,11 @@ namespace NextErp.Domain.Entities
         User = 2
     }
 
-    /// <summary>
-    /// Unified contact record for customers, suppliers, and linked users.
-    /// PartyType determines the role; a single party holds exactly one type.
-    /// </summary>
     [BranchScoped]
     public class Party : IEntity<Guid>, ISoftDeletable
     {
         public Guid Id { get; set; }
 
-        /// <summary>Display / company name.</summary>
         public string Title { get; set; } = null!;
 
         public string? FirstName { get; set; }

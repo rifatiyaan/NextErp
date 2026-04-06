@@ -12,7 +12,6 @@ namespace NextErp.API.Controllers;
 [ApiController]
 public class PaymentController(IMediator mediator) : ControllerBase
 {
-    /// <summary>List payments recorded for a sale (ordered by paid date).</summary>
     [HttpGet("sale/{saleId:guid}")]
     public async Task<IActionResult> GetBySaleId(Guid saleId)
     {
@@ -20,7 +19,6 @@ public class PaymentController(IMediator mediator) : ControllerBase
         return Ok(lines);
     }
 
-    /// <summary>Record a partial or full payment. Sum of payments cannot exceed the sale final amount.</summary>
     [HttpPost]
     public async Task<IActionResult> Record([FromBody] Payment.Request.Record dto)
     {

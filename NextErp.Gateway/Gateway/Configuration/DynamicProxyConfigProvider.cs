@@ -7,36 +7,44 @@ using NextErp.Gateway.Gateway.Abstractions;
 
 namespace NextErp.Gateway.Gateway.Configuration
 {
-    public class ProxyConfigSnapshot : IProxyConfig
+    public class ProxyConfigSnapshot(IReadOnlyList<RouteConfig> routes, IReadOnlyList<ClusterConfig> clusters)
+        : IProxyConfig
     {
-        private readonly CancellationTokenSource _cts = new();
-
-        public ProxyConfigSnapshot(IReadOnlyList<RouteConfig> routes, IReadOnlyList<ClusterConfig> clusters)
+        private static (CancellationTokenSource Cts, IChangeToken Token) CreateChangeInfrastructure()
         {
-            Routes = routes;
-            Clusters = clusters;
-            ChangeToken = new CancellationChangeToken(_cts.Token);
+            var cts = new CancellationTokenSource();
+            return (cts, new CancellationChangeToken(cts.Token));
         }
 
-        public IReadOnlyList<RouteConfig> Routes { get; }
-        public IReadOnlyList<ClusterConfig> Clusters { get; }
-        public IChangeToken ChangeToken { get; }
+        private readonly (CancellationTokenSource Cts, IChangeToken Token) _change = CreateChangeInfrastructure();
 
-        internal void SignalChange() => _cts.Cancel();
+        public IReadOnlyList<RouteConfig> Routes { get; } = routes;
+        public IReadOnlyList<ClusterConfig> Clusters { get; } = clusters;
+        public IChangeToken ChangeToken => _change.Token;
+
+        internal void SignalChange() => _change.Cts.Cancel();
     }
 
-    public class DynamicProxyConfigProvider : IGatewayConfigProvider
+    public class DynamicProxyConfigProvider(IReadOnlyList<RouteConfig> routes, IReadOnlyList<ClusterConfig> clusters)
+        : IGatewayConfigProvider
     {
-        private readonly ConcurrentDictionary<string, RouteConfig> _routes = new();
-        private readonly ConcurrentDictionary<string, ClusterConfig> _clusters = new();
-        private volatile ProxyConfigSnapshot _snapshot;
-
-        public DynamicProxyConfigProvider(IReadOnlyList<RouteConfig> routes, IReadOnlyList<ClusterConfig> clusters)
+        private static ConcurrentDictionary<string, RouteConfig> ToRouteMap(IReadOnlyList<RouteConfig> list)
         {
-            foreach (var r in routes) _routes[r.RouteId] = r;
-            foreach (var c in clusters) _clusters[c.ClusterId] = c;
-            _snapshot = new ProxyConfigSnapshot(routes, clusters);
+            var d = new ConcurrentDictionary<string, RouteConfig>();
+            foreach (var r in list) d[r.RouteId] = r;
+            return d;
         }
+
+        private static ConcurrentDictionary<string, ClusterConfig> ToClusterMap(IReadOnlyList<ClusterConfig> list)
+        {
+            var d = new ConcurrentDictionary<string, ClusterConfig>();
+            foreach (var c in list) d[c.ClusterId] = c;
+            return d;
+        }
+
+        private readonly ConcurrentDictionary<string, RouteConfig> _routes = ToRouteMap(routes);
+        private readonly ConcurrentDictionary<string, ClusterConfig> _clusters = ToClusterMap(clusters);
+        private volatile ProxyConfigSnapshot _snapshot = new(routes, clusters);
 
         public IProxyConfig GetConfig() => _snapshot;
 
@@ -46,7 +54,7 @@ namespace NextErp.Gateway.Gateway.Configuration
             _clusters.Clear();
             foreach (var r in routes) _routes[r.RouteId] = r;
             foreach (var c in clusters) _clusters[c.ClusterId] = c;
-            
+
             SynchronizeSnapshot();
         }
 

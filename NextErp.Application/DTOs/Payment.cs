@@ -2,7 +2,6 @@ using NextErp.Domain.Entities;
 
 namespace NextErp.Application.DTOs
 {
-    /// <summary>API contracts for sale payments (controller name: Payment).</summary>
     public partial class Payment
     {
         public class Request

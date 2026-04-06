@@ -7,35 +7,23 @@ using System.Linq.Expressions;
 
 namespace NextErp.Infrastructure.Repositories;
 
-public class PurchaseRepository : Repository<Purchase, Guid>, IPurchaseRepository
+public class PurchaseRepository(IApplicationDbContext applicationContext, IBranchProvider branchProvider)
+    : Repository<Purchase, Guid>((DbContext)applicationContext), IPurchaseRepository
 {
-    private readonly DbContext _db;
-    private readonly IBranchProvider _branchProvider;
+    private readonly DbContext _db = (DbContext)applicationContext;
 
-    public PurchaseRepository(IApplicationDbContext context, IBranchProvider branchProvider)
-        : base((DbContext)context)
-    {
-        _db = (DbContext)context;
-        _branchProvider = branchProvider;
-    }
-
-    /// <summary>
-    /// Paged purchases. <see cref="EntityFrameworkQueryableExtensions.IgnoreQueryFilters"/> is used only when a
-    /// non-global caller asks for inactive rows or both states; <see cref="BuildRowPredicate"/> then always
-    /// constrains <see cref="Purchase.BranchId"/> so rows cannot cross branches.
-    /// </summary>
     public async Task<(IList<Purchase> records, int total, int totalDisplay)> GetTableDataAsync(
-        int pageIndex,
-        int pageSize,
-        string? searchText,
-        string? orderBy,
-        IReadOnlyList<int>? supplierIds = null,
-        bool? isActiveFilter = null)
+            int pageIndex,
+            int pageSize,
+            string? searchText,
+            string? orderBy,
+            IReadOnlyList<int>? supplierIds = null,
+            bool? isActiveFilter = null)
     {
         _ = supplierIds;
 
-        var nonGlobal = !_branchProvider.IsGlobal();
-        var branchId = nonGlobal ? _branchProvider.GetRequiredBranchId() : (Guid?)null;
+        var nonGlobal = !branchProvider.IsGlobal();
+        var branchId = nonGlobal ? branchProvider.GetRequiredBranchId() : (Guid?)null;
         var root = CreatePurchaseRootQuery(nonGlobal, isActiveFilter);
 
         var filter = BuildRowFilter(searchText, nonGlobal, branchId, isActiveFilter);
@@ -44,10 +32,6 @@ public class PurchaseRepository : Repository<Purchase, Guid>, IPurchaseRepositor
         return await GetDynamicFromQueryAsync(root, filter, orderBy, include, pageIndex, pageSize, true);
     }
 
-    /// <summary>
-    /// Global filter hides inactive (and non-matching branch) rows. When we need inactive or mixed activity,
-    /// bypass filters and re-apply branch in the row predicate.
-    /// </summary>
     private IQueryable<Purchase> CreatePurchaseRootQuery(bool nonGlobal, bool? isActiveFilter)
     {
         var query = _db.Set<Purchase>().AsQueryable();

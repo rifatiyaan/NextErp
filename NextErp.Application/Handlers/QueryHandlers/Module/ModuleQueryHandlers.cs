@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Module
 {
-    public class GetMenuByUserHandler(IApplicationUnitOfWork unitOfWork, IMapper mapper) 
+    public class GetMenuByUserHandler(IApplicationUnitOfWork unitOfWork, IMapper mapper)
         : IRequestHandler<GetMenuByUserQuery, List<DTOs.Module.Response.Get.Single>>
     {
         public async Task<List<DTOs.Module.Response.Get.Single>> Handle(GetMenuByUserQuery request, CancellationToken cancellationToken)
@@ -17,7 +17,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Module
                 .Where(x => x.TenantId == request.TenantId && x.IsActive)
                 .OrderBy(x => x.Order)
                 .ToListAsync(cancellationToken);
-            
+
             var dtos = mapper.Map<List<DTOs.Module.Response.Get.Single>>(menuItems);
             return BuildMenuTree(dtos);
         }
@@ -44,7 +44,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Module
         }
     }
 
-    public class GetAllModulesHandler(IApplicationUnitOfWork unitOfWork, IMapper mapper) 
+    public class GetAllModulesHandler(IApplicationUnitOfWork unitOfWork, IMapper mapper)
         : IRequestHandler<GetAllModulesQuery, List<DTOs.Module.Response.Get.Single>>
     {
         public async Task<List<DTOs.Module.Response.Get.Single>> Handle(GetAllModulesQuery request, CancellationToken cancellationToken)
@@ -58,7 +58,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Module
         }
     }
 
-    public class GetModuleByIdHandler(IApplicationUnitOfWork unitOfWork, IMapper mapper) 
+    public class GetModuleByIdHandler(IApplicationUnitOfWork unitOfWork, IMapper mapper)
         : IRequestHandler<GetModuleByIdQuery, DTOs.Module.Response.Get.Single?>
     {
         public async Task<DTOs.Module.Response.Get.Single?> Handle(GetModuleByIdQuery request, CancellationToken cancellationToken)

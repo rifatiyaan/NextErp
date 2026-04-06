@@ -6,14 +6,10 @@ using System.Linq.Expressions;
 
 namespace NextErp.Infrastructure.Repositories
 {
-    public class PartyRepository : Repository<Party, Guid>, IPartyRepository
+    public class PartyRepository(IApplicationDbContext context)
+        : Repository<Party, Guid>((DbContext)context), IPartyRepository
     {
-        private readonly DbContext _db;
-
-        public PartyRepository(IApplicationDbContext context) : base((DbContext)context)
-        {
-            _db = (DbContext)context;
-        }
+        private readonly DbContext _db = (DbContext)context;
 
         public async Task<(IList<Party> records, int total, int totalDisplay)> GetTableDataAsync(
             int pageIndex, int pageSize, string? searchText, string? orderBy, PartyType? partyType = null)

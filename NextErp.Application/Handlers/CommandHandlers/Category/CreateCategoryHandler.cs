@@ -8,7 +8,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Category
 {
     public class CreateCategoryHandler(
         IApplicationUnitOfWork unitOfWork,
-        IMapper mapper) 
+        IMapper mapper)
         : IRequestHandler<CreateCategoryCommand, int>
     {
         public async Task<int> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)

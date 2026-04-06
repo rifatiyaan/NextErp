@@ -9,7 +9,7 @@ namespace NextErp.Application.Mappings
         public ModuleProfile()
         {
             // ===== Request DTOs to Entity =====
-            
+
             // Create Request -> Entity
             CreateMap<NextErp.Application.DTOs.Module.Request.Create.Single, NextErp.Domain.Entities.Module>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -45,7 +45,7 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.Children, opt => opt.Ignore());
 
             // ===== Entity to Response DTOs =====
-            
+
             // Entity -> Get Single Response
             CreateMap<NextErp.Domain.Entities.Module, NextErp.Application.DTOs.Module.Response.Get.Single>().MaxDepth(1);
 
@@ -59,7 +59,7 @@ namespace NextErp.Application.Mappings
             CreateMap<NextErp.Domain.Entities.Module, NextErp.Application.DTOs.Module.Response.Update.Single>();
 
             // ===== Metadata Mappings =====
-            
+
             CreateMap<NextErp.Domain.Entities.Module.ModuleMetadata, NextErp.Application.DTOs.Module.Request.Metadata>()
                 .ReverseMap();
         }

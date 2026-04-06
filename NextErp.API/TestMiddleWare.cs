@@ -1,20 +1,12 @@
 namespace NextErp.API
 {
-    public class TestMiddleWare
+    public class TestMiddleWare(RequestDelegate next)
     {
-        private readonly RequestDelegate _next;
-
-        public TestMiddleWare(RequestDelegate next)
-        {
-            _next = next;
-        }
-
         public async Task InvokeAsync(HttpContext ctx)
         {
             ctx.Response.Headers.Append("Testing custom middlewares", Guid.NewGuid().ToString());
 
-            await _next(ctx);
+            await next(ctx);
         }
-
     }
 }

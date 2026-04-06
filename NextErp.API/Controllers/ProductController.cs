@@ -159,7 +159,6 @@ public class ProductController(IMediator mediator, IMapper mapper, IImageService
         return Array.Empty<Product.Request.GalleryResolvedSlot>();
     }
 
-    /// <summary>Resolves uploads into <see cref="Product.Request.Base.ResolvedGallery"/>; sets primary <see cref="Product.Request.Base.ImageUrl"/> when the gallery is rebuilt.</summary>
     private async Task ResolveProductGalleryAsync(Product.Request.Base dto, CancellationToken cancellationToken)
     {
         var isUpdate = dto is Product.Request.Update.Single;

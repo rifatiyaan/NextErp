@@ -2,12 +2,10 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NextErp.Application.Common.Exceptions;
 
 namespace NextErp.API;
 
-/// <summary>
-/// Maps unhandled exceptions to RFC 7807 <see cref="ProblemDetails"/> responses (JSON, camelCase).
-/// </summary>
 public sealed class ApiExceptionHandler(IHostEnvironment environment, ILogger<ApiExceptionHandler> logger)
     : IExceptionHandler
 {
@@ -50,6 +48,8 @@ public sealed class ApiExceptionHandler(IHostEnvironment environment, ILogger<Ap
     {
         return exception switch
         {
+            ForbiddenAccessException f => (StatusCodes.Status403Forbidden, "Forbidden", f.Message),
+            UnauthorizedAccessException u => (StatusCodes.Status401Unauthorized, "Unauthorized", u.Message),
             InvalidOperationException op => (StatusCodes.Status400BadRequest, "Bad request", op.Message),
             DbUpdateConcurrencyException => (
                 StatusCodes.Status409Conflict,

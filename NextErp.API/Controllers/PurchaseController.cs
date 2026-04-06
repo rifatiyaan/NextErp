@@ -90,7 +90,6 @@ public class PurchaseController(IMediator mediator, IMapper mapper) : Controller
         return Ok(report);
     }
 
-    /// <summary>Maps multi-select status checkboxes to a single nullable IsActive filter (both = no filter).</summary>
     private static bool? ParsePurchaseStatusFilter(string[]? status)
     {
         if (status == null || status.Length == 0)

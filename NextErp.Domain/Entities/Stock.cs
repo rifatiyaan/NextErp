@@ -2,7 +2,6 @@ using NextErp.Domain.Common;
 
 namespace NextErp.Domain.Entities
 {
-    /// <summary>Branch-scoped stock row per sellable SKU.</summary>
     [BranchScoped]
     public class Stock : IEntity<Guid>, ISoftDeletable
     {
@@ -11,16 +10,16 @@ namespace NextErp.Domain.Entities
 
         public int ProductVariantId { get; set; }
         public ProductVariant ProductVariant { get; set; } = null!;
-        
+
         public decimal AvailableQuantity { get; set; }
 
         public bool IsActive { get; set; } = true;
-        
+
         public byte[] RowVersion { get; set; } = null!;
-        
+
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
-        
+
         public Guid TenantId { get; set; }
         public Guid BranchId { get; set; }
     }
