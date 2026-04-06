@@ -43,4 +43,17 @@ public class StockController(IMediator mediator, IMapper mapper) : ControllerBas
         var report = await mediator.Send(new GetLowStockReportQuery());
         return Ok(report);
     }
+
+    /// <summary>Append-only movement history for a variant in a branch (admin / inventory).</summary>
+    [HttpGet("variant/{productVariantId:int}/movements")]
+    public async Task<IActionResult> GetMovementHistory(
+        int productVariantId,
+        [FromQuery] Guid branchId)
+    {
+        if (branchId == Guid.Empty)
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Bad request", detail: "branchId is required.");
+
+        var rows = await mediator.Send(new GetStockMovementHistoryQuery(productVariantId, branchId));
+        return Ok(rows);
+    }
 }

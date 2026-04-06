@@ -11,7 +11,18 @@ public class StockMovementConfiguration : IEntityTypeConfiguration<StockMovement
         builder.HasKey(m => m.Id);
         builder.Property(m => m.Id).ValueGeneratedNever();
 
-        builder.Property(m => m.Quantity).HasPrecision(18, 2);
+        builder.Property(m => m.QuantityChanged).HasPrecision(18, 2);
+        builder.Property(m => m.PreviousQuantity).HasPrecision(18, 2);
+        builder.Property(m => m.NewQuantity).HasPrecision(18, 2);
+
+        builder.Property(m => m.MovementType)
+            .HasColumnName("Type")
+            .HasConversion<int>();
+
+        builder.HasOne(m => m.Stock)
+            .WithMany(s => s.Movements)
+            .HasForeignKey(m => m.StockId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(m => m.ProductVariant)
             .WithMany()
@@ -20,7 +31,9 @@ public class StockMovementConfiguration : IEntityTypeConfiguration<StockMovement
 
         builder.Property(m => m.BranchId).IsRequired();
         builder.HasIndex(m => m.BranchId);
+        builder.HasIndex(m => m.StockId);
         builder.HasIndex(m => new { m.ProductVariantId, m.BranchId, m.CreatedAt });
         builder.HasIndex(m => m.ReferenceId);
     }
 }
+

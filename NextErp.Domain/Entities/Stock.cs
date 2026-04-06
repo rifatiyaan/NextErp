@@ -22,5 +22,7 @@ namespace NextErp.Domain.Entities
 
         public Guid TenantId { get; set; }
         public Guid BranchId { get; set; }
+
+        public ICollection<StockMovement> Movements { get; set; } = new List<StockMovement>();
     }
 }

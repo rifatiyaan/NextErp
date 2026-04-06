@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NextErp.Infrastructure;
 
@@ -11,9 +12,10 @@ using NextErp.Infrastructure;
 namespace NextErp.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260406180000_RemoveProductVariantStock")]
+    partial class RemoveProductVariantStock
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -625,40 +627,26 @@ namespace NextErp.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<int>("MovementType")
-                        .HasColumnType("int")
-                        .HasColumnName("Type");
-
-                    b.Property<decimal>("NewQuantity")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("PreviousQuantity")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<int>("ProductVariantId")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("QuantityChanged")
+                    b.Property<decimal>("Quantity")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<Guid>("ReferenceId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("StockId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("BranchId");
 
-                    b.HasIndex("ProductVariantId", "BranchId", "CreatedAt");
-
                     b.HasIndex("ReferenceId");
 
-                    b.HasIndex("StockId");
+                    b.HasIndex("ProductVariantId", "BranchId", "CreatedAt");
 
                     b.ToTable("StockMovements");
                 });
@@ -1783,15 +1771,7 @@ namespace NextErp.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("NextErp.Domain.Entities.Stock", "Stock")
-                        .WithMany("Movements")
-                        .HasForeignKey("StockId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("ProductVariant");
-
-                    b.Navigation("Stock");
                 });
 
             modelBuilder.Entity("NextErp.Domain.Entities.VariationValue", b =>
@@ -1881,11 +1861,6 @@ namespace NextErp.Infrastructure.Migrations
                     b.Navigation("ProductVariants");
 
                     b.Navigation("ProductVariationOptions");
-                });
-
-            modelBuilder.Entity("NextErp.Domain.Entities.Stock", b =>
-                {
-                    b.Navigation("Movements");
                 });
 
             modelBuilder.Entity("NextErp.Domain.Entities.ProductVariant", b =>

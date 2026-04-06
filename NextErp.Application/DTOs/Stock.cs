@@ -45,6 +45,21 @@ namespace NextErp.Application.DTOs
                 public int? ReorderLevel { get; set; }
                 public string Status { get; set; } = null!;
             }
+
+            /// <summary>Single immutable ledger line for stock history APIs.</summary>
+            public class MovementLine
+            {
+                public Guid Id { get; set; }
+                public Guid StockId { get; set; }
+                public int ProductVariantId { get; set; }
+                public Guid BranchId { get; set; }
+                public decimal QuantityChanged { get; set; }
+                public decimal PreviousQuantity { get; set; }
+                public decimal NewQuantity { get; set; }
+                public string MovementType { get; set; } = null!;
+                public Guid ReferenceId { get; set; }
+                public DateTime CreatedAt { get; set; }
+            }
         }
     }
 }

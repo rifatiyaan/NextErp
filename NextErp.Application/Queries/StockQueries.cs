@@ -11,4 +11,7 @@ namespace NextErp.Application.Queries
     public record GetCurrentStockReportQuery() : IRequest<Stock.Response.CurrentStockReport>;
 
     public record GetLowStockReportQuery() : IRequest<Stock.Response.LowStockReport>;
+
+    public record GetStockMovementHistoryQuery(int ProductVariantId, Guid BranchId)
+        : IRequest<IReadOnlyList<Stock.Response.MovementLine>>;
 }

@@ -11,6 +11,7 @@ using NextErp.Application.Common.Behaviors;
 using NextErp.Application.Interfaces;
 using NextErp.Domain.Entities;
 using NextErp.Infrastructure;
+using NextErp.Infrastructure.Persistence;
 using NextErp.Infrastructure.Services;
 using Serilog;
 using Serilog.Events;
@@ -69,8 +70,10 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 // =======================================================
 // 🔹 DB CONTEXT
 // =======================================================
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddSingleton<StockMovementImmutabilitySaveInterceptor>();
+builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
 {
+    options.AddInterceptors(sp.GetRequiredService<StockMovementImmutabilitySaveInterceptor>());
     if (dbProvider.Equals("Postgres", StringComparison.OrdinalIgnoreCase))
     {
         options.UseNpgsql(connectionString,

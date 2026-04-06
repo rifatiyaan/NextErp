@@ -53,7 +53,7 @@ public class StockService(
             variant.TenantId,
             branchId,
             -quantity,
-            StockMovementType.Adjustment,
+            StockMovementType.ManualAdjustment,
             Guid.Empty,
             cancellationToken);
     }
@@ -70,7 +70,7 @@ public class StockService(
             variant.TenantId,
             branchId,
             quantity,
-            StockMovementType.Adjustment,
+            StockMovementType.ManualAdjustment,
             Guid.Empty,
             cancellationToken);
     }
@@ -87,7 +87,7 @@ public class StockService(
         Guid tenantId,
         Guid branchId,
         decimal quantityDelta,
-        StockMovementType type,
+        StockMovementType movementType,
         Guid referenceId,
         CancellationToken cancellationToken = default)
     {
@@ -103,25 +103,52 @@ public class StockService(
             quantityDelta,
             cancellationToken);
 
-        var projected = stock.AvailableQuantity + quantityDelta;
-        if (projected < 0)
-            throw InsufficientStock(variant, stock.AvailableQuantity, -quantityDelta);
+        await ApplyQuantityChangeAndRecordMovementAsync(
+            stock,
+            variant,
+            branchId,
+            quantityDelta,
+            movementType,
+            referenceId,
+            cancellationToken);
 
-        await dbContext.StockMovements.AddAsync(new StockMovement
-        {
-            Id = Guid.NewGuid(),
-            ProductVariantId = productVariantId,
-            BranchId = branchId,
-            IsActive = true,
-            Quantity = quantityDelta,
-            Type = type,
-            ReferenceId = referenceId,
-            CreatedAt = DateTime.UtcNow
-        }, cancellationToken);
-
-        ApplyQuantityChange(stock, quantityDelta);
         await stockRepository.EditAsync(stock);
         await SyncProductAggregateStockAsync(variant.ProductId, cancellationToken);
+    }
+
+    private async Task ApplyQuantityChangeAndRecordMovementAsync(
+        Stock stock,
+        ProductVariant variant,
+        Guid branchId,
+        decimal quantityDelta,
+        StockMovementType movementType,
+        Guid referenceId,
+        CancellationToken cancellationToken)
+    {
+        var previousQuantity = stock.AvailableQuantity;
+        var newQuantity = previousQuantity + quantityDelta;
+        if (newQuantity < 0)
+            throw InsufficientStock(variant, previousQuantity, -quantityDelta);
+
+        await dbContext.StockMovements.AddAsync(
+            new StockMovement
+            {
+                Id = Guid.NewGuid(),
+                StockId = stock.Id,
+                ProductVariantId = variant.Id,
+                BranchId = branchId,
+                IsActive = true,
+                QuantityChanged = quantityDelta,
+                PreviousQuantity = previousQuantity,
+                NewQuantity = newQuantity,
+                MovementType = movementType,
+                ReferenceId = referenceId,
+                CreatedAt = DateTime.UtcNow
+            },
+            cancellationToken);
+
+        stock.AvailableQuantity = newQuantity;
+        stock.UpdatedAt = DateTime.UtcNow;
     }
 
     private async Task<Stock> GetOrCreateStockForMovementAsync(
@@ -157,7 +184,6 @@ public class StockService(
         return available >= requiredQuantity;
     }
 
-    /// <summary>Reads on-hand quantity for the current branch context. Returns 0 when no stock row exists (no DB row created).</summary>
     private async Task<decimal> GetAvailableQuantityReadOnlyAsync(
         int productVariantId,
         CancellationToken cancellationToken)
@@ -213,12 +239,6 @@ public class StockService(
             BranchId = branchId,
             CreatedAt = DateTime.UtcNow
         };
-
-    private static void ApplyQuantityChange(Stock stock, decimal delta)
-    {
-        stock.AvailableQuantity = Math.Max(0, stock.AvailableQuantity + delta);
-        stock.UpdatedAt = DateTime.UtcNow;
-    }
 
     private async Task SyncProductAggregateStockAsync(int productId, CancellationToken cancellationToken)
     {
