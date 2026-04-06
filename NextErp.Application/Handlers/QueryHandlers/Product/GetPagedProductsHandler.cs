@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using NextErp.Application;
 using NextErp.Application.Common;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Products;
 using NextErp.Application.Queries;
 using Entities = NextErp.Domain.Entities;
 using ProductDto = NextErp.Application.DTOs.Product;
@@ -12,6 +13,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Product;
 
 public class GetPagedProductsHandler(
     IApplicationUnitOfWork unitOfWork,
+    IApplicationDbContext dbContext,
     IBranchProvider branchProvider,
     IMapper mapper)
     : IRequestHandler<GetPagedProductsQuery, PagedResult<ProductDto.Response.Get.Single>>
@@ -52,6 +54,20 @@ public class GetPagedProductsHandler(
 
         var dtos = mapper.Map<List<ProductDto.Response.Get.Single>>(records);
 
+        if (dtos.Count > 0)
+        {
+            await ProductVariantStockLookup.EnrichProductListVariantStocksAsync(dtos, dbContext, branchProvider, cancellationToken)
+                .ConfigureAwait(false);
+
+            var aggregateTotals = await ProductVariantStockLookup.GetProductAggregateStockTotalsAsync(
+                    dbContext,
+                    records.Select(r => r.Id).ToList(),
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            ProductVariantStockLookup.ApplyProductAggregateStocks(dtos, aggregateTotals);
+        }
+
         if (request.IncludeStock && dtos.Count > 0)
             ApplyStockColumns(dtos, await LoadStockLookupAsync(records, cancellationToken));
 
@@ -83,8 +99,8 @@ public class GetPagedProductsHandler(
 
     private IQueryable<Entities.Product> ApplyOutOfStock(IQueryable<Entities.Product> query) =>
         branchProvider.IsGlobal()
-            ? query.Where(p => p.IsActive && !p.ProductVariants.Any(v => v.Stock > 0))
-            : query.Where(p => !p.ProductVariants.Any(v => v.Stock > 0));
+            ? query.Where(p => p.IsActive && !p.ProductVariants.Any(v => v.StockRecords.Any(s => s.AvailableQuantity > 0)))
+            : query.Where(p => !p.ProductVariants.Any(v => v.StockRecords.Any(s => s.AvailableQuantity > 0)));
 
     private async Task<IReadOnlyDictionary<int, (decimal TotalAvailable, bool HasLowStock)>> LoadStockLookupAsync(
         IReadOnlyList<Entities.Product> records,
@@ -96,21 +112,20 @@ public class GetPagedProductsHandler(
     }
 
     private static void ApplyStockColumns(
-        List<ProductDto.Response.Get.Single> dtos,
+        IReadOnlyList<ProductDto.Response.Get.Single> dtos,
         IReadOnlyDictionary<int, (decimal TotalAvailable, bool HasLowStock)> lookup)
     {
         foreach (var d in dtos)
         {
-            if (lookup.TryGetValue(d.Id, out var row))
-            {
-                d.TotalAvailableQuantity = row.TotalAvailable;
-                d.HasLowStock = row.HasLowStock;
-            }
-            else
+            if (!lookup.TryGetValue(d.Id, out var row))
             {
                 d.TotalAvailableQuantity = 0m;
                 d.HasLowStock = false;
+                continue;
             }
+
+            d.TotalAvailableQuantity = row.TotalAvailable;
+            d.HasLowStock = row.HasLowStock;
         }
     }
 }

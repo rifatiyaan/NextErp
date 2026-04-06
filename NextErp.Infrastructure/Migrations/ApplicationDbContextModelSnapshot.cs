@@ -717,9 +717,6 @@ namespace NextErp.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("Stock")
-                        .HasColumnType("int");
-
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uniqueidentifier");
 

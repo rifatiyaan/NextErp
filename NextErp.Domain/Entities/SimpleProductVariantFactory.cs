@@ -14,7 +14,6 @@ namespace NextErp.Domain.Entities
                 ProductId = product.Id,
                 Sku = sku,
                 Price = product.Price,
-                Stock = product.Stock,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 TenantId = product.TenantId,

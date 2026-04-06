@@ -228,6 +228,7 @@ public class ProductProfile : Profile
         CreateMap<VariationValue, DTOs.ProductVariation.Response.VariationValueDto>();
 
         CreateMap<ProductVariant, DTOs.ProductVariation.Response.ProductVariantDto>()
+            .ForMember(dest => dest.Stock, opt => opt.Ignore())
             .ForMember(dest => dest.VariationValues, opt => opt.MapFrom(src => src.VariationValues));
     }
 

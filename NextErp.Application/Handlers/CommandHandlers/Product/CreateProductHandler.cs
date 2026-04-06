@@ -38,6 +38,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
             await dbContext.SaveChangesAsync(cancellationToken);
 
             await stockService.EnsureStockRecordExistsAsync(variant.Id, cancellationToken);
+            await stockService.SetAvailableQuantityAsync(variant.Id, request.Stock, cancellationToken);
+
             await unitOfWork.SaveAsync();
 
             return product.Id;

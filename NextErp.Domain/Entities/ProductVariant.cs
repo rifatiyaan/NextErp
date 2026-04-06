@@ -12,7 +12,6 @@ namespace NextErp.Domain.Entities
         // Variant-specific properties
         public string Sku { get; set; } = null!; // Unique SKU for this variant
         public decimal Price { get; set; } // Price for this specific variant
-        public int Stock { get; set; } // Stock quantity for this variant
         public bool IsActive { get; set; } = true; // Status
 
         public DateTime CreatedAt { get; set; }

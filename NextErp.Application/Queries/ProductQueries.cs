@@ -1,12 +1,11 @@
 using NextErp.Application.Common;
 using MediatR;
-using Entities = NextErp.Domain.Entities;
 using DTOs = NextErp.Application.DTOs;
 
 namespace NextErp.Application.Queries
 {
     // Get Product by Id
-    public record GetProductByIdQuery(int Id) : IRequest<Entities.Product?>;
+    public record GetProductByIdQuery(int Id) : IRequest<DTOs.Product.Response.Get.Single?>;
 
     // Get Paged Products
     public record GetPagedProductsQuery(

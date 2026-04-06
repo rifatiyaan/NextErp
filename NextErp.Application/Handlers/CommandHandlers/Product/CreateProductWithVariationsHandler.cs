@@ -79,8 +79,26 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
 
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            product.Stock = await SumVariantStockAsync(product.Id, dbContext, cancellationToken);
             await EnsureStockRowsForProductVariantsAsync(product, dbContext, stockService, cancellationToken);
+
+            var savedVariants = await dbContext.ProductVariants
+                .Where(pv => pv.ProductId == product.Id)
+                .ToListAsync(cancellationToken);
+
+            foreach (var variantDto in request.ProductVariants)
+            {
+                var sku = variantDto.Sku.Trim();
+                var entity = savedVariants.FirstOrDefault(v => v.Sku == sku);
+                if (entity == null)
+                    continue;
+
+                await stockService.SetAvailableQuantityAsync(entity.Id, variantDto.Stock, cancellationToken);
+            }
+
+            product.Stock = await ProductVariantStockLookup.GetProductAggregateStockTotalAsync(
+                product.Id,
+                dbContext,
+                cancellationToken);
 
             await dbContext.SaveChangesAsync(cancellationToken);
             return product.Id;
@@ -111,14 +129,6 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                 await dbContext.ProductVariationOptions.AddAsync(pvo, cancellationToken);
             }
         }
-
-        private static Task<int> SumVariantStockAsync(
-            int productId,
-            IApplicationDbContext dbContext,
-            CancellationToken cancellationToken) =>
-            dbContext.ProductVariants
-                .Where(pv => pv.ProductId == productId)
-                .SumAsync(pv => pv.Stock, cancellationToken);
 
         private static async Task EnsureStockRowsForProductVariantsAsync(
             Entities.Product product,

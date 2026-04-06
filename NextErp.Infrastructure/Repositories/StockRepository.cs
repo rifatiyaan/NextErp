@@ -60,6 +60,7 @@ public class StockRepository(IApplicationDbContext applicationContext, IBranchPr
             return Array.Empty<(int, decimal, bool)>();
 
         const decimal lowThreshold = 10m;
+        var branchId = branchProvider.GetBranchId();
 
         var rows = await _db.Set<ProductVariant>()
             .AsNoTracking()
@@ -68,8 +69,13 @@ public class StockRepository(IApplicationDbContext applicationContext, IBranchPr
             .Select(g => new
             {
                 ProductId = g.Key,
-                TotalAvailable = g.SelectMany(v => v.StockRecords).Select(s => (decimal?)s.AvailableQuantity).Sum() ?? 0m,
-                HasLowStock = g.SelectMany(v => v.StockRecords).Any(s => s.AvailableQuantity <= lowThreshold),
+                TotalAvailable = g.SelectMany(v => v.StockRecords)
+                    .Where(sr => !branchId.HasValue || sr.BranchId == branchId.Value)
+                    .Select(s => (decimal?)s.AvailableQuantity)
+                    .Sum() ?? 0m,
+                HasLowStock = g.SelectMany(v => v.StockRecords)
+                    .Where(sr => !branchId.HasValue || sr.BranchId == branchId.Value)
+                    .Any(s => s.AvailableQuantity <= lowThreshold),
             })
             .ToListAsync(cancellationToken);
 

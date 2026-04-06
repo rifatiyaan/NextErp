@@ -11,6 +11,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
     public class UpdateProductHandler(
         IApplicationUnitOfWork unitOfWork,
         IApplicationDbContext dbContext,
+        IStockService stockService,
         IMapper mapper)
         : IRequestHandler<UpdateProductCommand, Unit>
     {
@@ -68,15 +69,10 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                 return;
 
             def.Price = price;
-            def.Stock = stock;
             def.UpdatedAt = DateTime.UtcNow;
 
-            var stockRow = await dbContext.Stocks.FirstOrDefaultAsync(s => s.ProductVariantId == def.Id, cancellationToken);
-            if (stockRow == null)
-                return;
-
-            stockRow.AvailableQuantity = stock;
-            stockRow.UpdatedAt = DateTime.UtcNow;
+            await stockService.EnsureStockRecordExistsAsync(def.Id, cancellationToken);
+            await stockService.SetAvailableQuantityAsync(def.Id, stock, cancellationToken);
         }
     }
 }

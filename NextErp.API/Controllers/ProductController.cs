@@ -17,13 +17,11 @@ public class ProductController(IMediator mediator, IMapper mapper, IImageService
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(int id)
     {
-        var query = new GetProductByIdQuery(id);
-        var product = await mediator.Send(query);
+        var dto = await mediator.Send(new GetProductByIdQuery(id));
 
-        if (product == null)
+        if (dto == null)
             return NotFound();
 
-        var dto = mapper.Map<Product.Response.Get.Single>(product);
         return Ok(dto);
     }
 
@@ -100,8 +98,9 @@ public class ProductController(IMediator mediator, IMapper mapper, IImageService
             id = await mediator.Send(command);
         }
 
-        var product = await mediator.Send(new GetProductByIdQuery(id));
-        var response = mapper.Map<Product.Response.Get.Single>(product);
+        var response = await mediator.Send(new GetProductByIdQuery(id));
+        if (response == null)
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Not found", detail: "Product was not found after create.");
 
         return CreatedAtAction(nameof(Get), new { id }, response);
     }

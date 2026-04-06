@@ -20,7 +20,26 @@ public class StockService(
             : CheckAvailabilityInternalAsync(productVariantId, requiredQuantity, cancellationToken);
 
     public Task<decimal> GetAvailableStockAsync(int productVariantId, CancellationToken cancellationToken = default) =>
-        ResolveAvailableQuantityAsync(productVariantId, cancellationToken);
+        GetAvailableQuantityReadOnlyAsync(productVariantId, cancellationToken);
+
+    public async Task SetAvailableQuantityAsync(
+        int productVariantId,
+        decimal targetQuantity,
+        CancellationToken cancellationToken = default)
+    {
+        if (targetQuantity < 0)
+            throw new ArgumentOutOfRangeException(nameof(targetQuantity));
+
+        var current = await GetAvailableQuantityReadOnlyAsync(productVariantId, cancellationToken).ConfigureAwait(false);
+        var delta = targetQuantity - current;
+        if (delta == 0)
+            return;
+
+        if (delta > 0)
+            await IncreaseStockAsync(productVariantId, delta, cancellationToken).ConfigureAwait(false);
+        else
+            await ReduceStockAsync(productVariantId, -delta, cancellationToken).ConfigureAwait(false);
+    }
 
     public async Task ReduceStockAsync(int productVariantId, decimal quantity, CancellationToken cancellationToken = default)
     {
@@ -100,7 +119,7 @@ public class StockService(
             CreatedAt = DateTime.UtcNow
         }, cancellationToken);
 
-        ApplyQuantityChange(stock, variant, quantityDelta);
+        ApplyQuantityChange(stock, quantityDelta);
         await stockRepository.EditAsync(stock);
         await SyncProductAggregateStockAsync(variant.ProductId, cancellationToken);
     }
@@ -134,16 +153,23 @@ public class StockService(
         decimal requiredQuantity,
         CancellationToken cancellationToken)
     {
-        var available = await ResolveAvailableQuantityAsync(productVariantId, cancellationToken);
+        var available = await GetAvailableQuantityReadOnlyAsync(productVariantId, cancellationToken);
         return available >= requiredQuantity;
     }
 
-    private async Task<decimal> ResolveAvailableQuantityAsync(int productVariantId, CancellationToken cancellationToken)
+    /// <summary>Reads on-hand quantity for the current branch context. Returns 0 when no stock row exists (no DB row created).</summary>
+    private async Task<decimal> GetAvailableQuantityReadOnlyAsync(
+        int productVariantId,
+        CancellationToken cancellationToken)
     {
-        var variant = await RequireVariantAsync(productVariantId, cancellationToken);
+        _ = await RequireVariantAsync(productVariantId, cancellationToken);
         var branchId = branchProvider.GetRequiredBranchId();
-        var stock = await UpsertStockRowAsync(productVariantId, variant.TenantId, branchId, cancellationToken);
-        return stock.AvailableQuantity;
+        var existing = await stockRepository.GetByProductVariantIdAndBranchIdAsync(
+            productVariantId,
+            branchId,
+            cancellationToken);
+
+        return existing?.AvailableQuantity ?? 0m;
     }
 
     private async Task<ProductVariant> RequireVariantAsync(int productVariantId, CancellationToken cancellationToken)
@@ -188,24 +214,32 @@ public class StockService(
             CreatedAt = DateTime.UtcNow
         };
 
-    private static void ApplyQuantityChange(Stock stock, ProductVariant variant, decimal delta)
+    private static void ApplyQuantityChange(Stock stock, decimal delta)
     {
         stock.AvailableQuantity = Math.Max(0, stock.AvailableQuantity + delta);
         stock.UpdatedAt = DateTime.UtcNow;
-        variant.Stock = (int)Math.Floor(stock.AvailableQuantity);
-        variant.UpdatedAt = DateTime.UtcNow;
     }
 
     private async Task SyncProductAggregateStockAsync(int productId, CancellationToken cancellationToken)
     {
         var product = await dbContext.Products
-            .Include(p => p.ProductVariants)
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
 
         if (product == null)
             return;
 
-        product.Stock = product.ProductVariants.Sum(pv => pv.Stock);
+        var variantIds = await dbContext.ProductVariants
+            .Where(pv => pv.ProductId == productId)
+            .Select(pv => pv.Id)
+            .ToListAsync(cancellationToken);
+
+        var total = variantIds.Count == 0
+            ? 0m
+            : await dbContext.Stocks
+                .Where(s => s.BranchId == product.BranchId && variantIds.Contains(s.ProductVariantId))
+                .SumAsync(s => s.AvailableQuantity, cancellationToken);
+
+        product.Stock = (int)Math.Floor(total);
         product.UpdatedAt = DateTime.UtcNow;
     }
 

@@ -8,6 +8,9 @@ namespace NextErp.Application.Interfaces
 
         Task<decimal> GetAvailableStockAsync(int productVariantId, CancellationToken cancellationToken = default);
 
+        /// <summary>Sets on-hand quantity for the variant in the current branch (via adjustments). Does not create a row until a positive adjustment occurs.</summary>
+        Task SetAvailableQuantityAsync(int productVariantId, decimal targetQuantity, CancellationToken cancellationToken = default);
+
         Task ReduceStockAsync(int productVariantId, decimal quantity, CancellationToken cancellationToken = default);
 
         Task IncreaseStockAsync(int productVariantId, decimal quantity, CancellationToken cancellationToken = default);
