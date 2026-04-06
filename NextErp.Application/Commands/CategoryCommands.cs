@@ -1,4 +1,5 @@
 using MediatR;
+using NextErp.Application.Common.Interfaces;
 
 namespace NextErp.Application.Commands
 {
@@ -8,7 +9,7 @@ namespace NextErp.Application.Commands
         string? Description,
         int? ParentId,
         List<CategoryAsset>? Assets = null
-    ) : IRequest<int>; // Returns Id of created category
+    ) : IRequest<int>, ITransactionalRequest; // Returns Id of created category
 
     // Update
     public record UpdateCategoryCommand(
@@ -18,7 +19,7 @@ namespace NextErp.Application.Commands
         int? ParentId,
         bool IsActive = true,
         List<CategoryAsset>? Assets = null
-    ) : IRequest<Unit>; // No return
+    ) : IRequest<Unit>, ITransactionalRequest; // No return
 
     public record CategoryAsset(
         string Filename,

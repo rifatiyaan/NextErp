@@ -1,4 +1,5 @@
 using MediatR;
+using NextErp.Application.Common.Interfaces;
 using NextErp.Domain.Entities;
 
 namespace NextErp.Application.Commands
@@ -18,7 +19,7 @@ namespace NextErp.Application.Commands
         string? Notes,
         PartyType PartyType,
         bool IsActive = true
-    ) : IRequest<Guid>;
+    ) : IRequest<Guid>, ITransactionalRequest;
 
     public record UpdatePartyCommand(
         Guid Id,
@@ -36,5 +37,5 @@ namespace NextErp.Application.Commands
         string? Notes,
         PartyType PartyType,
         bool IsActive = true
-    ) : IRequest<Unit>;
+    ) : IRequest<Unit>, ITransactionalRequest;
 }

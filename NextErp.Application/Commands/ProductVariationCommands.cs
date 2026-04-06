@@ -1,13 +1,14 @@
 using MediatR;
+using NextErp.Application.Common.Interfaces;
 using NextErp.Application.DTOs;
 
 namespace NextErp.Application.Commands
 {
-    public record CreateVariationOptionCommandGlobal(string Name, int DisplayOrder, Guid TenantId, Guid? BranchId = null) : IRequest<int>;
+    public record CreateVariationOptionCommandGlobal(string Name, int DisplayOrder, Guid TenantId, Guid? BranchId = null) : IRequest<int>, ITransactionalRequest;
 
-    public record AssignVariationOptionToProductCommand(int ProductId, int VariationOptionId, int DisplayOrder = 0) : IRequest<int>;
+    public record AssignVariationOptionToProductCommand(int ProductId, int VariationOptionId, int DisplayOrder = 0) : IRequest<int>, ITransactionalRequest;
 
-    public record UnassignVariationOptionFromProductCommand(int ProductId, int VariationOptionId) : IRequest;
+    public record UnassignVariationOptionFromProductCommand(int ProductId, int VariationOptionId) : IRequest, ITransactionalRequest;
 
     public record CreateProductWithVariationsCommand(
         // Base product fields
@@ -26,16 +27,16 @@ namespace NextErp.Application.Commands
         // Variation data
         List<ProductVariation.Request.VariationOptionDto> VariationOptions,
         List<ProductVariation.Request.ProductVariantDto> ProductVariants
-    ) : IRequest<int>; // Returns Id of created product
+    ) : IRequest<int>, ITransactionalRequest; // Returns Id of created product
 
-    public record UpdateVariationOptionCommand(int Id, string Name, int DisplayOrder) : IRequest;
+    public record UpdateVariationOptionCommand(int Id, string Name, int DisplayOrder) : IRequest, ITransactionalRequest;
 
-    public record DeleteVariationOptionCommand(int Id) : IRequest;
+    public record DeleteVariationOptionCommand(int Id) : IRequest, ITransactionalRequest;
 
-    public record CreateVariationValueCommand(int VariationOptionId, string Value, int DisplayOrder) : IRequest<int>;
+    public record CreateVariationValueCommand(int VariationOptionId, string Value, int DisplayOrder) : IRequest<int>, ITransactionalRequest;
 
-    public record UpdateVariationValueCommand(int Id, string Value, int DisplayOrder) : IRequest;
+    public record UpdateVariationValueCommand(int Id, string Value, int DisplayOrder) : IRequest, ITransactionalRequest;
 
-    public record DeleteVariationValueCommand(int Id) : IRequest;
+    public record DeleteVariationValueCommand(int Id) : IRequest, ITransactionalRequest;
 }
 

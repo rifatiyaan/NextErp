@@ -1,4 +1,5 @@
 using MediatR;
+using NextErp.Application.Common.Interfaces;
 using NextErp.Application.DTOs;
 
 namespace NextErp.Application.Commands
@@ -17,7 +18,7 @@ namespace NextErp.Application.Commands
         string? Description = null,
         string? Color = null,
         string? Warranty = null
-    ) : IRequest<int>; // Returns Id of created product
+    ) : IRequest<int>, ITransactionalRequest; // Returns Id of created product
 
     // Update Product
     public record UpdateProductCommand(
@@ -35,7 +36,7 @@ namespace NextErp.Application.Commands
         string? Description = null,
         string? Color = null,
         string? Warranty = null
-    ) : IRequest<Unit>; // No return
+    ) : IRequest<Unit>, ITransactionalRequest; // No return
 
     // Update Product with Variations
     public record UpdateProductWithVariationsCommand(
@@ -55,5 +56,5 @@ namespace NextErp.Application.Commands
         string? Warranty,
         List<ProductVariation.Request.VariationOptionDto> VariationOptions,
         List<ProductVariation.Request.ProductVariantDto> ProductVariants
-    ) : IRequest<Unit>; // No return
+    ) : IRequest<Unit>, ITransactionalRequest; // No return
 }

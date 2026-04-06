@@ -1,4 +1,5 @@
 using MediatR;
+using NextErp.Application.Common.Interfaces;
 using NextErp.Application.Interfaces;
 
 namespace NextErp.Application.Common.Behaviors;
@@ -12,7 +13,7 @@ public sealed class TransactionBehavior<TRequest, TResponse>(IApplicationDbConte
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        if (!ShouldWrapInTransaction(typeof(TRequest)))
+        if (request is not ITransactionalRequest)
             return await next(cancellationToken).ConfigureAwait(false);
 
         if (db.Database.CurrentTransaction != null)
@@ -33,16 +34,5 @@ public sealed class TransactionBehavior<TRequest, TResponse>(IApplicationDbConte
             await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
             throw;
         }
-    }
-
-    private static bool ShouldWrapInTransaction(Type requestType)
-    {
-        var name = requestType.Name;
-        if (name.Contains("Query", StringComparison.OrdinalIgnoreCase))
-            return false;
-
-        return name.Contains("Create", StringComparison.OrdinalIgnoreCase)
-            || name.Contains("Update", StringComparison.OrdinalIgnoreCase)
-            || name.Contains("Delete", StringComparison.OrdinalIgnoreCase);
     }
 }

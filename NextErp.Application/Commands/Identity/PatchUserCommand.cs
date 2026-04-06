@@ -1,4 +1,5 @@
 using MediatR;
+using NextErp.Application.Common.Interfaces;
 
 namespace NextErp.Application.Commands.Identity
 {
@@ -6,5 +7,5 @@ namespace NextErp.Application.Commands.Identity
             Guid UserId,
             Guid? BranchId,
             string? RoleName
-        ) : IRequest<bool>;
+        ) : IRequest<bool>, ITransactionalRequest;
 }

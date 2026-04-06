@@ -1,4 +1,5 @@
 using MediatR;
+using NextErp.Application.Common.Interfaces;
 using NextErp.Application.DTOs;
 
 namespace NextErp.Application.Commands
@@ -11,5 +12,5 @@ namespace NextErp.Application.Commands
         decimal Discount,
         List<Purchase.Request.Create.PurchaseItemRequest> Items,
         Purchase.Request.Metadata? Metadata
-    ) : IRequest<Guid>; // Returns Id of created purchase
+    ) : IRequest<Guid>, ITransactionalRequest; // Returns Id of created purchase
 }
