@@ -21,7 +21,13 @@ namespace NextErp.Application.Mappings
                         ? src.ProductVariant.Product.Code
                         : "N/A"))
                 .ForMember(dest => dest.VariantSku, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.Sku : ""))
-                .ForMember(dest => dest.VariantTitle, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.Title : ""));
+                .ForMember(dest => dest.VariantTitle, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.Title : ""))
+                .ForMember(dest => dest.ReorderLevel, opt => opt.MapFrom(src => src.ReorderLevel))
+                .ForMember(dest => dest.UnitOfMeasureId, opt => opt.MapFrom(src =>
+                    src.ProductVariant != null ? src.ProductVariant.UnitOfMeasureId : null))
+                .ForMember(dest => dest.UnitOfMeasureAbbreviation, opt => opt.MapFrom(src =>
+                    src.ProductVariant != null && src.ProductVariant.UnitOfMeasure != null
+                        ? src.ProductVariant.UnitOfMeasure.Abbreviation : null));
         }
     }
 }

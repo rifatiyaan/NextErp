@@ -40,6 +40,7 @@ namespace NextErp.Infrastructure
         public DbSet<SaleItem> SaleItems { get; set; }
         public DbSet<SalePayment> SalePayments { get; set; }
         public DbSet<StockMovement> StockMovements { get; set; }
+        public DbSet<UnitOfMeasure> UnitOfMeasures { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

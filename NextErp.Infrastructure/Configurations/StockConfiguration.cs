@@ -25,6 +25,9 @@ namespace NextErp.Infrastructure.Configurations
             builder.Property(s => s.AvailableQuantity)
                 .HasPrecision(18, 2);
 
+            builder.Property(s => s.ReorderLevel)
+                .HasPrecision(18, 2);
+
             builder.Property(s => s.BranchId)
                 .IsRequired();
 

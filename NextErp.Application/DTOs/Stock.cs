@@ -14,6 +14,9 @@ namespace NextErp.Application.DTOs
                 public string VariantSku { get; set; } = null!;
                 public string VariantTitle { get; set; } = null!;
                 public decimal AvailableQuantity { get; set; }
+                public decimal? ReorderLevel { get; set; }
+                public int? UnitOfMeasureId { get; set; }
+                public string? UnitOfMeasureAbbreviation { get; set; }
                 public DateTime CreatedAt { get; set; }
                 public DateTime? UpdatedAt { get; set; }
                 public Guid TenantId { get; set; }
@@ -42,7 +45,8 @@ namespace NextErp.Application.DTOs
                 public string VariantSku { get; set; } = null!;
                 public string VariantTitle { get; set; } = null!;
                 public decimal AvailableQuantity { get; set; }
-                public int? ReorderLevel { get; set; }
+                public decimal? ReorderLevel { get; set; }
+                public string? UnitOfMeasureAbbreviation { get; set; }
                 public string Status { get; set; } = null!;
             }
 

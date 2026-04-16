@@ -17,7 +17,9 @@ namespace NextErp.Application.Handlers.QueryHandlers.Stock
                 .AsNoTracking()
                 .Include(s => s.ProductVariant)
                     .ThenInclude(pv => pv.Product)
-                .Where(s => s.AvailableQuantity <= 10)
+                .Include(s => s.ProductVariant)
+                    .ThenInclude(pv => pv.UnitOfMeasure)
+                .Where(s => s.AvailableQuantity <= (s.ReorderLevel ?? 10))
                 .Select(s => new DTOs.Stock.Response.LowStockItem
                 {
                     ProductVariantId = s.ProductVariantId,
@@ -31,9 +33,11 @@ namespace NextErp.Application.Handlers.QueryHandlers.Stock
                     VariantSku = s.ProductVariant != null ? s.ProductVariant.Sku : "",
                     VariantTitle = s.ProductVariant != null ? s.ProductVariant.Title : "",
                     AvailableQuantity = s.AvailableQuantity,
-                    ReorderLevel = null,
+                    ReorderLevel = s.ReorderLevel,
+                    UnitOfMeasureAbbreviation = s.ProductVariant != null && s.ProductVariant.UnitOfMeasure != null
+                        ? s.ProductVariant.UnitOfMeasure.Abbreviation : null,
                     Status = s.AvailableQuantity == 0 ? "Out of Stock"
-                        : s.AvailableQuantity <= 5 ? "Critical"
+                        : s.AvailableQuantity <= (s.ReorderLevel.HasValue ? s.ReorderLevel.Value * 0.5m : 5m) ? "Critical"
                         : "Low"
                 })
                 .ToListAsync(cancellationToken);

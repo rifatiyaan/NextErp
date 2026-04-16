@@ -12,6 +12,7 @@ namespace NextErp.Domain.Entities
         public ProductVariant ProductVariant { get; set; } = null!;
 
         public decimal AvailableQuantity { get; set; }
+        public decimal? ReorderLevel { get; set; }
 
         public bool IsActive { get; set; } = true;
 

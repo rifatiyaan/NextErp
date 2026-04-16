@@ -46,7 +46,7 @@ public class StockRepository(IApplicationDbContext applicationContext, IBranchPr
         await _db.Set<Stock>()
             .Include(s => s.ProductVariant)
             .ThenInclude(pv => pv.Product)
-            .Where(s => s.AvailableQuantity <= 10)
+            .Where(s => s.AvailableQuantity <= (s.ReorderLevel ?? 10))
             .ToListAsync();
 
     public IQueryable<Stock> Query() => _db.Set<Stock>().AsQueryable();
@@ -59,7 +59,6 @@ public class StockRepository(IApplicationDbContext applicationContext, IBranchPr
         if (productIds.Count == 0)
             return Array.Empty<(int, decimal, bool)>();
 
-        const decimal lowThreshold = 10m;
         var branchId = branchProvider.GetBranchId();
 
         var rows = await _db.Set<ProductVariant>()
@@ -75,7 +74,7 @@ public class StockRepository(IApplicationDbContext applicationContext, IBranchPr
                     .Sum() ?? 0m,
                 HasLowStock = g.SelectMany(v => v.StockRecords)
                     .Where(sr => !branchId.HasValue || sr.BranchId == branchId.Value)
-                    .Any(s => s.AvailableQuantity <= lowThreshold),
+                    .Any(s => s.AvailableQuantity <= (s.ReorderLevel ?? 10m)),
             })
             .ToListAsync(cancellationToken);
 

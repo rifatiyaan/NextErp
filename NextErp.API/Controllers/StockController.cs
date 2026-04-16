@@ -2,6 +2,7 @@ using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NextErp.Application.Commands.Stock;
 using NextErp.Application.DTOs;
 using NextErp.Application.Queries;
 
@@ -42,6 +43,13 @@ public class StockController(IMediator mediator, IMapper mapper) : ControllerBas
     {
         var report = await mediator.Send(new GetLowStockReportQuery());
         return Ok(report);
+    }
+
+    [HttpPatch("variant/{productVariantId:int}/reorder-level")]
+    public async Task<IActionResult> SetReorderLevel(int productVariantId, [FromBody] decimal? reorderLevel)
+    {
+        await mediator.Send(new SetReorderLevelCommand(productVariantId, reorderLevel));
+        return NoContent();
     }
 
     /// <summary>Append-only movement history for a variant in a branch (admin / inventory).</summary>
