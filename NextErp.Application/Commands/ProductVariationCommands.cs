@@ -26,7 +26,8 @@ namespace NextErp.Application.Commands
         string? Warranty,
         // Variation data
         List<ProductVariation.Request.VariationOptionDto> VariationOptions,
-        List<ProductVariation.Request.ProductVariantDto> ProductVariants
+        List<ProductVariation.Request.ProductVariantDto> ProductVariants,
+        int? UnitOfMeasureId = null
     ) : IRequest<int>, ITransactionalRequest; // Returns Id of created product
 
     public record UpdateVariationOptionCommand(int Id, string Name, int DisplayOrder) : IRequest, ITransactionalRequest;

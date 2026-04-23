@@ -17,6 +17,7 @@ public class UpdateUnitOfMeasureHandler(IApplicationDbContext dbContext)
         entity.Name = request.Name;
         entity.Title = request.Name;
         entity.Abbreviation = request.Abbreviation;
+        entity.Category = request.Category;
         entity.IsActive = request.IsActive;
         entity.UpdatedAt = DateTime.UtcNow;
 

@@ -17,8 +17,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Stock
                 .AsNoTracking()
                 .Include(s => s.ProductVariant)
                     .ThenInclude(pv => pv.Product)
-                .Include(s => s.ProductVariant)
-                    .ThenInclude(pv => pv.UnitOfMeasure)
+                        .ThenInclude(p => p!.UnitOfMeasure)
                 .Where(s => s.AvailableQuantity <= (s.ReorderLevel ?? 10))
                 .Select(s => new DTOs.Stock.Response.LowStockItem
                 {
@@ -34,8 +33,8 @@ namespace NextErp.Application.Handlers.QueryHandlers.Stock
                     VariantTitle = s.ProductVariant != null ? s.ProductVariant.Title : "",
                     AvailableQuantity = s.AvailableQuantity,
                     ReorderLevel = s.ReorderLevel,
-                    UnitOfMeasureAbbreviation = s.ProductVariant != null && s.ProductVariant.UnitOfMeasure != null
-                        ? s.ProductVariant.UnitOfMeasure.Abbreviation : null,
+                    UnitOfMeasureAbbreviation = s.ProductVariant != null && s.ProductVariant.Product != null && s.ProductVariant.Product.UnitOfMeasure != null
+                        ? s.ProductVariant.Product.UnitOfMeasure.Abbreviation : null,
                     Status = s.AvailableQuantity == 0 ? "Out of Stock"
                         : s.AvailableQuantity <= (s.ReorderLevel.HasValue ? s.ReorderLevel.Value * 0.5m : 5m) ? "Critical"
                         : "Low"

@@ -29,14 +29,14 @@ public class UnitOfMeasureController(IMediator mediator) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] UnitOfMeasure.Request.Create request)
     {
-        var result = await mediator.Send(new CreateUnitOfMeasureCommand(request.Name, request.Abbreviation));
+        var result = await mediator.Send(new CreateUnitOfMeasureCommand(request.Name, request.Abbreviation, request.Category, false));
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] UnitOfMeasure.Request.Update request)
     {
-        await mediator.Send(new UpdateUnitOfMeasureCommand(id, request.Name, request.Abbreviation, request.IsActive));
+        await mediator.Send(new UpdateUnitOfMeasureCommand(id, request.Name, request.Abbreviation, request.Category, request.IsActive));
         return NoContent();
     }
 

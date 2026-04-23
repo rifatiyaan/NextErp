@@ -20,6 +20,9 @@ namespace NextErp.Domain.Entities
         public string? ImageUrl { get; set; }
         public ProductMetadataClass Metadata { get; set; } = new ProductMetadataClass();
 
+        public int? UnitOfMeasureId { get; set; }
+        public UnitOfMeasure? UnitOfMeasure { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; }

@@ -25,12 +25,6 @@ namespace NextErp.Infrastructure.Configurations
             // Indexes for performance
             builder.HasIndex(pv => pv.ProductId);
             builder.HasIndex(pv => pv.Sku);
-
-            builder.HasOne(pv => pv.UnitOfMeasure)
-                .WithMany()
-                .HasForeignKey(pv => pv.UnitOfMeasureId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .IsRequired(false);
         }
     }
 }

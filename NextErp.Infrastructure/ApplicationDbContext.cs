@@ -7,6 +7,7 @@ using NextErp.Application.Interfaces;
 using NextErp.Domain.Common;
 using NextErp.Domain.Entities;
 using NextErp.Infrastructure.Entities;
+using NextErp.Infrastructure.Seeds;
 
 namespace NextErp.Infrastructure
 {
@@ -58,6 +59,8 @@ namespace NextErp.Infrastructure
                 .OnDelete(DeleteBehavior.Restrict);
 
             ApplyBranchQueryFilters(builder);
+
+            SeedData.SeedUnitsOfMeasure(builder);
         }
 
         private void ApplyBranchQueryFilters(ModelBuilder builder)

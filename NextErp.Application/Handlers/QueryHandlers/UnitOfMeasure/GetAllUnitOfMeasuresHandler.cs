@@ -14,13 +14,15 @@ public class GetAllUnitOfMeasuresHandler(IApplicationDbContext dbContext)
     {
         return await dbContext.UnitOfMeasures
             .AsNoTracking()
-            .Where(u => u.IsActive)
             .OrderBy(u => u.Name)
             .Select(u => new DTOs.UnitOfMeasure.Response.Single
             {
                 Id = u.Id,
+                Title = u.Title,
                 Name = u.Name,
                 Abbreviation = u.Abbreviation,
+                Category = u.Category,
+                IsSystem = u.IsSystem,
                 IsActive = u.IsActive
             })
             .ToListAsync(cancellationToken);

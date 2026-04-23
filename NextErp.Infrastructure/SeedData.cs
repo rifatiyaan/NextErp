@@ -38,6 +38,22 @@ namespace NextErp.Infrastructure.Seeds
         );
         }
 
+        public static void SeedUnitsOfMeasure(ModelBuilder modelBuilder)
+        {
+            var seedDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            modelBuilder.Entity<UnitOfMeasure>().HasData(
+                new UnitOfMeasure { Id = 1, Title = "Piece", Name = "Piece", Abbreviation = "pcs", Category = "Count", IsSystem = true, IsActive = true, CreatedAt = seedDate },
+                new UnitOfMeasure { Id = 2, Title = "Kilogram", Name = "Kilogram", Abbreviation = "kg", Category = "Weight", IsSystem = true, IsActive = true, CreatedAt = seedDate },
+                new UnitOfMeasure { Id = 3, Title = "Gram", Name = "Gram", Abbreviation = "g", Category = "Weight", IsSystem = true, IsActive = true, CreatedAt = seedDate },
+                new UnitOfMeasure { Id = 4, Title = "Litre", Name = "Litre", Abbreviation = "L", Category = "Volume", IsSystem = true, IsActive = true, CreatedAt = seedDate },
+                new UnitOfMeasure { Id = 5, Title = "Millilitre", Name = "Millilitre", Abbreviation = "ml", Category = "Volume", IsSystem = true, IsActive = true, CreatedAt = seedDate },
+                new UnitOfMeasure { Id = 6, Title = "Metre", Name = "Metre", Abbreviation = "m", Category = "Length", IsSystem = true, IsActive = true, CreatedAt = seedDate },
+                new UnitOfMeasure { Id = 7, Title = "Centimetre", Name = "Centimetre", Abbreviation = "cm", Category = "Length", IsSystem = true, IsActive = true, CreatedAt = seedDate },
+                new UnitOfMeasure { Id = 8, Title = "Dozen", Name = "Dozen", Abbreviation = "dz", Category = "Count", IsSystem = true, IsActive = true, CreatedAt = seedDate },
+                new UnitOfMeasure { Id = 9, Title = "Box", Name = "Box", Abbreviation = "box", Category = "Count", IsSystem = true, IsActive = true, CreatedAt = seedDate },
+                new UnitOfMeasure { Id = 10, Title = "Pack", Name = "Pack", Abbreviation = "pk", Category = "Count", IsSystem = true, IsActive = true, CreatedAt = seedDate }
+            );
+        }
     }
 }
 

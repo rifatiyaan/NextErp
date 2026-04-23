@@ -17,7 +17,8 @@ namespace NextErp.Application.Commands
         IReadOnlyList<Product.Request.GalleryResolvedSlot>? ImageGallery = null,
         string? Description = null,
         string? Color = null,
-        string? Warranty = null
+        string? Warranty = null,
+        int? UnitOfMeasureId = null
     ) : IRequest<int>, ITransactionalRequest; // Returns Id of created product
 
     // Update Product
@@ -35,7 +36,8 @@ namespace NextErp.Application.Commands
         IReadOnlyList<Product.Request.ProductImageThumbnailUpdate>? ImageThumbnailUpdates = null,
         string? Description = null,
         string? Color = null,
-        string? Warranty = null
+        string? Warranty = null,
+        int? UnitOfMeasureId = null
     ) : IRequest<Unit>, ITransactionalRequest; // No return
 
     // Update Product with Variations
@@ -55,6 +57,7 @@ namespace NextErp.Application.Commands
         string? Color,
         string? Warranty,
         List<ProductVariation.Request.VariationOptionDto> VariationOptions,
-        List<ProductVariation.Request.ProductVariantDto> ProductVariants
+        List<ProductVariation.Request.ProductVariantDto> ProductVariants,
+        int? UnitOfMeasureId = null
     ) : IRequest<Unit>, ITransactionalRequest; // No return
 }

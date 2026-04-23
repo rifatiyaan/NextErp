@@ -27,6 +27,7 @@ public class ProductProfile : Profile
             .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
             .ForMember(dest => dest.ProductImages, opt => opt.Ignore())
             .ForMember(dest => dest.HasVariations, opt => opt.Ignore())
+            .ForMember(dest => dest.UnitOfMeasure, opt => opt.Ignore())
             .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId ?? 0));
 
         // Update Request -> Entity
@@ -43,6 +44,7 @@ public class ProductProfile : Profile
             .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
             .ForMember(dest => dest.ProductImages, opt => opt.Ignore())
             .ForMember(dest => dest.HasVariations, opt => opt.Ignore())
+            .ForMember(dest => dest.UnitOfMeasure, opt => opt.Ignore())
             .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId ?? 0));
 
         // ===== Entity to Response DTOs =====
@@ -50,6 +52,9 @@ public class ProductProfile : Profile
         // Entity -> Get Single Response
         CreateMap<ProductEntity, DTOs.Product.Response.Get.Single>()
             .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId))
+            .ForMember(dest => dest.UnitOfMeasureId, opt => opt.MapFrom(src => src.UnitOfMeasureId))
+            .ForMember(dest => dest.UnitAbbreviation, opt => opt.MapFrom(src => src.UnitOfMeasure != null ? src.UnitOfMeasure.Abbreviation : null))
+            .ForMember(dest => dest.UnitTitle, opt => opt.MapFrom(src => src.UnitOfMeasure != null ? (src.UnitOfMeasure.Title ?? src.UnitOfMeasure.Name) : null))
             .ForMember(dest => dest.HasVariations, opt => opt.MapFrom(src =>
                 src.HasVariations || (src.ProductVariationOptions != null && src.ProductVariationOptions.Any())))
             .ForMember(dest => dest.VariationOptions, opt => opt.MapFrom(src =>
@@ -114,6 +119,7 @@ public class ProductProfile : Profile
             .ForMember(dest => dest.ProductImages, opt => opt.Ignore())
             .ForMember(dest => dest.HasVariations, opt => opt.Ignore())
             .ForMember(dest => dest.IsActive, opt => opt.Ignore())
+            .ForMember(dest => dest.UnitOfMeasure, opt => opt.Ignore())
             .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new ProductEntity.ProductMetadataClass
             {
                 Description = src.Description,
@@ -134,6 +140,7 @@ public class ProductProfile : Profile
             .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
             .ForMember(dest => dest.ProductImages, opt => opt.Ignore())
             .ForMember(dest => dest.HasVariations, opt => opt.Ignore())
+            .ForMember(dest => dest.UnitOfMeasure, opt => opt.Ignore())
             .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new ProductEntity.ProductMetadataClass
             {
                 Description = src.Description,
@@ -156,6 +163,7 @@ public class ProductProfile : Profile
             .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
             .ForMember(dest => dest.ProductImages, opt => opt.Ignore())
             .ForMember(dest => dest.HasVariations, opt => opt.MapFrom(src => true))
+            .ForMember(dest => dest.UnitOfMeasure, opt => opt.Ignore())
             .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new ProductEntity.ProductMetadataClass
             {
                 Description = src.Description,
@@ -178,6 +186,7 @@ public class ProductProfile : Profile
             .ForMember(dest => dest.ProductVariants, opt => opt.Ignore())
             .ForMember(dest => dest.ProductImages, opt => opt.Ignore())
             .ForMember(dest => dest.HasVariations, opt => opt.MapFrom(src => true))
+            .ForMember(dest => dest.UnitOfMeasure, opt => opt.Ignore())
             .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new ProductEntity.ProductMetadataClass
             {
                 Description = src.Description,
@@ -254,7 +263,8 @@ public class ProductProfile : Profile
             gallery,
             dto.Metadata != null ? dto.Metadata.Description : null,
             dto.Metadata != null ? dto.Metadata.Color : null,
-            dto.Metadata != null ? dto.Metadata.Warranty : null);
+            dto.Metadata != null ? dto.Metadata.Warranty : null,
+            UnitOfMeasureId: dto.UnitOfMeasureId);
     }
 
     private static UpdateProductCommand MapUpdateProductCommand(DTOs.Product.Request.Update.Single dto) =>
@@ -274,5 +284,6 @@ public class ProductProfile : Profile
                 : null,
             dto.Metadata != null ? dto.Metadata.Description : null,
             dto.Metadata != null ? dto.Metadata.Color : null,
-            dto.Metadata != null ? dto.Metadata.Warranty : null);
+            dto.Metadata != null ? dto.Metadata.Warranty : null,
+            UnitOfMeasureId: dto.UnitOfMeasureId);
 }

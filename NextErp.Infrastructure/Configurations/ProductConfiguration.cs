@@ -26,6 +26,12 @@ namespace NextErp.Infrastructure.Configurations
                 .HasForeignKey(p => p.ParentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.HasOne(p => p.UnitOfMeasure)
+                .WithMany()
+                .HasForeignKey(p => p.UnitOfMeasureId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
+
             // JSON column for Product.Metadata
             builder.OwnsOne(p => p.Metadata, meta =>
             {

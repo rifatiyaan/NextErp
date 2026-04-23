@@ -6,6 +6,8 @@ public class UnitOfMeasure : IEntity<int>
     public string Title { get; set; } = null!;
     public string Name { get; set; } = null!;
     public string Abbreviation { get; set; } = null!;
+    public string? Category { get; set; }
+    public bool IsSystem { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

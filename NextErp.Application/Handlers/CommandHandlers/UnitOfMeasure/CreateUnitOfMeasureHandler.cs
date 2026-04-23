@@ -16,6 +16,8 @@ public class CreateUnitOfMeasureHandler(IApplicationDbContext dbContext)
             Name = request.Name,
             Title = request.Name,
             Abbreviation = request.Abbreviation,
+            Category = request.Category,
+            IsSystem = request.IsSystem,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
@@ -26,8 +28,11 @@ public class CreateUnitOfMeasureHandler(IApplicationDbContext dbContext)
         return new DTOs.UnitOfMeasure.Response.Single
         {
             Id = entity.Id,
+            Title = entity.Title,
             Name = entity.Name,
             Abbreviation = entity.Abbreviation,
+            Category = entity.Category,
+            IsSystem = entity.IsSystem,
             IsActive = entity.IsActive
         };
     }

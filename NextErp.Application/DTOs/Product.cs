@@ -32,6 +32,7 @@ namespace NextErp.Application.DTOs
                 public string? ImageUrl { get; set; }
                 public IFormFile? Image { get; set; }
                 public int? ParentId { get; set; }
+                public int? UnitOfMeasureId { get; set; }
                 public Metadata Metadata { get; set; } = new();
 
                 public List<ImageSlot> ImageSlots { get; set; } = new();
@@ -121,6 +122,9 @@ namespace NextErp.Application.DTOs
                 public int? CategoryId { get; set; }
                 public string? ImageUrl { get; set; }
                 public int? ParentId { get; set; }
+                public int? UnitOfMeasureId { get; set; }
+                public string? UnitAbbreviation { get; set; }
+                public string? UnitTitle { get; set; }
                 public bool IsActive { get; set; }
                 public DateTime CreatedAt { get; set; }
                 public DateTime? UpdatedAt { get; set; }

@@ -8,12 +8,15 @@ public partial class UnitOfMeasure
         {
             public string Name { get; set; } = null!;
             public string Abbreviation { get; set; } = null!;
+            public string? Category { get; set; }
+            public bool IsSystem { get; set; } = false;
         }
 
         public class Update
         {
             public string Name { get; set; } = null!;
             public string Abbreviation { get; set; } = null!;
+            public string? Category { get; set; }
             public bool IsActive { get; set; }
         }
     }
@@ -23,8 +26,11 @@ public partial class UnitOfMeasure
         public class Single
         {
             public int Id { get; set; }
+            public string Title { get; set; } = null!;
             public string Name { get; set; } = null!;
             public string Abbreviation { get; set; } = null!;
+            public string? Category { get; set; }
+            public bool IsSystem { get; set; }
             public bool IsActive { get; set; }
         }
     }

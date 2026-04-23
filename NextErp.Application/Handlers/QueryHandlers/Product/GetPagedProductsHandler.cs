@@ -47,6 +47,7 @@ public class GetPagedProductsHandler(
         var records = await query
             .AsNoTracking()
             .Include(p => p.Category)
+            .Include(p => p.UnitOfMeasure)
             .Include(p => p.ProductVariants)
             .Skip((request.PageIndex - 1) * request.PageSize)
             .Take(request.PageSize)

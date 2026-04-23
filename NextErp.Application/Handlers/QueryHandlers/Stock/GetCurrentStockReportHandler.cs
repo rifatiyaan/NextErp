@@ -17,8 +17,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Stock
                 .AsNoTracking()
                 .Include(s => s.ProductVariant)
                     .ThenInclude(pv => pv.Product)
-                .Include(s => s.ProductVariant)
-                    .ThenInclude(pv => pv.UnitOfMeasure)
+                        .ThenInclude(p => p!.UnitOfMeasure)
                 .Select(s => new DTOs.Stock.Response.Single
                 {
                     Id = s.Id,
@@ -34,9 +33,10 @@ namespace NextErp.Application.Handlers.QueryHandlers.Stock
                     VariantTitle = s.ProductVariant != null ? s.ProductVariant.Title : "",
                     AvailableQuantity = s.AvailableQuantity,
                     ReorderLevel = s.ReorderLevel,
-                    UnitOfMeasureId = s.ProductVariant != null ? s.ProductVariant.UnitOfMeasureId : null,
-                    UnitOfMeasureAbbreviation = s.ProductVariant != null && s.ProductVariant.UnitOfMeasure != null
-                        ? s.ProductVariant.UnitOfMeasure.Abbreviation : null,
+                    UnitOfMeasureId = s.ProductVariant != null && s.ProductVariant.Product != null
+                        ? s.ProductVariant.Product.UnitOfMeasureId : null,
+                    UnitOfMeasureAbbreviation = s.ProductVariant != null && s.ProductVariant.Product != null && s.ProductVariant.Product.UnitOfMeasure != null
+                        ? s.ProductVariant.Product.UnitOfMeasure.Abbreviation : null,
                     CreatedAt = s.CreatedAt,
                     UpdatedAt = s.UpdatedAt,
                     TenantId = s.TenantId,

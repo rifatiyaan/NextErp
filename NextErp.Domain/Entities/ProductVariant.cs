@@ -23,9 +23,6 @@ namespace NextErp.Domain.Entities
         // Many-to-many relationship with VariationValue
         public ICollection<VariationValue> VariationValues { get; set; } = new List<VariationValue>();
 
-        public int? UnitOfMeasureId { get; set; }
-        public UnitOfMeasure? UnitOfMeasure { get; set; }
-
         public ICollection<Stock> StockRecords { get; set; } = new List<Stock>();
     }
 }

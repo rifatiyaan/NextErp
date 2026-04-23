@@ -14,6 +14,11 @@ public class DeleteUnitOfMeasureHandler(IApplicationDbContext dbContext)
             .FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken)
             ?? throw new InvalidOperationException($"UnitOfMeasure {request.Id} not found.");
 
+        if (entity.IsSystem)
+        {
+            throw new InvalidOperationException("System units cannot be deleted.");
+        }
+
         entity.IsActive = false;
         entity.UpdatedAt = DateTime.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);

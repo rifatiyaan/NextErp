@@ -24,10 +24,10 @@ namespace NextErp.Application.Mappings
                 .ForMember(dest => dest.VariantTitle, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.Title : ""))
                 .ForMember(dest => dest.ReorderLevel, opt => opt.MapFrom(src => src.ReorderLevel))
                 .ForMember(dest => dest.UnitOfMeasureId, opt => opt.MapFrom(src =>
-                    src.ProductVariant != null ? src.ProductVariant.UnitOfMeasureId : null))
+                    src.ProductVariant != null && src.ProductVariant.Product != null ? src.ProductVariant.Product.UnitOfMeasureId : null))
                 .ForMember(dest => dest.UnitOfMeasureAbbreviation, opt => opt.MapFrom(src =>
-                    src.ProductVariant != null && src.ProductVariant.UnitOfMeasure != null
-                        ? src.ProductVariant.UnitOfMeasure.Abbreviation : null));
+                    src.ProductVariant != null && src.ProductVariant.Product != null && src.ProductVariant.Product.UnitOfMeasure != null
+                        ? src.ProductVariant.Product.UnitOfMeasure.Abbreviation : null));
         }
     }
 }

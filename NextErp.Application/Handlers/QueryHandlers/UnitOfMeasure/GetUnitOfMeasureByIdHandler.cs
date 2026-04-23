@@ -21,8 +21,11 @@ public class GetUnitOfMeasureByIdHandler(IApplicationDbContext dbContext)
         return new DTOs.UnitOfMeasure.Response.Single
         {
             Id = entity.Id,
+            Title = entity.Title,
             Name = entity.Name,
             Abbreviation = entity.Abbreviation,
+            Category = entity.Category,
+            IsSystem = entity.IsSystem,
             IsActive = entity.IsActive
         };
     }

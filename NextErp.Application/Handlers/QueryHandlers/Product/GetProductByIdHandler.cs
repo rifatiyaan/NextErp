@@ -23,6 +23,7 @@ public class GetProductByIdHandler(
         var product = await productRepo.Query()
             .AsNoTracking()
             .Include(p => p.Category)
+            .Include(p => p.UnitOfMeasure)
             .Include(p => p.ProductImages)
             .Include(p => p.Parent)
             .Include(p => p.Children)
