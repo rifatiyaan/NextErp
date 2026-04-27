@@ -1,4 +1,4 @@
-using NextErp.Application;
+using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -6,12 +6,12 @@ using Entities = NextErp.Domain.Entities;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Stock
 {
-    public class GetStockByProductVariantIdHandler(IApplicationUnitOfWork unitOfWork)
+    public class GetStockByProductVariantIdHandler(IApplicationDbContext dbContext)
         : IRequestHandler<GetStockByProductVariantIdQuery, Entities.Stock?>
     {
-        public Task<Entities.Stock?> Handle(GetStockByProductVariantIdQuery request, CancellationToken cancellationToken)
+        public Task<Entities.Stock?> Handle(GetStockByProductVariantIdQuery request, CancellationToken cancellationToken = default)
         {
-            return unitOfWork.StockRepository.Query()
+            return dbContext.Stocks
                 .AsNoTracking()
                 .Include(s => s.ProductVariant)
                     .ThenInclude(pv => pv.Product)

@@ -14,7 +14,7 @@ public class GetStockMovementHistoryHandler(
 {
     public async Task<IReadOnlyList<StockDto.Response.MovementLine>> Handle(
         GetStockMovementHistoryQuery request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         if (!branchProvider.IsGlobal())
         {
@@ -42,6 +42,8 @@ public class GetStockMovementHistoryHandler(
                 NewQuantity = m.NewQuantity,
                 MovementType = m.MovementType.ToString(),
                 ReferenceId = m.ReferenceId,
+                Reason = m.Reason,
+                Notes = m.Notes,
                 CreatedAt = m.CreatedAt
             })
             .ToListAsync(cancellationToken)

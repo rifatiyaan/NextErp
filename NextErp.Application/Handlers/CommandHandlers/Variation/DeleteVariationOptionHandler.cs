@@ -9,7 +9,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Variation
     public class DeleteVariationOptionHandler(IApplicationDbContext dbContext)
         : IRequestHandler<DeleteVariationOptionCommand>
     {
-        public async Task Handle(DeleteVariationOptionCommand request, CancellationToken cancellationToken)
+        public async Task Handle(DeleteVariationOptionCommand request, CancellationToken cancellationToken = default)
         {
             var option = await dbContext.VariationOptions
                 .Include(vo => vo.Values)

@@ -10,7 +10,7 @@ namespace NextErp.Application.Products
         public static async Task<Dictionary<string, Entities.VariationOption>> LoadActiveGlobalOptionsAsync(
             IApplicationDbContext dbContext,
             IEnumerable<string> optionNames,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
             var nameSet = optionNames.Distinct().ToList();
             var options = await dbContext.VariationOptions
@@ -25,7 +25,7 @@ namespace NextErp.Application.Products
                     IReadOnlyList<ProductVariation.Request.VariationOptionDto> optionsInRequestOrder,
                     IReadOnlyDictionary<string, Entities.VariationOption> optionByName,
                     IApplicationDbContext dbContext,
-                    CancellationToken cancellationToken)
+                    CancellationToken cancellationToken = default)
         {
             foreach (var dto in optionsInRequestOrder)
             {
@@ -142,7 +142,7 @@ namespace NextErp.Application.Products
             int valIdx,
             ProductVariation.Request.VariationValueDto valDto,
             IApplicationDbContext dbContext,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
             var str = (valDto.Value ?? string.Empty).Trim();
             if (string.IsNullOrEmpty(str))

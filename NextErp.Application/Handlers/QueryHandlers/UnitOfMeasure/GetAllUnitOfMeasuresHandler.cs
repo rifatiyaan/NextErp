@@ -10,7 +10,7 @@ public class GetAllUnitOfMeasuresHandler(IApplicationDbContext dbContext)
     : IRequestHandler<GetAllUnitOfMeasuresQuery, IReadOnlyList<DTOs.UnitOfMeasure.Response.Single>>
 {
     public async Task<IReadOnlyList<DTOs.UnitOfMeasure.Response.Single>> Handle(
-        GetAllUnitOfMeasuresQuery request, CancellationToken cancellationToken)
+        GetAllUnitOfMeasuresQuery request, CancellationToken cancellationToken = default)
     {
         return await dbContext.UnitOfMeasures
             .AsNoTracking()

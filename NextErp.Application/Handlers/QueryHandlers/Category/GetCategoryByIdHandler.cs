@@ -1,17 +1,17 @@
+using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Entities = NextErp.Domain.Entities;
-using Repositories = NextErp.Domain.Repositories;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Category
 {
-    public class GetCategoryByIdHandler(Repositories.ICategoryRepository categoryRepo)
+    public class GetCategoryByIdHandler(IApplicationDbContext dbContext)
         : IRequestHandler<GetCategoryByIdQuery, Entities.Category?>
     {
-        public async Task<Entities.Category?> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken)
+        public async Task<Entities.Category?> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken = default)
         {
-            return await categoryRepo.Query()
+            return await dbContext.Categories
                 .AsNoTracking()
                 .Include(c => c.Parent)
                 .Include(c => c.Children)

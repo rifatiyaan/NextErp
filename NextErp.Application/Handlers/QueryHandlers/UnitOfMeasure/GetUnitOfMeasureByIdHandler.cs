@@ -10,7 +10,7 @@ public class GetUnitOfMeasureByIdHandler(IApplicationDbContext dbContext)
     : IRequestHandler<GetUnitOfMeasureByIdQuery, DTOs.UnitOfMeasure.Response.Single?>
 {
     public async Task<DTOs.UnitOfMeasure.Response.Single?> Handle(
-        GetUnitOfMeasureByIdQuery request, CancellationToken cancellationToken)
+        GetUnitOfMeasureByIdQuery request, CancellationToken cancellationToken = default)
     {
         var entity = await dbContext.UnitOfMeasures
             .AsNoTracking()

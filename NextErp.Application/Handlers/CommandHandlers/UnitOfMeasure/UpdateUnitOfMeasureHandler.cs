@@ -8,7 +8,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.UnitOfMeasure;
 public class UpdateUnitOfMeasureHandler(IApplicationDbContext dbContext)
     : IRequestHandler<UpdateUnitOfMeasureCommand>
 {
-    public async Task Handle(UpdateUnitOfMeasureCommand request, CancellationToken cancellationToken)
+    public async Task Handle(UpdateUnitOfMeasureCommand request, CancellationToken cancellationToken = default)
     {
         var entity = await dbContext.UnitOfMeasures
             .FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken)

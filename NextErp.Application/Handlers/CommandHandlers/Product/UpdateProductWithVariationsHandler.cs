@@ -14,7 +14,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
         IMapper mapper)
         : IRequestHandler<UpdateProductWithVariationsCommand, Unit>
     {
-        public async Task<Unit> Handle(UpdateProductWithVariationsCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(UpdateProductWithVariationsCommand request, CancellationToken cancellationToken = default)
         {
             var product = await dbContext.Products
                 .Include(p => p.ProductVariationOptions)
@@ -132,25 +132,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
             foreach (var variantId in variantIds)
                 await stockService.EnsureStockRecordExistsAsync(variantId, cancellationToken);
 
-            var entities = await dbContext.ProductVariants
-                .Where(pv => pv.ProductId == product.Id)
-                .ToListAsync(cancellationToken);
-
-            foreach (var variantDto in request.ProductVariants)
-            {
-                var sku = variantDto.Sku.Trim();
-                var entity = entities.FirstOrDefault(v => v.Sku == sku);
-                if (entity == null)
-                    continue;
-
-                await stockService.SetAvailableQuantityAsync(entity.Id, variantDto.Stock, cancellationToken);
-            }
-
-            product.Stock = await ProductVariantStockLookup.GetProductAggregateStockTotalAsync(
-                product.Id,
-                dbContext,
-                cancellationToken);
-
+            // Stock quantities are no longer updated via product update; use StockMovement.
             await dbContext.SaveChangesAsync(cancellationToken);
             return Unit.Value;
         }
@@ -160,7 +142,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
             UpdateProductWithVariationsCommand request,
             IReadOnlyDictionary<string, Entities.VariationOption> optionByName,
             IApplicationDbContext dbContext,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
             var requestOptionNamesInOrder = request.VariationOptions.Select(o => o.Name).ToList();
 

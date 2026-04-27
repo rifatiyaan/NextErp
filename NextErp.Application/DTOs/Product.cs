@@ -27,7 +27,6 @@ namespace NextErp.Application.DTOs
                 public string Title { get; set; } = null!;
                 public string Code { get; set; } = null!;
                 public decimal Price { get; set; }
-                public int Stock { get; set; }
                 public int? CategoryId { get; set; }
                 public string? ImageUrl { get; set; }
                 public IFormFile? Image { get; set; }
@@ -69,6 +68,9 @@ namespace NextErp.Application.DTOs
                 public class Single : Base
                 {
                     public bool IsActive { get; set; } = true;
+
+                    // Seed quantity for first Stock row; no longer persisted on Product itself.
+                    public decimal InitialStock { get; set; }
 
                     // Variation system support (optional - if null/empty, product has no variations)
                     public bool HasVariations { get; set; } = false;
@@ -118,7 +120,6 @@ namespace NextErp.Application.DTOs
                 public string Title { get; set; } = null!;
                 public string Code { get; set; } = null!;
                 public decimal Price { get; set; }
-                public int Stock { get; set; }
                 public int? CategoryId { get; set; }
                 public string? ImageUrl { get; set; }
                 public int? ParentId { get; set; }

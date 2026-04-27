@@ -30,5 +30,11 @@ public class StockMovement : ISoftDeletable
     /// <summary>Source document id when applicable (e.g. sale, purchase).</summary>
     public Guid ReferenceId { get; set; }
 
+    /// <summary>Reason code for manual adjustments (see <see cref="StockAdjustmentReason"/>).</summary>
+    public string? Reason { get; set; }
+
+    /// <summary>Free-text notes for manual adjustments.</summary>
+    public string? Notes { get; set; }
+
     public DateTime CreatedAt { get; set; }
 }

@@ -9,7 +9,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Variation
     public class GetVariationValueByIdHandler(IApplicationDbContext dbContext)
         : IRequestHandler<GetVariationValueByIdQuery, Entities.VariationValue?>
     {
-        public async Task<Entities.VariationValue?> Handle(GetVariationValueByIdQuery request, CancellationToken cancellationToken)
+        public async Task<Entities.VariationValue?> Handle(GetVariationValueByIdQuery request, CancellationToken cancellationToken = default)
         {
             return await dbContext.VariationValues
                 .AsNoTracking()

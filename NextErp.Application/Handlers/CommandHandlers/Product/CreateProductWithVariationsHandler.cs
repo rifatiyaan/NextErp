@@ -10,22 +10,21 @@ using Entities = NextErp.Domain.Entities;
 namespace NextErp.Application.Handlers.CommandHandlers.Product
 {
     public class CreateProductWithVariationsHandler(
-        IApplicationUnitOfWork unitOfWork,
         IApplicationDbContext dbContext,
         IStockService stockService,
         IBranchProvider branchProvider,
         IMapper mapper)
         : IRequestHandler<CreateProductWithVariationsCommand, int>
     {
-        public async Task<int> Handle(CreateProductWithVariationsCommand request, CancellationToken cancellationToken)
+        public async Task<int> Handle(CreateProductWithVariationsCommand request, CancellationToken cancellationToken = default)
         {
             var product = mapper.Map<Entities.Product>(request);
             await ProductBranchScope.ApplyToProductAsync(product, dbContext, branchProvider, cancellationToken);
             product.HasVariations = true;
             product.CreatedAt = DateTime.UtcNow;
 
-            await unitOfWork.ProductRepository.AddAsync(product);
-            await unitOfWork.SaveAsync();
+            dbContext.Products.Add(product);
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             await ProductGallerySync.ApplyFullGalleryAsync(
                 product,
@@ -92,13 +91,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                 if (entity == null)
                     continue;
 
-                await stockService.SetAvailableQuantityAsync(entity.Id, variantDto.Stock, cancellationToken);
+                await stockService.SetAvailableQuantityAsync(entity.Id, variantDto.InitialStock, cancellationToken);
             }
-
-            product.Stock = await ProductVariantStockLookup.GetProductAggregateStockTotalAsync(
-                product.Id,
-                dbContext,
-                cancellationToken);
 
             await dbContext.SaveChangesAsync(cancellationToken);
             return product.Id;
@@ -109,7 +103,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
             CreateProductWithVariationsCommand request,
             IReadOnlyDictionary<string, Entities.VariationOption> optionByName,
             IApplicationDbContext dbContext,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
             var assigned = new HashSet<string>(StringComparer.Ordinal);
             foreach (var (optionDto, displayOrder) in request.VariationOptions.Select((dto, i) => (dto, i)))
@@ -134,7 +128,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
             Entities.Product product,
             IApplicationDbContext dbContext,
             IStockService stockService,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
             var variantIds = await dbContext.ProductVariants
                 .Where(pv => pv.ProductId == product.Id)

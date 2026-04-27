@@ -12,7 +12,7 @@ public static class ProductGallerySync
             DomainProduct product,
             IReadOnlyList<Product.Request.GalleryResolvedSlot>? gallery,
             IApplicationDbContext db,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
     {
         if (gallery == null)
             return;
@@ -60,7 +60,7 @@ public static class ProductGallerySync
             IReadOnlyList<Product.Request.ProductImageThumbnailUpdate> updates,
             DomainProduct product,
             IApplicationDbContext db,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
     {
         if (updates == null || updates.Count == 0)
             return;

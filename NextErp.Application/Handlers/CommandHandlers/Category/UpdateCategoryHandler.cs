@@ -1,26 +1,27 @@
 using AutoMapper;
 using NextErp.Application.Commands;
 using MediatR;
-using Repositories = NextErp.Domain.Repositories;
+using Microsoft.EntityFrameworkCore;
+using NextErp.Application.Interfaces;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Category
 {
     public class UpdateCategoryHandler(
-        IApplicationUnitOfWork unitOfWork,
+        IApplicationDbContext dbContext,
         IMapper mapper)
         : IRequestHandler<UpdateCategoryCommand, Unit>
     {
-        public async Task<Unit> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken = default)
         {
-            var existing = await unitOfWork.CategoryRepository.GetByIdAsync(request.Id);
+            var existing = await dbContext.Categories
+                .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
             if (existing == null)
                 throw new KeyNotFoundException($"Category with ID {request.Id} not found.");
 
             mapper.Map(request, existing);
             existing.UpdatedAt = DateTime.UtcNow;
 
-            await unitOfWork.CategoryRepository.EditAsync(existing);
-            await unitOfWork.SaveAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             return Unit.Value;
         }

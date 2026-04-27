@@ -9,7 +9,7 @@ public class CreateUnitOfMeasureHandler(IApplicationDbContext dbContext)
     : IRequestHandler<CreateUnitOfMeasureCommand, DTOs.UnitOfMeasure.Response.Single>
 {
     public async Task<DTOs.UnitOfMeasure.Response.Single> Handle(
-        CreateUnitOfMeasureCommand request, CancellationToken cancellationToken)
+        CreateUnitOfMeasureCommand request, CancellationToken cancellationToken = default)
     {
         var entity = new Domain.Entities.UnitOfMeasure
         {

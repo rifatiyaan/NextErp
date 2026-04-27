@@ -1,4 +1,4 @@
-using NextErp.Application;
+using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 using NextErp.Application.DTOs;
 using MediatR;
@@ -6,14 +6,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Purchase
 {
-    public class GetPurchaseReportHandler(IApplicationUnitOfWork unitOfWork)
+    public class GetPurchaseReportHandler(IApplicationDbContext dbContext)
         : IRequestHandler<GetPurchaseReportQuery, DTOs.Purchase.Response.Get.Report>
     {
         public async Task<DTOs.Purchase.Response.Get.Report> Handle(
             GetPurchaseReportQuery request,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
-            var query = unitOfWork.PurchaseRepository.Query()
+            var query = dbContext.Purchases
                 .AsNoTracking()
                 .Include(p => p.Party)
                 .Include(p => p.Items)

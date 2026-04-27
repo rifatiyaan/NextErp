@@ -1,4 +1,4 @@
-using NextErp.Application;
+using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 using NextErp.Application.DTOs;
 using MediatR;
@@ -6,14 +6,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Stock
 {
-    public class GetLowStockReportHandler(IApplicationUnitOfWork unitOfWork)
+    public class GetLowStockReportHandler(IApplicationDbContext dbContext)
         : IRequestHandler<GetLowStockReportQuery, DTOs.Stock.Response.LowStockReport>
     {
         public async Task<DTOs.Stock.Response.LowStockReport> Handle(
             GetLowStockReportQuery request,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
-            var lowStockItems = await unitOfWork.StockRepository.Query()
+            var lowStockItems = await dbContext.Stocks
                 .AsNoTracking()
                 .Include(s => s.ProductVariant)
                     .ThenInclude(pv => pv.Product)

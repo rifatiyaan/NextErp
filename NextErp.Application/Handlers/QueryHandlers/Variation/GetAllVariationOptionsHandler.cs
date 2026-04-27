@@ -8,7 +8,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Variation
     public class GetAllVariationOptionsHandler(IApplicationDbContext dbContext)
         : IRequestHandler<GetAllVariationOptionsQuery, List<Domain.Entities.VariationOption>>
     {
-        public async Task<List<Domain.Entities.VariationOption>> Handle(GetAllVariationOptionsQuery request, CancellationToken cancellationToken)
+        public async Task<List<Domain.Entities.VariationOption>> Handle(GetAllVariationOptionsQuery request, CancellationToken cancellationToken = default)
         {
             return await dbContext.VariationOptions
                 .AsNoTracking()

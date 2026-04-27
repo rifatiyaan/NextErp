@@ -8,7 +8,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.UnitOfMeasure;
 public class DeleteUnitOfMeasureHandler(IApplicationDbContext dbContext)
     : IRequestHandler<DeleteUnitOfMeasureCommand>
 {
-    public async Task Handle(DeleteUnitOfMeasureCommand request, CancellationToken cancellationToken)
+    public async Task Handle(DeleteUnitOfMeasureCommand request, CancellationToken cancellationToken = default)
     {
         var entity = await dbContext.UnitOfMeasures
             .FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken)

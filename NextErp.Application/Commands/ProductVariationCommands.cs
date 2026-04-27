@@ -17,7 +17,7 @@ namespace NextErp.Application.Commands
         int? ParentId,
         int CategoryId,
         decimal Price, // Base price (variants can override)
-        int Stock, // Base stock (variants can override)
+        decimal InitialStock, // Seed quantity for default variant (variants override per-variant)
         bool IsActive,
         string? ImageUrl,
         IReadOnlyList<Product.Request.GalleryResolvedSlot>? ImageGallery,

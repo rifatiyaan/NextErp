@@ -5,12 +5,10 @@ using NextErp.Application.Interfaces;
 using NextErp.Application.Products;
 using NextErp.Application.Queries;
 using ProductGetDto = NextErp.Application.DTOs.Product.Response.Get;
-using Repositories = NextErp.Domain.Repositories;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Product;
 
 public class GetProductByIdHandler(
-    Repositories.IProductRepository productRepo,
     IApplicationDbContext dbContext,
     IBranchProvider branchProvider,
     IMapper mapper)
@@ -18,9 +16,9 @@ public class GetProductByIdHandler(
 {
     public async Task<ProductGetDto.Single?> Handle(
         GetProductByIdQuery request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
-        var product = await productRepo.Query()
+        var product = await dbContext.Products
             .AsNoTracking()
             .Include(p => p.Category)
             .Include(p => p.UnitOfMeasure)
@@ -42,7 +40,7 @@ public class GetProductByIdHandler(
         await ProductVariantStockLookup.EnrichProductVariantStocksAsync(dto, dbContext, branchProvider, cancellationToken)
             .ConfigureAwait(false);
 
-        dto.Stock = await ProductVariantStockLookup.GetProductAggregateStockTotalAsync(
+        dto.TotalAvailableQuantity = await ProductVariantStockLookup.GetProductAggregateStockTotalAsync(
                 product.Id,
                 dbContext,
                 cancellationToken)

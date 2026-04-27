@@ -14,7 +14,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Identity
     {
         public async Task<bool> Handle(
             SetRolePermissionsCommand request,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
             var roleExists = await roleManager.Roles
                 .AnyAsync(r => r.Id == request.RoleId, cancellationToken);

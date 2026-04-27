@@ -1,6 +1,5 @@
 using Autofac;
 using Microsoft.AspNetCore.Http;
-using NextErp.Application;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Services;
 
@@ -13,10 +12,9 @@ namespace NextErp.Infrastructure
             // ApplicationDbContext is registered via builder.Services.AddDbContext in Program.cs
             // (single registration; IBranchProvider is injected by DI when resolving the context).
 
-            // Register other infrastructure services here
-            builder.RegisterType<ApplicationUnitOfWork>()
-                .As<IApplicationUnitOfWork>()
-                .InstancePerLifetimeScope();
+            // The UnitOfWork + per-entity Repository abstractions were removed; handlers now
+            // depend on IApplicationDbContext directly. EF Core's DbContext already provides
+            // a UnitOfWork (SaveChanges) and Repository (DbSet) implementation.
 
             builder.RegisterType<Services.CloudinaryService>()
                 .As<IImageService>()
@@ -32,14 +30,6 @@ namespace NextErp.Infrastructure
 
             builder.RegisterType<StockService>()
                 .As<IStockService>()
-                .InstancePerLifetimeScope();
-
-            // Register Repositories
-            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-
-            builder.RegisterAssemblyTypes(assembly)
-                .Where(t => t.Name.EndsWith("Repository"))
-                .AsImplementedInterfaces()
                 .InstancePerLifetimeScope();
         }
     }

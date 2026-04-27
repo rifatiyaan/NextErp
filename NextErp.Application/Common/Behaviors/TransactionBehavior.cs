@@ -11,7 +11,7 @@ public sealed class TransactionBehavior<TRequest, TResponse>(IApplicationDbConte
     public async Task<TResponse> Handle(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         if (request is not ITransactionalRequest)
             return await next(cancellationToken).ConfigureAwait(false);

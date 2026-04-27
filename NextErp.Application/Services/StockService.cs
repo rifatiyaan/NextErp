@@ -1,12 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Interfaces;
 using NextErp.Domain.Entities;
-using NextErp.Domain.Repositories;
 
 namespace NextErp.Application.Services;
 
 public class StockService(
-    IStockRepository stockRepository,
     IApplicationDbContext dbContext,
     IBranchProvider branchProvider)
     : IStockService
@@ -55,7 +53,7 @@ public class StockService(
             -quantity,
             StockMovementType.ManualAdjustment,
             Guid.Empty,
-            cancellationToken);
+            cancellationToken: cancellationToken);
     }
 
     public async Task IncreaseStockAsync(int productVariantId, decimal quantity, CancellationToken cancellationToken = default)
@@ -72,7 +70,7 @@ public class StockService(
             quantity,
             StockMovementType.ManualAdjustment,
             Guid.Empty,
-            cancellationToken);
+            cancellationToken: cancellationToken);
     }
 
     public async Task EnsureStockRecordExistsAsync(int productVariantId, CancellationToken cancellationToken = default)
@@ -89,6 +87,8 @@ public class StockService(
         decimal quantityDelta,
         StockMovementType movementType,
         Guid referenceId,
+        string? reason = null,
+        string? notes = null,
         CancellationToken cancellationToken = default)
     {
         if (quantityDelta == 0)
@@ -110,10 +110,12 @@ public class StockService(
             quantityDelta,
             movementType,
             referenceId,
+            reason,
+            notes,
             cancellationToken);
 
-        await stockRepository.EditAsync(stock);
-        await SyncProductAggregateStockAsync(variant.ProductId, cancellationToken);
+        // Stock is loaded tracked from the DbSet; SaveChanges in the orchestrating handler will persist
+        // both the Stock row update and the StockMovement insert.
     }
 
     private async Task ApplyQuantityChangeAndRecordMovementAsync(
@@ -123,7 +125,9 @@ public class StockService(
         decimal quantityDelta,
         StockMovementType movementType,
         Guid referenceId,
-        CancellationToken cancellationToken)
+        string? reason,
+        string? notes,
+        CancellationToken cancellationToken = default)
     {
         var previousQuantity = stock.AvailableQuantity;
         var newQuantity = previousQuantity + quantityDelta;
@@ -143,6 +147,8 @@ public class StockService(
                 NewQuantity = newQuantity,
                 MovementType = movementType,
                 ReferenceId = referenceId,
+                Reason = reason,
+                Notes = notes,
                 CreatedAt = DateTime.UtcNow
             },
             cancellationToken);
@@ -157,12 +163,9 @@ public class StockService(
         Guid branchId,
         ProductVariant variant,
         decimal quantityDelta,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
-        var existing = await stockRepository.GetByProductVariantIdAndBranchIdAsync(
-            productVariantId,
-            branchId,
-            cancellationToken);
+        var existing = await GetTrackedStockByVariantAndBranchAsync(productVariantId, branchId, cancellationToken);
 
         if (existing != null)
             return existing;
@@ -171,14 +174,14 @@ public class StockService(
             throw InsufficientStock(variant, 0, -quantityDelta);
 
         var row = CreateStockRow(variant, tenantId, branchId, initialAvailable: 0);
-        await stockRepository.AddAsync(row);
+        dbContext.Stocks.Add(row);
         return row;
     }
 
     private async Task<bool> CheckAvailabilityInternalAsync(
         int productVariantId,
         decimal requiredQuantity,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         var available = await GetAvailableQuantityReadOnlyAsync(productVariantId, cancellationToken);
         return available >= requiredQuantity;
@@ -186,19 +189,16 @@ public class StockService(
 
     private async Task<decimal> GetAvailableQuantityReadOnlyAsync(
         int productVariantId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         _ = await RequireVariantAsync(productVariantId, cancellationToken);
         var branchId = branchProvider.GetRequiredBranchId();
-        var existing = await stockRepository.GetByProductVariantIdAndBranchIdAsync(
-            productVariantId,
-            branchId,
-            cancellationToken);
+        var existing = await GetTrackedStockByVariantAndBranchAsync(productVariantId, branchId, cancellationToken);
 
         return existing?.AvailableQuantity ?? 0m;
     }
 
-    private async Task<ProductVariant> RequireVariantAsync(int productVariantId, CancellationToken cancellationToken)
+    private async Task<ProductVariant> RequireVariantAsync(int productVariantId, CancellationToken cancellationToken = default)
     {
         var variant = await dbContext.ProductVariants
             .FirstOrDefaultAsync(pv => pv.Id == productVariantId, cancellationToken);
@@ -207,23 +207,33 @@ public class StockService(
                ?? throw new InvalidOperationException($"Product variant {productVariantId} was not found.");
     }
 
+    // Inlined from former IStockRepository.GetByProductVariantIdAndBranchIdAsync — returns tracked entity
+    // so callers can mutate AvailableQuantity directly and have SaveChanges persist it.
+    private Task<Stock?> GetTrackedStockByVariantAndBranchAsync(
+        int productVariantId,
+        Guid branchId,
+        CancellationToken cancellationToken = default) =>
+        dbContext.Stocks
+            .Include(s => s.ProductVariant)
+                .ThenInclude(pv => pv.Product)
+            .FirstOrDefaultAsync(
+                s => s.ProductVariantId == productVariantId && s.BranchId == branchId,
+                cancellationToken);
+
     private async Task<Stock> UpsertStockRowAsync(
         int productVariantId,
         Guid tenantId,
         Guid branchId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
-        var existing = await stockRepository.GetByProductVariantIdAndBranchIdAsync(
-            productVariantId,
-            branchId,
-            cancellationToken);
+        var existing = await GetTrackedStockByVariantAndBranchAsync(productVariantId, branchId, cancellationToken);
 
         if (existing != null)
             return existing;
 
         var variant = await RequireVariantAsync(productVariantId, cancellationToken);
         var row = CreateStockRow(variant, tenantId, branchId, initialAvailable: 0);
-        await stockRepository.AddAsync(row);
+        dbContext.Stocks.Add(row);
         return row;
     }
 
@@ -239,29 +249,6 @@ public class StockService(
             BranchId = branchId,
             CreatedAt = DateTime.UtcNow
         };
-
-    private async Task SyncProductAggregateStockAsync(int productId, CancellationToken cancellationToken)
-    {
-        var product = await dbContext.Products
-            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
-
-        if (product == null)
-            return;
-
-        var variantIds = await dbContext.ProductVariants
-            .Where(pv => pv.ProductId == productId)
-            .Select(pv => pv.Id)
-            .ToListAsync(cancellationToken);
-
-        var total = variantIds.Count == 0
-            ? 0m
-            : await dbContext.Stocks
-                .Where(s => s.BranchId == product.BranchId && variantIds.Contains(s.ProductVariantId))
-                .SumAsync(s => s.AvailableQuantity, cancellationToken);
-
-        product.Stock = (int)Math.Floor(total);
-        product.UpdatedAt = DateTime.UtcNow;
-    }
 
     private static InvalidOperationException InsufficientStock(ProductVariant variant, decimal available, decimal required) =>
         new($"Insufficient stock for SKU '{variant.Sku}'. Available: {available}, Required: {required}.");

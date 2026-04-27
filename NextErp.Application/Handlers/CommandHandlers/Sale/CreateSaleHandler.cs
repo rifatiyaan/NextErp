@@ -7,13 +7,12 @@ using Entities = NextErp.Domain.Entities;
 namespace NextErp.Application.Handlers.CommandHandlers.Sale;
 
 public class CreateSaleHandler(
-    IApplicationUnitOfWork unitOfWork,
     IApplicationDbContext dbContext,
     IStockService stockService,
     IBranchProvider branchProvider)
     : IRequestHandler<CreateSaleCommand, Guid>
 {
-    public async Task<Guid> Handle(CreateSaleCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreateSaleCommand request, CancellationToken cancellationToken = default)
     {
         if (request.Items.Count == 0)
             throw new InvalidOperationException("A sale must contain at least one line item.");
@@ -28,18 +27,18 @@ public class CreateSaleHandler(
         await EnsureStockAvailableForAllLinesAsync(lines, cancellationToken);
 
         var sale = CreateSaleEntity(request, tenantId, branchId, grossTotal);
-        await unitOfWork.SaleRepository.AddAsync(sale);
+        dbContext.Sales.Add(sale);
 
         await AddSaleLinesAndStockMovementsAsync(sale, lines, cancellationToken);
         await AddOptionalPaymentAsync(request, sale, cancellationToken);
 
-        await unitOfWork.SaveAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return sale.Id;
     }
 
     private async Task<Dictionary<int, Entities.ProductVariant>> LoadVariantsByRequestAsync(
         CreateSaleCommand request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         var variantIds = request.Items.Select(i => i.ProductVariantId).Distinct().ToList();
         var variants = await dbContext.ProductVariants
@@ -70,7 +69,7 @@ public class CreateSaleHandler(
 
     private async Task EnsureStockAvailableForAllLinesAsync(
         IReadOnlyList<(Entities.ProductVariant Variant, decimal Quantity, decimal UnitPrice)> lines,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         foreach (var (variant, quantity, _) in lines)
         {
@@ -113,7 +112,7 @@ public class CreateSaleHandler(
     private async Task AddSaleLinesAndStockMovementsAsync(
         Entities.Sale sale,
         IReadOnlyList<(Entities.ProductVariant Variant, decimal Quantity, decimal UnitPrice)> lines,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         foreach (var (variant, quantity, unitPrice) in lines)
         {
@@ -137,14 +136,14 @@ public class CreateSaleHandler(
                 -quantity,
                 Entities.StockMovementType.Sale,
                 sale.Id,
-                cancellationToken);
+                cancellationToken: cancellationToken);
         }
     }
 
     private async Task AddOptionalPaymentAsync(
         CreateSaleCommand request,
         Entities.Sale sale,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         if (!ShouldCreatePayment(request, sale.FinalAmount))
             return;

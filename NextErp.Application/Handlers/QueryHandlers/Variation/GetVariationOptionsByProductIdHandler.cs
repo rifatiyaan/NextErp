@@ -9,7 +9,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Variation
     public class GetVariationOptionsByProductIdHandler(IApplicationDbContext dbContext)
         : IRequestHandler<GetVariationOptionsByProductIdQuery, List<Entities.VariationOption>>
     {
-        public async Task<List<Entities.VariationOption>> Handle(GetVariationOptionsByProductIdQuery request, CancellationToken cancellationToken)
+        public async Task<List<Entities.VariationOption>> Handle(GetVariationOptionsByProductIdQuery request, CancellationToken cancellationToken = default)
         {
             var product = await dbContext.Products
                 .AsNoTracking()

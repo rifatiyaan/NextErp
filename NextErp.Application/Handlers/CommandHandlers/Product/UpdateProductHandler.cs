@@ -4,20 +4,18 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Products;
-using Repositories = NextErp.Domain.Repositories;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Product
 {
     public class UpdateProductHandler(
-        IApplicationUnitOfWork unitOfWork,
         IApplicationDbContext dbContext,
         IStockService stockService,
         IMapper mapper)
         : IRequestHandler<UpdateProductCommand, Unit>
     {
-        public async Task<Unit> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(UpdateProductCommand request, CancellationToken cancellationToken = default)
         {
-            var existing = await unitOfWork.ProductRepository.Query()
+            var existing = await dbContext.Products
                 .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
 
             if (existing == null)
@@ -44,21 +42,21 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                     cancellationToken);
             }
 
-            await unitOfWork.ProductRepository.EditAsync(existing);
+            // Tracked entity — change tracker will pick up modifications without an explicit Update call.
 
             if (!existing.HasVariations)
-                await SyncDefaultVariantWithSimpleProductAsync(existing.Id, existing.Price, existing.Stock, cancellationToken);
+                await SyncDefaultVariantPriceAsync(existing.Id, existing.Price, cancellationToken);
 
-            await unitOfWork.SaveAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             return Unit.Value;
         }
 
-        private async Task SyncDefaultVariantWithSimpleProductAsync(
+        // Stock changes flow only through StockMovement; product update keeps Stock rows untouched.
+        private async Task SyncDefaultVariantPriceAsync(
             int productId,
             decimal price,
-            int stock,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
             var def = await dbContext.ProductVariants
                 .Where(pv => pv.ProductId == productId)
@@ -72,7 +70,6 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
             def.UpdatedAt = DateTime.UtcNow;
 
             await stockService.EnsureStockRecordExistsAsync(def.Id, cancellationToken);
-            await stockService.SetAvailableQuantityAsync(def.Id, stock, cancellationToken);
         }
     }
 }

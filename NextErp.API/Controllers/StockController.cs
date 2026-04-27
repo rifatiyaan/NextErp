@@ -2,9 +2,11 @@ using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NextErp.Application.Commands;
 using NextErp.Application.Commands.Stock;
 using NextErp.Application.DTOs;
 using NextErp.Application.Queries;
+using StockAdjustmentReason = NextErp.Domain.Entities.StockAdjustmentReason;
 
 namespace NextErp.API.Controllers;
 
@@ -64,4 +66,25 @@ public class StockController(IMediator mediator, IMapper mapper) : ControllerBas
         var rows = await mediator.Send(new GetStockMovementHistoryQuery(productVariantId, branchId));
         return Ok(rows);
     }
+
+    [HttpPost("adjust")]
+    public async Task<IActionResult> Adjust([FromBody] CreateStockAdjustmentCommand cmd)
+    {
+        var id = await mediator.Send(cmd);
+        return Ok(new { id });
+    }
+
+    [HttpGet("adjustments")]
+    public async Task<IActionResult> GetAdjustments(
+        [FromQuery] int? productVariantId = null,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        var result = await mediator.Send(new GetStockAdjustmentHistoryQuery(productVariantId, pageIndex, pageSize));
+        return Ok(result);
+    }
+
+    [HttpGet("adjustment-reasons")]
+    public IActionResult GetAdjustmentReasons()
+        => Ok(StockAdjustmentReason.All);
 }

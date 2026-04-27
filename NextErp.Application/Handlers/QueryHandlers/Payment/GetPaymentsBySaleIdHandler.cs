@@ -12,7 +12,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Payment
     {
         public async Task<IReadOnlyList<PaymentContracts.Response.Line>> Handle(
             GetPaymentsBySaleIdQuery request,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
             var rows = await dbContext.SalePayments
                 .AsNoTracking()

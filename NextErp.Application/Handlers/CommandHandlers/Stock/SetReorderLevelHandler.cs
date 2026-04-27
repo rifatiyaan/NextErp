@@ -8,7 +8,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Stock;
 public class SetReorderLevelHandler(IApplicationDbContext dbContext, IBranchProvider branchProvider)
     : IRequestHandler<SetReorderLevelCommand>
 {
-    public async Task Handle(SetReorderLevelCommand request, CancellationToken cancellationToken)
+    public async Task Handle(SetReorderLevelCommand request, CancellationToken cancellationToken = default)
     {
         var branchId = branchProvider.GetRequiredBranchId();
 

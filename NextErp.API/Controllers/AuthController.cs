@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -105,6 +106,73 @@ public class AuthController(
         return Ok(response);
     }
 
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> Me()
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            return Unauthorized();
+
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user == null) return Unauthorized();
+
+        var (roles, primaryRoleId, isSuperAdmin) = await ResolveRoleContextAsync(user);
+
+        var roleIds = new List<Guid>();
+        foreach (var roleName in roles)
+        {
+            var role = await roleManager.FindByNameAsync(roleName);
+            if (role != null) roleIds.Add(role.Id);
+        }
+
+        IReadOnlyList<string> permissions;
+        if (isSuperAdmin)
+        {
+            permissions = await dbContext.RolePermissions
+                .AsNoTracking()
+                .Select(rp => rp.PermissionKey)
+                .Distinct()
+                .ToListAsync();
+        }
+        else
+        {
+            permissions = await dbContext.RolePermissions
+                .AsNoTracking()
+                .Where(rp => roleIds.Contains(rp.RoleId))
+                .Select(rp => rp.PermissionKey)
+                .Distinct()
+                .ToListAsync();
+        }
+
+        string? branchName = null;
+        if (user.BranchId != Guid.Empty)
+        {
+            branchName = await dbContext.Branches
+                .AsNoTracking()
+                .Where(b => b.Id == user.BranchId)
+                .Select(b => b.Title)
+                .FirstOrDefaultAsync();
+        }
+
+        var isGlobal = isSuperAdmin;
+
+        return Ok(new CurrentUserDto
+        {
+            Id = user.Id,
+            Email = user.Email,
+            UserName = user.UserName,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            BranchId = user.BranchId == Guid.Empty ? null : user.BranchId,
+            BranchName = branchName,
+            IsSuperAdmin = isSuperAdmin,
+            IsGlobal = isGlobal,
+            Roles = roles.ToList(),
+            Permissions = permissions,
+        });
+    }
+
     private async Task<(IList<string> Roles, Guid? PrimaryRoleId, bool IsSuperAdmin)> ResolveRoleContextAsync(
         ApplicationUser user)
     {
@@ -184,10 +252,12 @@ public class AuthController(
         var authSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
 
+        var now = DateTime.UtcNow;
         var token = new JwtSecurityToken(
             issuer: configuration["Jwt:Issuer"],
             audience: configuration["Jwt:Audience"],
-            expires: DateTime.Now.AddHours(3),
+            notBefore: now,
+            expires: now.AddHours(3),
             claims: userClaims,
             signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
         );

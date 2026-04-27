@@ -1,14 +1,17 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Commands;
+using NextErp.Application.Interfaces;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Party
 {
-    public class UpdatePartyHandler(IApplicationUnitOfWork unitOfWork)
+    public class UpdatePartyHandler(IApplicationDbContext dbContext)
         : IRequestHandler<UpdatePartyCommand, Unit>
     {
-        public async Task<Unit> Handle(UpdatePartyCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(UpdatePartyCommand request, CancellationToken cancellationToken = default)
         {
-            var party = await unitOfWork.PartyRepository.GetByIdAsync(request.Id);
+            var party = await dbContext.Parties
+                .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
             if (party == null)
                 throw new InvalidOperationException($"Party with Id {request.Id} not found.");
 
@@ -28,8 +31,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Party
             party.IsActive = request.IsActive;
             party.UpdatedAt = DateTime.UtcNow;
 
-            await unitOfWork.PartyRepository.EditAsync(party);
-            await unitOfWork.SaveAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
             return Unit.Value;
         }
     }

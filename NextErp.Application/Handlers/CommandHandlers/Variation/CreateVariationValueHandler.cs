@@ -9,7 +9,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Variation
     public class CreateVariationValueHandler(IApplicationDbContext dbContext)
         : IRequestHandler<CreateVariationValueCommand, int>
     {
-        public async Task<int> Handle(CreateVariationValueCommand request, CancellationToken cancellationToken)
+        public async Task<int> Handle(CreateVariationValueCommand request, CancellationToken cancellationToken = default)
         {
             var option = await dbContext.VariationOptions
                 .FirstOrDefaultAsync(vo => vo.Id == request.VariationOptionId, cancellationToken);

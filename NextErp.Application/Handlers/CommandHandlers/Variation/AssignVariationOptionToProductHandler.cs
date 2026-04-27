@@ -9,7 +9,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Variation
     public class AssignVariationOptionToProductHandler(IApplicationDbContext dbContext)
         : IRequestHandler<AssignVariationOptionToProductCommand, int>
     {
-        public async Task<int> Handle(AssignVariationOptionToProductCommand request, CancellationToken cancellationToken)
+        public async Task<int> Handle(AssignVariationOptionToProductCommand request, CancellationToken cancellationToken = default)
         {
             var productExists = await dbContext.Products.AnyAsync(p => p.Id == request.ProductId, cancellationToken);
             if (!productExists)

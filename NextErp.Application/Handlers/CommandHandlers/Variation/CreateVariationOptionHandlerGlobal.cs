@@ -8,7 +8,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Variation
     public class CreateVariationOptionHandlerGlobal(IApplicationDbContext dbContext)
         : IRequestHandler<CreateVariationOptionCommandGlobal, int>
     {
-        public async Task<int> Handle(CreateVariationOptionCommandGlobal request, CancellationToken cancellationToken)
+        public async Task<int> Handle(CreateVariationOptionCommandGlobal request, CancellationToken cancellationToken = default)
         {
             var option = new Entities.VariationOption
             {

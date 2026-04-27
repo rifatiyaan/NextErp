@@ -10,7 +10,7 @@ internal static class ProductBranchScope
         Entities.Product product,
         IApplicationDbContext dbContext,
         IBranchProvider branchProvider,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         var branchId = branchProvider.GetRequiredBranchId();
         var branch = await dbContext.Branches

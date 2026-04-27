@@ -11,7 +11,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Variation
     {
         public async Task<List<ProductVariation.Response.BulkVariationOptionDto>> Handle(
             GetAllDistinctVariationOptionsQuery request,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
             return await dbContext.VariationOptions
                 .AsNoTracking()

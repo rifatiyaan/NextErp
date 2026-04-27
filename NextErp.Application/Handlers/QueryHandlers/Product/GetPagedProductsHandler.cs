@@ -1,7 +1,6 @@
 using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using NextErp.Application;
 using NextErp.Application.Common;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Products;
@@ -12,7 +11,6 @@ using ProductDto = NextErp.Application.DTOs.Product;
 namespace NextErp.Application.Handlers.QueryHandlers.Product;
 
 public class GetPagedProductsHandler(
-    IApplicationUnitOfWork unitOfWork,
     IApplicationDbContext dbContext,
     IBranchProvider branchProvider,
     IMapper mapper)
@@ -20,9 +18,9 @@ public class GetPagedProductsHandler(
 {
     public async Task<PagedResult<ProductDto.Response.Get.Single>> Handle(
         GetPagedProductsQuery request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
-        var query = ApplyStatusFilter(unitOfWork.ProductRepository.Query(), request.Status);
+        var query = ApplyStatusFilter(dbContext.Products.AsQueryable(), request.Status);
 
         if (!string.IsNullOrWhiteSpace(request.SearchText))
         {
@@ -60,17 +58,10 @@ public class GetPagedProductsHandler(
             await ProductVariantStockLookup.EnrichProductListVariantStocksAsync(dtos, dbContext, branchProvider, cancellationToken)
                 .ConfigureAwait(false);
 
-            var aggregateTotals = await ProductVariantStockLookup.GetProductAggregateStockTotalsAsync(
-                    dbContext,
-                    records.Select(r => r.Id).ToList(),
-                    cancellationToken)
-                .ConfigureAwait(false);
-
-            ProductVariantStockLookup.ApplyProductAggregateStocks(dtos, aggregateTotals);
-        }
-
-        if (request.IncludeStock && dtos.Count > 0)
+            // Populate TotalAvailableQuantity + HasLowStock as default list behaviour
+            // (previously gated behind includeStock=true).
             ApplyStockColumns(dtos, await LoadStockLookupAsync(records, cancellationToken));
+        }
 
         return new PagedResult<ProductDto.Response.Get.Single>(dtos, total, total);
     }
@@ -105,11 +96,32 @@ public class GetPagedProductsHandler(
 
     private async Task<IReadOnlyDictionary<int, (decimal TotalAvailable, bool HasLowStock)>> LoadStockLookupAsync(
         IReadOnlyList<Entities.Product> records,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         var ids = records.Select(p => p.Id).Distinct().ToArray();
-        var rows = await unitOfWork.StockRepository.GetProductStockAggregatesAsync(ids, cancellationToken);
-        return rows.ToDictionary(t => t.ProductId, t => (t.TotalAvailable, t.HasLowStock));
+        if (ids.Length == 0)
+            return new Dictionary<int, (decimal, bool)>();
+
+        // Inlined from former IStockRepository.GetProductStockAggregatesAsync.
+        var branchId = branchProvider.GetBranchId();
+        var rows = await dbContext.ProductVariants
+            .AsNoTracking()
+            .Where(v => ids.Contains(v.ProductId))
+            .GroupBy(v => v.ProductId)
+            .Select(g => new
+            {
+                ProductId = g.Key,
+                TotalAvailable = g.SelectMany(v => v.StockRecords)
+                    .Where(sr => !branchId.HasValue || sr.BranchId == branchId.Value)
+                    .Select(s => (decimal?)s.AvailableQuantity)
+                    .Sum() ?? 0m,
+                HasLowStock = g.SelectMany(v => v.StockRecords)
+                    .Where(sr => !branchId.HasValue || sr.BranchId == branchId.Value)
+                    .Any(s => s.AvailableQuantity <= (s.ReorderLevel ?? 10m)),
+            })
+            .ToListAsync(cancellationToken);
+
+        return rows.ToDictionary(r => r.ProductId, r => (r.TotalAvailable, r.HasLowStock));
     }
 
     private static void ApplyStockColumns(

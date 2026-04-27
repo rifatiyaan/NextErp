@@ -81,7 +81,7 @@ public class ProductController(IMediator mediator, IMapper mapper, IImageService
                 dto.ParentId,
                 dto.CategoryId ?? 0,
                 dto.Price,
-                dto.Stock,
+                dto.InitialStock,
                 dto.IsActive,
                 dto.ImageUrl,
                 createGallery,
@@ -128,7 +128,6 @@ public class ProductController(IMediator mediator, IMapper mapper, IImageService
                 dto.ParentId,
                 dto.CategoryId ?? 0,
                 dto.Price,
-                dto.Stock,
                 dto.IsActive,
                 dto.ImageUrl,
                 dto.ResolvedGallery,
@@ -158,7 +157,7 @@ public class ProductController(IMediator mediator, IMapper mapper, IImageService
         return Array.Empty<Product.Request.GalleryResolvedSlot>();
     }
 
-    private async Task ResolveProductGalleryAsync(Product.Request.Base dto, CancellationToken cancellationToken)
+    private async Task ResolveProductGalleryAsync(Product.Request.Base dto, CancellationToken cancellationToken = default)
     {
         var isUpdate = dto is Product.Request.Update.Single;
 

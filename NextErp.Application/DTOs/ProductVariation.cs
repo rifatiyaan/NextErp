@@ -21,7 +21,7 @@ namespace NextErp.Application.DTOs
             {
                 public string Sku { get; set; } = null!;
                 public decimal Price { get; set; }
-                public int Stock { get; set; }
+                public decimal InitialStock { get; set; }
                 public bool IsActive { get; set; } = true;
                 // Format: "optionIndex:valueIndex" - e.g., ["0:0", "1:1"] means first option's first value + second option's second value
                 public List<string> VariationValueKeys { get; set; } = new();
@@ -50,7 +50,7 @@ namespace NextErp.Application.DTOs
                 public int Id { get; set; }
                 public string Sku { get; set; } = null!;
                 public decimal Price { get; set; }
-                public int Stock { get; set; }
+                public decimal AvailableQuantity { get; set; }
                 public bool IsActive { get; set; }
                 public string Title { get; set; } = null!; // e.g., "S / Red"
                 public List<VariationValueDto> VariationValues { get; set; } = new();

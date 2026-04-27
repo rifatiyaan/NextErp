@@ -1,20 +1,20 @@
 using NextErp.Application.Common;
+using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Entities = NextErp.Domain.Entities;
-using Repositories = NextErp.Domain.Repositories;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Category
 {
-    public class GetPagedCategoriesHandler(Repositories.ICategoryRepository categoryRepo)
+    public class GetPagedCategoriesHandler(IApplicationDbContext dbContext)
         : IRequestHandler<GetPagedCategoriesQuery, PagedResult<Entities.Category>>
     {
         public async Task<PagedResult<Entities.Category>> Handle(
             GetPagedCategoriesQuery request,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
-            var query = categoryRepo.Query().AsNoTracking().Where(c => c.IsActive);
+            var query = dbContext.Categories.AsNoTracking().Where(c => c.IsActive);
 
             if (!string.IsNullOrWhiteSpace(request.SearchText))
                 query = query.Where(c => c.Title.Contains(request.SearchText));

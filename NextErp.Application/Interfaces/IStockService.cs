@@ -24,6 +24,8 @@ namespace NextErp.Application.Interfaces
                     decimal quantityDelta,
                     StockMovementType type,
                     Guid referenceId,
+                    string? reason = null,
+                    string? notes = null,
                     CancellationToken cancellationToken = default);
     }
 }

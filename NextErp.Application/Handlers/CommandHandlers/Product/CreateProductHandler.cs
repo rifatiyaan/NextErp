@@ -8,14 +8,13 @@ using Entities = NextErp.Domain.Entities;
 namespace NextErp.Application.Handlers.CommandHandlers.Product
 {
     public class CreateProductHandler(
-        IApplicationUnitOfWork unitOfWork,
         IApplicationDbContext dbContext,
         IStockService stockService,
         IBranchProvider branchProvider,
         IMapper mapper)
         : IRequestHandler<CreateProductCommand, int>
     {
-        public async Task<int> Handle(CreateProductCommand request, CancellationToken cancellationToken)
+        public async Task<int> Handle(CreateProductCommand request, CancellationToken cancellationToken = default)
         {
             var product = mapper.Map<Entities.Product>(request);
             await ProductBranchScope.ApplyToProductAsync(product, dbContext, branchProvider, cancellationToken);
@@ -23,8 +22,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
             product.HasVariations = false;
             product.CreatedAt = DateTime.UtcNow;
 
-            await unitOfWork.ProductRepository.AddAsync(product);
-            await unitOfWork.SaveAsync();
+            dbContext.Products.Add(product);
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             await ProductGallerySync.ApplyFullGalleryAsync(
                 product,
@@ -38,9 +37,9 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
             await dbContext.SaveChangesAsync(cancellationToken);
 
             await stockService.EnsureStockRecordExistsAsync(variant.Id, cancellationToken);
-            await stockService.SetAvailableQuantityAsync(variant.Id, request.Stock, cancellationToken);
+            await stockService.SetAvailableQuantityAsync(variant.Id, request.InitialStock, cancellationToken);
 
-            await unitOfWork.SaveAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             return product.Id;
         }

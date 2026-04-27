@@ -24,7 +24,7 @@ public class IdentityController(
     UserManager<ApplicationUser> userManager) : ControllerBase
 {
     [HttpGet("dashboard")]
-    public async Task<IActionResult> GetDashboard(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetDashboard(CancellationToken cancellationToken = default)
     {
         var result = await sender.Send(new GetIdentityDashboardQuery(), cancellationToken);
         return Ok(result);
@@ -34,7 +34,7 @@ public class IdentityController(
     public async Task<IActionResult> SetRolePermissions(
         Guid roleId,
         [FromBody] SetPermissionsDto dto,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         var success = await sender.Send(
             new SetRolePermissionsCommand(roleId, dto.PermissionKeys),
@@ -50,7 +50,7 @@ public class IdentityController(
     public async Task<IActionResult> PatchUser(
         Guid id,
         [FromBody] PatchUserDto dto,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         var target = await userManager.FindByIdAsync(id.ToString());
         if (target == null)

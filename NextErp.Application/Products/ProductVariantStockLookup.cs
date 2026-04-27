@@ -14,13 +14,13 @@ public static class ProductVariantStockLookup
     /// One query: total <see cref="Domain.Entities.Stock.AvailableQuantity"/> per product,
     /// counting only rows whose <c>BranchId</c> matches the product catalog row (Products.BranchId).
     /// </summary>
-    public static async Task<IReadOnlyDictionary<int, int>> GetProductAggregateStockTotalsAsync(
+    public static async Task<IReadOnlyDictionary<int, decimal>> GetProductAggregateStockTotalsAsync(
         IApplicationDbContext db,
         IReadOnlyCollection<int> productIds,
         CancellationToken cancellationToken = default)
     {
         if (productIds.Count == 0)
-            return new Dictionary<int, int>();
+            return new Dictionary<int, decimal>();
 
         var idArray = productIds.Distinct().ToArray();
 
@@ -35,22 +35,22 @@ public static class ProductVariantStockLookup
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        var result = idArray.ToDictionary(id => id, _ => 0);
+        var result = idArray.ToDictionary(id => id, _ => 0m);
         foreach (var row in sums)
-            result[row.ProductId] = (int)Math.Floor(row.Total);
+            result[row.ProductId] = row.Total;
 
         return result;
     }
 
     /// <summary>Total on-hand for one product (same rules as <see cref="GetProductAggregateStockTotalsAsync"/>).</summary>
-    public static async Task<int> GetProductAggregateStockTotalAsync(
+    public static async Task<decimal> GetProductAggregateStockTotalAsync(
         int productId,
         IApplicationDbContext db,
         CancellationToken cancellationToken = default)
     {
         var map = await GetProductAggregateStockTotalsAsync(db, new[] { productId }, cancellationToken)
             .ConfigureAwait(false);
-        return map.GetValueOrDefault(productId, 0);
+        return map.GetValueOrDefault(productId, 0m);
     }
 
     /// <summary>
@@ -130,10 +130,10 @@ public static class ProductVariantStockLookup
 
     public static void ApplyProductAggregateStocks(
         IReadOnlyList<ProductGetSingle.Single> dtos,
-        IReadOnlyDictionary<int, int> totalsByProductId)
+        IReadOnlyDictionary<int, decimal> totalsByProductId)
     {
         foreach (var dto in dtos)
-            dto.Stock = totalsByProductId.GetValueOrDefault(dto.Id, 0);
+            dto.TotalAvailableQuantity = totalsByProductId.GetValueOrDefault(dto.Id, 0m);
     }
 
     private static void ApplyVariantQuantities(
@@ -144,6 +144,6 @@ public static class ProductVariantStockLookup
             return;
 
         foreach (var v in variants)
-            v.Stock = (int)Math.Floor(quantityByVariantId.GetValueOrDefault(v.Id, 0m));
+            v.AvailableQuantity = quantityByVariantId.GetValueOrDefault(v.Id, 0m);
     }
 }

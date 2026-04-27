@@ -62,7 +62,32 @@ namespace NextErp.Application.DTOs
                 public decimal NewQuantity { get; set; }
                 public string MovementType { get; set; } = null!;
                 public Guid ReferenceId { get; set; }
+                public string? Reason { get; set; }
+                public string? Notes { get; set; }
                 public DateTime CreatedAt { get; set; }
+            }
+
+            /// <summary>Display row for manual stock adjustment history.</summary>
+            public class AdjustmentLine
+            {
+                public Guid Id { get; set; }
+                public int ProductVariantId { get; set; }
+                public string VariantSku { get; set; } = null!;
+                public string ProductTitle { get; set; } = null!;
+                public decimal QuantityChanged { get; set; }
+                public decimal PreviousQuantity { get; set; }
+                public decimal NewQuantity { get; set; }
+                public string ReasonCode { get; set; } = null!;
+                public string? Notes { get; set; }
+                public DateTime CreatedAt { get; set; }
+            }
+
+            public class PagedAdjustments
+            {
+                public IReadOnlyList<AdjustmentLine> Items { get; set; } = Array.Empty<AdjustmentLine>();
+                public int Total { get; set; }
+                public int PageIndex { get; set; }
+                public int PageSize { get; set; }
             }
         }
     }

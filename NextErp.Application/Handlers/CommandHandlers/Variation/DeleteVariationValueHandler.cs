@@ -8,7 +8,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Variation
     public class DeleteVariationValueHandler(IApplicationDbContext dbContext)
         : IRequestHandler<DeleteVariationValueCommand>
     {
-        public async Task Handle(DeleteVariationValueCommand request, CancellationToken cancellationToken)
+        public async Task Handle(DeleteVariationValueCommand request, CancellationToken cancellationToken = default)
         {
             var value = await dbContext.VariationValues.FindAsync([request.Id], cancellationToken);
             if (value == null)

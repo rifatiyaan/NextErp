@@ -7,13 +7,12 @@ using Entities = NextErp.Domain.Entities;
 namespace NextErp.Application.Handlers.CommandHandlers.Purchase;
 
 public class CreatePurchaseHandler(
-    IApplicationUnitOfWork unitOfWork,
     IApplicationDbContext dbContext,
     IStockService stockService,
     IBranchProvider branchProvider)
     : IRequestHandler<CreatePurchaseCommand, Guid>
 {
-    public async Task<Guid> Handle(CreatePurchaseCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreatePurchaseCommand request, CancellationToken cancellationToken = default)
     {
         if (request.Items.Count == 0)
             throw new InvalidOperationException("A purchase must contain at least one line item.");
@@ -23,17 +22,17 @@ public class CreatePurchaseHandler(
         var branchId = ResolveWriteBranchId(variants.Values);
 
         var purchase = CreatePurchaseHeader(request, tenantId, branchId);
-        await unitOfWork.PurchaseRepository.AddAsync(purchase);
+        dbContext.Purchases.Add(purchase);
 
         purchase.TotalAmount = await AddLineItemsAndMovementsAsync(purchase, request, variants, cancellationToken);
 
-        await unitOfWork.SaveAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return purchase.Id;
     }
 
     private async Task<Dictionary<int, Entities.ProductVariant>> LoadVariantsAsync(
         CreatePurchaseCommand request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         var variantIds = request.Items.Select(i => i.ProductVariantId).Distinct().ToList();
         var variants = await dbContext.ProductVariants
@@ -85,7 +84,7 @@ public class CreatePurchaseHandler(
         Entities.Purchase purchase,
         CreatePurchaseCommand request,
         IReadOnlyDictionary<int, Entities.ProductVariant> variants,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         decimal total = 0;
 
@@ -125,7 +124,7 @@ public class CreatePurchaseHandler(
                 dto.Quantity,
                 Entities.StockMovementType.Purchase,
                 purchase.Id,
-                cancellationToken);
+                cancellationToken: cancellationToken);
         }
 
         return total;

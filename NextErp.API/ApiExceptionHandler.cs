@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Common.Exceptions;
+using ValidationException = NextErp.Application.Common.Exceptions.ValidationException;
 
 namespace NextErp.API;
 
@@ -18,7 +19,7 @@ public sealed class ApiExceptionHandler(IHostEnvironment environment, ILogger<Ap
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         if (!httpContext.Request.Path.StartsWithSegments("/api"))
             return false;
@@ -37,6 +38,11 @@ public sealed class ApiExceptionHandler(IHostEnvironment environment, ILogger<Ap
 
         problem.Extensions["traceId"] = httpContext.TraceIdentifier;
 
+        if (exception is ValidationException vex)
+        {
+            problem.Extensions["errors"] = vex.Errors;
+        }
+
         httpContext.Response.ContentType = "application/problem+json; charset=utf-8";
         httpContext.Response.StatusCode = status;
 
@@ -48,6 +54,10 @@ public sealed class ApiExceptionHandler(IHostEnvironment environment, ILogger<Ap
     {
         return exception switch
         {
+            ValidationException => (
+                StatusCodes.Status422UnprocessableEntity,
+                "Validation failed",
+                "One or more validation failures have occurred."),
             ForbiddenAccessException f => (StatusCodes.Status403Forbidden, "Forbidden", f.Message),
             UnauthorizedAccessException u => (StatusCodes.Status401Unauthorized, "Unauthorized", u.Message),
             InvalidOperationException op => (StatusCodes.Status400BadRequest, "Bad request", op.Message),

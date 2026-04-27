@@ -13,7 +13,6 @@ namespace NextErp.Domain.Entities
         public ICollection<Product> Children { get; set; } = new List<Product>();
 
         public decimal Price { get; set; }
-        public int Stock { get; set; }
         public int CategoryId { get; set; }
         public Category Category { get; set; } = null!;
 

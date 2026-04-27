@@ -8,7 +8,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Identity
     public class PatchUserHandler(UserManager<ApplicationUser> userManager)
             : IRequestHandler<PatchUserCommand, bool>
     {
-        public async Task<bool> Handle(PatchUserCommand request, CancellationToken cancellationToken)
+        public async Task<bool> Handle(PatchUserCommand request, CancellationToken cancellationToken = default)
         {
             var user = await userManager.FindByIdAsync(request.UserId.ToString());
             if (user is null)

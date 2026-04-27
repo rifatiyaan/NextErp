@@ -1,5 +1,6 @@
 using AutoMapper;
 using NextErp.Application.DTOs;
+using NextErp.Application.Interfaces;
 using NextErp.Application.Queries.Module;
 using NextErp.Domain.Entities;
 using MediatR;
@@ -7,12 +8,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Module
 {
-    public class GetMenuByUserHandler(IApplicationUnitOfWork unitOfWork, IMapper mapper)
+    public class GetMenuByUserHandler(IApplicationDbContext dbContext, IMapper mapper)
         : IRequestHandler<GetMenuByUserQuery, List<DTOs.Module.Response.Get.Single>>
     {
-        public async Task<List<DTOs.Module.Response.Get.Single>> Handle(GetMenuByUserQuery request, CancellationToken cancellationToken)
+        public async Task<List<DTOs.Module.Response.Get.Single>> Handle(GetMenuByUserQuery request, CancellationToken cancellationToken = default)
         {
-            var menuItems = await unitOfWork.ModuleRepository.Query()
+            var menuItems = await dbContext.Modules
                 .AsNoTracking()
                 .Where(x => x.TenantId == request.TenantId && x.IsActive)
                 .OrderBy(x => x.Order)
@@ -44,12 +45,12 @@ namespace NextErp.Application.Handlers.QueryHandlers.Module
         }
     }
 
-    public class GetAllModulesHandler(IApplicationUnitOfWork unitOfWork, IMapper mapper)
+    public class GetAllModulesHandler(IApplicationDbContext dbContext, IMapper mapper)
         : IRequestHandler<GetAllModulesQuery, List<DTOs.Module.Response.Get.Single>>
     {
-        public async Task<List<DTOs.Module.Response.Get.Single>> Handle(GetAllModulesQuery request, CancellationToken cancellationToken)
+        public async Task<List<DTOs.Module.Response.Get.Single>> Handle(GetAllModulesQuery request, CancellationToken cancellationToken = default)
         {
-            var items = await unitOfWork.ModuleRepository.Query()
+            var items = await dbContext.Modules
                 .AsNoTracking()
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync(cancellationToken);
@@ -58,24 +59,24 @@ namespace NextErp.Application.Handlers.QueryHandlers.Module
         }
     }
 
-    public class GetModuleByIdHandler(IApplicationUnitOfWork unitOfWork, IMapper mapper)
+    public class GetModuleByIdHandler(IApplicationDbContext dbContext, IMapper mapper)
         : IRequestHandler<GetModuleByIdQuery, DTOs.Module.Response.Get.Single?>
     {
-        public async Task<DTOs.Module.Response.Get.Single?> Handle(GetModuleByIdQuery request, CancellationToken cancellationToken)
+        public async Task<DTOs.Module.Response.Get.Single?> Handle(GetModuleByIdQuery request, CancellationToken cancellationToken = default)
         {
-            var item = await unitOfWork.ModuleRepository.Query()
+            var item = await dbContext.Modules
                 .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Id == request.Id, cancellationToken);
             return mapper.Map<DTOs.Module.Response.Get.Single?>(item);
         }
     }
 
-    public class GetModulesByTypeHandler(IApplicationUnitOfWork unitOfWork, IMapper mapper)
+    public class GetModulesByTypeHandler(IApplicationDbContext dbContext, IMapper mapper)
         : IRequestHandler<GetModulesByTypeQuery, List<DTOs.Module.Response.Get.Single>>
     {
-        public async Task<List<DTOs.Module.Response.Get.Single>> Handle(GetModulesByTypeQuery request, CancellationToken cancellationToken)
+        public async Task<List<DTOs.Module.Response.Get.Single>> Handle(GetModulesByTypeQuery request, CancellationToken cancellationToken = default)
         {
-            var items = await unitOfWork.ModuleRepository.Query()
+            var items = await dbContext.Modules
                 .AsNoTracking()
                 .Where(x => x.Type == (ModuleType)request.Type)
                 .OrderByDescending(x => x.CreatedAt)

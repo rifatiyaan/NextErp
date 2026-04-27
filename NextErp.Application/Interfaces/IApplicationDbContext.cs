@@ -33,6 +33,6 @@ namespace NextErp.Application.Interfaces
         // Transaction Support
         DatabaseFacade Database { get; }
 
-        Task<int> SaveChangesAsync(CancellationToken cancellationToken);
+        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

@@ -2,33 +2,34 @@ using AutoMapper;
 using NextErp.Application.Commands.Module;
 using NextErp.Domain.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Interfaces;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Module
 {
-    public class CreateModuleHandler(IApplicationUnitOfWork unitOfWork, IMapper mapper)
+    public class CreateModuleHandler(IApplicationDbContext dbContext, IMapper mapper)
         : IRequestHandler<CreateModuleCommand, int>
     {
-        public async Task<int> Handle(CreateModuleCommand request, CancellationToken cancellationToken)
+        public async Task<int> Handle(CreateModuleCommand request, CancellationToken cancellationToken = default)
         {
             var module = mapper.Map<NextErp.Domain.Entities.Module>(request.Dto);
             module.CreatedAt = DateTime.UtcNow;
 
-            await unitOfWork.ModuleRepository.AddAsync(module);
-            await unitOfWork.SaveAsync();
+            dbContext.Modules.Add(module);
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             return module.Id;
         }
     }
 
     public class CreateBulkModulesHandler(
-        IApplicationUnitOfWork unitOfWork,
+        IApplicationDbContext dbContext,
         IMapper mapper)
         : IRequestHandler<CreateBulkModulesCommand, DTOs.Module.Response.Create.Bulk>
     {
         public async Task<DTOs.Module.Response.Create.Bulk> Handle(
             CreateBulkModulesCommand request,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
             var response = new DTOs.Module.Response.Create.Bulk
             {
@@ -49,7 +50,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Module
                     module.CreatedAt = DateTime.UtcNow;
                     module.TenantId = Guid.Empty;
 
-                    await unitOfWork.ModuleRepository.AddAsync(module);
+                    dbContext.Modules.Add(module);
                     parentModules.Add((moduleDto, module));
                 }
                 catch (Exception ex)
@@ -59,7 +60,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Module
                 }
             }
 
-            await unitOfWork.SaveAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             var allChildren = new List<(DTOs.Module.Request.Create.Hierarchical ChildDto, int ParentId)>();
 
@@ -83,7 +84,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Module
                     childModule.CreatedAt = DateTime.UtcNow;
                     childModule.TenantId = Guid.Empty;
 
-                    await unitOfWork.ModuleRepository.AddAsync(childModule);
+                    dbContext.Modules.Add(childModule);
                 }
                 catch (Exception ex)
                 {
@@ -92,7 +93,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Module
                 }
             }
 
-            await unitOfWork.SaveAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             var childErrorCount = response.Errors.Count(e => e.Contains("child module"));
             response.SuccessCount = parentModules.Count + (allChildren.Count - childErrorCount);
@@ -107,36 +108,39 @@ namespace NextErp.Application.Handlers.CommandHandlers.Module
         }
     }
 
-    public class UpdateModuleHandler(IApplicationUnitOfWork unitOfWork, IMapper mapper)
+    public class UpdateModuleHandler(IApplicationDbContext dbContext, IMapper mapper)
         : IRequestHandler<UpdateModuleCommand, Unit>
     {
-        public async Task<Unit> Handle(UpdateModuleCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(UpdateModuleCommand request, CancellationToken cancellationToken = default)
         {
-            var existing = await unitOfWork.ModuleRepository.GetByIdAsync(request.Id);
+            var existing = await dbContext.Modules
+                .FirstOrDefaultAsync(m => m.Id == request.Id, cancellationToken);
             if (existing == null)
                 throw new KeyNotFoundException($"Module with ID {request.Id} not found.");
 
             mapper.Map(request.Dto, existing);
             existing.UpdatedAt = DateTime.UtcNow;
 
-            await unitOfWork.ModuleRepository.EditAsync(existing);
-            await unitOfWork.SaveAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             return Unit.Value;
         }
     }
 
-    public class DeleteModuleHandler(IApplicationUnitOfWork unitOfWork)
+    public class DeleteModuleHandler(IApplicationDbContext dbContext)
         : IRequestHandler<DeleteModuleCommand, Unit>
     {
-        public async Task<Unit> Handle(DeleteModuleCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(DeleteModuleCommand request, CancellationToken cancellationToken = default)
         {
-            var existing = await unitOfWork.ModuleRepository.GetByIdAsync(request.Id);
+            var existing = await dbContext.Modules
+                .FirstOrDefaultAsync(m => m.Id == request.Id, cancellationToken);
             if (existing == null)
                 throw new KeyNotFoundException($"Module with ID {request.Id} not found.");
 
-            await unitOfWork.ModuleRepository.RemoveAsync(existing);
-            await unitOfWork.SaveAsync();
+            // Module is ISoftDeletable — preserve original repo behaviour (soft-delete via IsActive flag).
+            existing.IsActive = false;
+            existing.UpdatedAt = DateTime.UtcNow;
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             return Unit.Value;
         }

@@ -19,7 +19,7 @@ public class BranchController(
     IBranchProvider branchProvider) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll(CancellationToken cancellationToken = default)
     {
         IQueryable<DomainBranch> query = dbContext.Branches.AsNoTracking().OrderByDescending(x => x.CreatedAt);
         if (!branchProvider.IsGlobal())
@@ -34,7 +34,7 @@ public class BranchController(
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken = default)
     {
         if (!branchProvider.IsGlobal() && branchProvider.GetRequiredBranchId() != id)
             return NotFound();
@@ -49,7 +49,7 @@ public class BranchController(
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] BranchDto.Request.Create.Single dto, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create([FromBody] BranchDto.Request.Create.Single dto, CancellationToken cancellationToken = default)
     {
         if (!branchProvider.IsGlobal())
             return Forbid();
@@ -67,7 +67,7 @@ public class BranchController(
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] BranchDto.Request.Update.Single dto, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(Guid id, [FromBody] BranchDto.Request.Update.Single dto, CancellationToken cancellationToken = default)
     {
         if (!branchProvider.IsGlobal())
             return Forbid();
@@ -83,7 +83,7 @@ public class BranchController(
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
     {
         if (!branchProvider.IsGlobal())
             return Forbid();

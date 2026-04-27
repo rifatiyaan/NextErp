@@ -8,7 +8,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Variation
     public class UnassignVariationOptionFromProductHandler(IApplicationDbContext dbContext)
         : IRequestHandler<UnassignVariationOptionFromProductCommand>
     {
-        public async Task Handle(UnassignVariationOptionFromProductCommand request, CancellationToken cancellationToken)
+        public async Task Handle(UnassignVariationOptionFromProductCommand request, CancellationToken cancellationToken = default)
         {
             var pvo = await dbContext.ProductVariationOptions
                 .FirstOrDefaultAsync(pvo => pvo.ProductId == request.ProductId && pvo.VariationOptionId == request.VariationOptionId, cancellationToken);

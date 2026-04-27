@@ -6,11 +6,11 @@ using Entities = NextErp.Domain.Entities;
 namespace NextErp.Application.Handlers.CommandHandlers.Party
 {
     public class CreatePartyHandler(
-        IApplicationUnitOfWork unitOfWork,
+        IApplicationDbContext dbContext,
         IBranchProvider branchProvider)
         : IRequestHandler<CreatePartyCommand, Guid>
     {
-        public async Task<Guid> Handle(CreatePartyCommand request, CancellationToken cancellationToken)
+        public async Task<Guid> Handle(CreatePartyCommand request, CancellationToken cancellationToken = default)
         {
             var party = new Entities.Party
             {
@@ -33,8 +33,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Party
                 BranchId = branchProvider.GetRequiredBranchId()
             };
 
-            await unitOfWork.PartyRepository.AddAsync(party);
-            await unitOfWork.SaveAsync();
+            dbContext.Parties.Add(party);
+            await dbContext.SaveChangesAsync(cancellationToken);
             return party.Id;
         }
     }

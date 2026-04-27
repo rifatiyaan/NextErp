@@ -237,7 +237,7 @@ public class ProductProfile : Profile
         CreateMap<VariationValue, DTOs.ProductVariation.Response.VariationValueDto>();
 
         CreateMap<ProductVariant, DTOs.ProductVariation.Response.ProductVariantDto>()
-            .ForMember(dest => dest.Stock, opt => opt.Ignore())
+            .ForMember(dest => dest.AvailableQuantity, opt => opt.Ignore()) // populated by ProductVariantStockLookup
             .ForMember(dest => dest.VariationValues, opt => opt.MapFrom(src => src.VariationValues));
     }
 
@@ -257,7 +257,7 @@ public class ProductProfile : Profile
             dto.ParentId,
             dto.Metadata != null && dto.Metadata.CategoryId.HasValue ? dto.Metadata.CategoryId.Value : (dto.CategoryId ?? 0),
             dto.Price,
-            dto.Stock,
+            dto.InitialStock,
             dto.IsActive,
             dto.ImageUrl,
             gallery,
@@ -275,7 +275,6 @@ public class ProductProfile : Profile
             dto.ParentId,
             dto.Metadata != null && dto.Metadata.CategoryId.HasValue ? dto.Metadata.CategoryId.Value : (dto.CategoryId ?? 0),
             dto.Price,
-            dto.Stock,
             dto.IsActive,
             dto.ImageUrl,
             dto.ResolvedGallery,

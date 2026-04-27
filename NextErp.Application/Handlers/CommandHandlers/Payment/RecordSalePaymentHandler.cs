@@ -9,11 +9,10 @@ using Entities = NextErp.Domain.Entities;
 namespace NextErp.Application.Handlers.CommandHandlers.Payment
 {
     public class RecordSalePaymentHandler(
-        IApplicationDbContext dbContext,
-        IApplicationUnitOfWork unitOfWork)
+        IApplicationDbContext dbContext)
         : IRequestHandler<RecordSalePaymentCommand, Guid>
     {
-        public async Task<Guid> Handle(RecordSalePaymentCommand request, CancellationToken cancellationToken)
+        public async Task<Guid> Handle(RecordSalePaymentCommand request, CancellationToken cancellationToken = default)
         {
             SalePaymentRules.RequirePositiveAmount(request.Amount);
 
@@ -42,7 +41,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Payment
             };
 
             await dbContext.SalePayments.AddAsync(payment, cancellationToken);
-            await unitOfWork.SaveAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             return payment.Id;
         }

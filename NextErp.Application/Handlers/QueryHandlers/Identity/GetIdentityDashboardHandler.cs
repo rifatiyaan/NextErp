@@ -26,7 +26,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Identity
 
         public async Task<IdentityCommandCenterDto> Handle(
             GetIdentityDashboardQuery request,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
             // Sequential queries: UserManager, RoleManager, and DbContext share one EF instance;
             // concurrent ToListAsync on the same context is not supported.

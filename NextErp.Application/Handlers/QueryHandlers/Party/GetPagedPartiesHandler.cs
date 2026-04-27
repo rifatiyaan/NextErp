@@ -1,22 +1,45 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
+using System.Linq.Dynamic.Core;
 using Entities = NextErp.Domain.Entities;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Party
 {
-    public class GetPagedPartiesHandler(IApplicationUnitOfWork unitOfWork)
+    public class GetPagedPartiesHandler(IApplicationDbContext dbContext)
         : IRequestHandler<GetPagedPartiesQuery, (IList<Entities.Party> Records, int Total, int TotalDisplay)>
     {
         public async Task<(IList<Entities.Party> Records, int Total, int TotalDisplay)> Handle(
             GetPagedPartiesQuery request,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
-            return await unitOfWork.PartyRepository.GetTableDataAsync(
-                request.PageIndex,
-                request.PageSize,
-                request.SearchText,
-                request.SortBy,
-                request.PartyType);
+            // Inlined from former IPartyRepository.GetTableDataAsync.
+            var partyType = request.PartyType;
+            var searchText = request.SearchText;
+
+            var query = dbContext.Parties
+                .AsNoTracking()
+                .Where(x =>
+                    (partyType == null || x.PartyType == partyType) &&
+                    (string.IsNullOrEmpty(searchText) ||
+                     x.Title.Contains(searchText) ||
+                     (x.Email != null && x.Email.Contains(searchText)) ||
+                     (x.Phone != null && x.Phone.Contains(searchText))));
+
+            var total = await query.CountAsync(cancellationToken);
+
+            // Preserve original dynamic-string sort behaviour via System.Linq.Dynamic.Core.
+            var ordered = string.IsNullOrWhiteSpace(request.SortBy)
+                ? (IQueryable<Entities.Party>)query
+                : query.OrderBy(request.SortBy);
+
+            var records = await ordered
+                .Skip((request.PageIndex - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync(cancellationToken);
+
+            return (records, total, total);
         }
     }
 }

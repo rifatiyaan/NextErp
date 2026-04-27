@@ -1,4 +1,5 @@
 using NextErp.Application.Common;
+using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -6,14 +7,14 @@ using SaleDto = NextErp.Application.DTOs.Sale;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Sale
 {
-    public class GetPagedSalesHandler(IApplicationUnitOfWork unitOfWork)
+    public class GetPagedSalesHandler(IApplicationDbContext dbContext)
         : IRequestHandler<GetPagedSalesQuery, PagedResult<SaleDto.Response.Get.ListRow>>
     {
         public async Task<PagedResult<SaleDto.Response.Get.ListRow>> Handle(
             GetPagedSalesQuery request,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
-            var baseQuery = unitOfWork.SaleRepository.Query().AsNoTracking();
+            var baseQuery = dbContext.Sales.AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(request.SearchText))
             {
