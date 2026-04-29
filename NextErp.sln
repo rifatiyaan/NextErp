@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NextErp.Application", "Next
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NextErp.Gateway", "NextErp.Gateway\NextErp.Gateway.csproj", "{47709F6F-EEE5-4CCF-8851-8D9C3D94E56F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NextErp.Application.Tests", "NextErp.Application.Tests\NextErp.Application.Tests.csproj", "{B98F06F5-409A-447F-B9D8-709F9CF5A816}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,18 @@ Global
 		{47709F6F-EEE5-4CCF-8851-8D9C3D94E56F}.Release|x64.Build.0 = Release|Any CPU
 		{47709F6F-EEE5-4CCF-8851-8D9C3D94E56F}.Release|x86.ActiveCfg = Release|Any CPU
 		{47709F6F-EEE5-4CCF-8851-8D9C3D94E56F}.Release|x86.Build.0 = Release|Any CPU
+		{B98F06F5-409A-447F-B9D8-709F9CF5A816}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B98F06F5-409A-447F-B9D8-709F9CF5A816}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B98F06F5-409A-447F-B9D8-709F9CF5A816}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B98F06F5-409A-447F-B9D8-709F9CF5A816}.Debug|x64.Build.0 = Debug|Any CPU
+		{B98F06F5-409A-447F-B9D8-709F9CF5A816}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B98F06F5-409A-447F-B9D8-709F9CF5A816}.Debug|x86.Build.0 = Debug|Any CPU
+		{B98F06F5-409A-447F-B9D8-709F9CF5A816}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B98F06F5-409A-447F-B9D8-709F9CF5A816}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B98F06F5-409A-447F-B9D8-709F9CF5A816}.Release|x64.ActiveCfg = Release|Any CPU
+		{B98F06F5-409A-447F-B9D8-709F9CF5A816}.Release|x64.Build.0 = Release|Any CPU
+		{B98F06F5-409A-447F-B9D8-709F9CF5A816}.Release|x86.ActiveCfg = Release|Any CPU
+		{B98F06F5-409A-447F-B9D8-709F9CF5A816}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
