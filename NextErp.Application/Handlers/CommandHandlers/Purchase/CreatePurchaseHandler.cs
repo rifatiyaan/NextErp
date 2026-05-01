@@ -1,7 +1,7 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Commands;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Services;
 using Entities = NextErp.Domain.Entities;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Purchase;
@@ -17,34 +17,24 @@ public class CreatePurchaseHandler(
         if (request.Items.Count == 0)
             throw new InvalidOperationException("A purchase must contain at least one line item.");
 
-        var variants = await LoadVariantsAsync(request, cancellationToken);
+        // ---- Phase 1: variants in one query ----
+        var variantIds = request.Items.Select(i => i.ProductVariantId).Distinct().ToList();
+        var variants = await stockService.LoadVariantsAsync(variantIds, cancellationToken);
+
         var tenantId = variants.Values.First().TenantId;
         var branchId = ResolveWriteBranchId(variants.Values);
 
+        // ---- Phase 2: stocks for branch in one query ----
+        var stockContext = await stockService.LoadStockContextAsync(variants, branchId, tenantId, cancellationToken);
+
+        // ---- Phase 3: build purchase + line items + stock movements (no DB calls) ----
         var purchase = CreatePurchaseHeader(request, tenantId, branchId);
         dbContext.Purchases.Add(purchase);
+        purchase.TotalAmount = AddLineItemsAndMovements(purchase, request, stockContext);
 
-        purchase.TotalAmount = await AddLineItemsAndMovementsAsync(purchase, request, variants, cancellationToken);
-
+        // ---- Phase 4: single SaveChanges persists everything ----
         await dbContext.SaveChangesAsync(cancellationToken);
         return purchase.Id;
-    }
-
-    private async Task<Dictionary<int, Entities.ProductVariant>> LoadVariantsAsync(
-        CreatePurchaseCommand request,
-        CancellationToken cancellationToken = default)
-    {
-        var variantIds = request.Items.Select(i => i.ProductVariantId).Distinct().ToList();
-        var variants = await dbContext.ProductVariants
-            .Include(v => v.Product)
-            .Where(v => variantIds.Contains(v.Id))
-            .ToDictionaryAsync(v => v.Id, cancellationToken);
-
-        if (variants.Count == variantIds.Count)
-            return variants;
-
-        var missing = string.Join(", ", variantIds.Except(variants.Keys));
-        throw new InvalidOperationException($"Product variant(s) not found: {missing}.");
     }
 
     private static Entities.Purchase CreatePurchaseHeader(
@@ -80,17 +70,16 @@ public class CreatePurchaseHandler(
         };
     }
 
-    private async Task<decimal> AddLineItemsAndMovementsAsync(
+    private decimal AddLineItemsAndMovements(
         Entities.Purchase purchase,
         CreatePurchaseCommand request,
-        IReadOnlyDictionary<int, Entities.ProductVariant> variants,
-        CancellationToken cancellationToken = default)
+        StockContext stockContext)
     {
         decimal total = 0;
 
         foreach (var dto in request.Items)
         {
-            var variant = variants[dto.ProductVariantId];
+            var variant = stockContext.GetVariant(dto.ProductVariantId);
             var title = string.IsNullOrWhiteSpace(dto.Title)
                 ? $"{variant.Product?.Title ?? "Product"} — {variant.Title}"
                 : dto.Title;
@@ -117,14 +106,13 @@ public class CreatePurchaseHandler(
             purchase.Items.Add(item);
             total += item.Total;
 
-            await stockService.RecordMovementAsync(
+            // Pure in-memory: mutates tracked Stock + adds StockMovement.
+            stockService.RecordMovement(
+                stockContext,
                 variant.Id,
-                purchase.TenantId,
-                purchase.BranchId,
                 dto.Quantity,
                 Entities.StockMovementType.Purchase,
-                purchase.Id,
-                cancellationToken: cancellationToken);
+                purchase.Id);
         }
 
         return total;

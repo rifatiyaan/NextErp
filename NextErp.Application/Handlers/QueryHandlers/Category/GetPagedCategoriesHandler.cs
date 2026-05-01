@@ -1,4 +1,5 @@
 using NextErp.Application.Common;
+using NextErp.Application.Common.Extensions;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 using MediatR;
@@ -14,10 +15,10 @@ namespace NextErp.Application.Handlers.QueryHandlers.Category
             GetPagedCategoriesQuery request,
             CancellationToken cancellationToken = default)
         {
-            var query = dbContext.Categories.AsNoTracking().Where(c => c.IsActive);
-
-            if (!string.IsNullOrWhiteSpace(request.SearchText))
-                query = query.Where(c => c.Title.Contains(request.SearchText));
+            var query = dbContext.Categories
+                .AsNoTracking()
+                .Where(c => c.IsActive)
+                .WhereIfNotEmpty(request.SearchText, c => c.Title.Contains(request.SearchText!));
 
             var total = await query.CountAsync(cancellationToken);
 

@@ -2,6 +2,7 @@ using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Common;
+using NextErp.Application.Common.Extensions;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Products;
 using NextErp.Application.Queries;
@@ -20,18 +21,15 @@ public class GetPagedProductsHandler(
         GetPagedProductsQuery request,
         CancellationToken cancellationToken = default)
     {
-        var query = ApplyStatusFilter(dbContext.Products.AsQueryable(), request.Status);
+        var pattern = !string.IsNullOrWhiteSpace(request.SearchText)
+            ? $"%{request.SearchText.Trim()}%"
+            : null;
 
-        if (!string.IsNullOrWhiteSpace(request.SearchText))
-        {
-            var pattern = $"%{request.SearchText.Trim()}%";
-            query = query.Where(p =>
-                EF.Functions.Like(p.Title, pattern) ||
-                EF.Functions.Like(p.Code, pattern));
-        }
-
-        if (request.CategoryId is > 0)
-            query = query.Where(p => p.CategoryId == request.CategoryId.Value);
+        var query = ApplyStatusFilter(dbContext.Products.AsQueryable(), request.Status)
+            .WhereIfNotEmpty(pattern, p =>
+                EF.Functions.Like(p.Title, pattern!) ||
+                EF.Functions.Like(p.Code, pattern!))
+            .WhereIf(request.CategoryId is > 0, p => p.CategoryId == request.CategoryId!.Value);
 
         var total = await query.CountAsync(cancellationToken);
 

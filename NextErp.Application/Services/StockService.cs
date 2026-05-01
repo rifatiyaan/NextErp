@@ -252,4 +252,101 @@ public class StockService(
 
     private static InvalidOperationException InsufficientStock(ProductVariant variant, decimal available, decimal required) =>
         new($"Insufficient stock for SKU '{variant.Sku}'. Available: {available}, Required: {required}.");
+
+    // ===========================================================================
+    // Batch API — loads variants + stocks once, then serves per-item operations
+    // from in-memory context. Eliminates N+1 query patterns in multi-item handlers.
+    // ===========================================================================
+
+    public async Task<IReadOnlyDictionary<int, ProductVariant>> LoadVariantsAsync(
+        IReadOnlyCollection<int> variantIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (variantIds.Count == 0)
+            return new Dictionary<int, ProductVariant>();
+
+        var distinctIds = variantIds.Distinct().ToList();
+        var variants = await dbContext.ProductVariants
+            .Include(v => v.Product)
+            .Where(v => distinctIds.Contains(v.Id))
+            .ToDictionaryAsync(v => v.Id, cancellationToken);
+
+        if (variants.Count == distinctIds.Count)
+            return variants;
+
+        var missing = string.Join(", ", distinctIds.Except(variants.Keys));
+        throw new InvalidOperationException($"Product variant(s) not found: {missing}.");
+    }
+
+    public async Task<StockContext> LoadStockContextAsync(
+        IReadOnlyDictionary<int, ProductVariant> variants,
+        Guid branchId,
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = variants.Keys.ToList();
+        var stockRows = await dbContext.Stocks
+            .Where(s => s.BranchId == branchId && ids.Contains(s.ProductVariantId))
+            .ToListAsync(cancellationToken);
+
+        var stocksByVariant = stockRows.ToDictionary(s => s.ProductVariantId);
+        return new StockContext(branchId, tenantId, variants, stocksByVariant);
+    }
+
+    public StockMovement RecordMovement(
+        StockContext context,
+        int productVariantId,
+        decimal quantityDelta,
+        StockMovementType movementType,
+        Guid referenceId,
+        string? reason = null,
+        string? notes = null)
+    {
+        var variant = context.GetVariant(productVariantId);
+        var stock = context.GetStockOrNull(productVariantId);
+
+        if (stock == null)
+        {
+            if (quantityDelta < 0)
+                throw InsufficientStock(variant, 0, -quantityDelta);
+
+            stock = CreateStockRow(variant, context.TenantId, context.BranchId, initialAvailable: 0);
+            dbContext.Stocks.Add(stock);
+            context.RegisterStock(stock);
+        }
+
+        var previousQuantity = stock.AvailableQuantity;
+        var newQuantity = previousQuantity + quantityDelta;
+        if (newQuantity < 0)
+            throw InsufficientStock(variant, previousQuantity, -quantityDelta);
+
+        var movement = new StockMovement
+        {
+            Id = Guid.NewGuid(),
+            StockId = stock.Id,
+            ProductVariantId = variant.Id,
+            BranchId = context.BranchId,
+            IsActive = true,
+            QuantityChanged = quantityDelta,
+            PreviousQuantity = previousQuantity,
+            NewQuantity = newQuantity,
+            MovementType = movementType,
+            ReferenceId = referenceId,
+            Reason = reason,
+            Notes = notes,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        dbContext.StockMovements.Add(movement);
+        stock.AvailableQuantity = newQuantity;
+        stock.UpdatedAt = DateTime.UtcNow;
+
+        return movement;
+    }
+
+    public bool HasStockAvailable(StockContext context, int productVariantId, decimal requiredQuantity) =>
+        requiredQuantity <= 0 || GetAvailable(context, productVariantId) >= requiredQuantity;
+
+    public decimal GetAvailable(StockContext context, int productVariantId) =>
+        context.GetStockOrNull(productVariantId)?.AvailableQuantity ?? 0m;
 }

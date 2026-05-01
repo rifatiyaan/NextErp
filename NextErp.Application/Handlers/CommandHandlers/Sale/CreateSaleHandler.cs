@@ -1,7 +1,7 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Commands;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Services;
 using Entities = NextErp.Domain.Entities;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Sale;
@@ -17,40 +17,31 @@ public class CreateSaleHandler(
         if (request.Items.Count == 0)
             throw new InvalidOperationException("A sale must contain at least one line item.");
 
-        var variants = await LoadVariantsByRequestAsync(request, cancellationToken);
+        // ---- Phase 1: load all variants in one query ----
+        var variantIds = request.Items.Select(i => i.ProductVariantId).Distinct().ToList();
+        var variants = await stockService.LoadVariantsAsync(variantIds, cancellationToken);
+
         var tenantId = variants.Values.First().TenantId;
         var branchId = ResolveWriteBranchId(variants.Values);
 
+        // ---- Phase 2: load all stock rows for the resolved branch in one query ----
+        var stockContext = await stockService.LoadStockContextAsync(variants, branchId, tenantId, cancellationToken);
+
+        // ---- Phase 3: validate availability against the loaded context (no DB calls) ----
         var lines = NormalizeSaleLines(request, variants);
+        EnsureStockAvailableForAllLines(stockContext, lines);
+
+        // ---- Phase 4: build sale + stage line items + stock movements (no DB calls) ----
         var grossTotal = lines.Sum(l => l.UnitPrice * l.Quantity);
-
-        await EnsureStockAvailableForAllLinesAsync(lines, cancellationToken);
-
         var sale = CreateSaleEntity(request, tenantId, branchId, grossTotal);
         dbContext.Sales.Add(sale);
 
-        await AddSaleLinesAndStockMovementsAsync(sale, lines, cancellationToken);
-        await AddOptionalPaymentAsync(request, sale, cancellationToken);
+        AddSaleLinesAndStockMovements(sale, lines, stockContext);
+        AddOptionalPayment(request, sale);
 
+        // ---- Phase 5: single round-trip persists everything ----
         await dbContext.SaveChangesAsync(cancellationToken);
         return sale.Id;
-    }
-
-    private async Task<Dictionary<int, Entities.ProductVariant>> LoadVariantsByRequestAsync(
-        CreateSaleCommand request,
-        CancellationToken cancellationToken = default)
-    {
-        var variantIds = request.Items.Select(i => i.ProductVariantId).Distinct().ToList();
-        var variants = await dbContext.ProductVariants
-            .Include(v => v.Product)
-            .Where(v => variantIds.Contains(v.Id))
-            .ToDictionaryAsync(v => v.Id, cancellationToken);
-
-        if (variants.Count == variantIds.Count)
-            return variants;
-
-        var missing = string.Join(", ", variantIds.Except(variants.Keys));
-        throw new InvalidOperationException($"Product variant(s) not found: {missing}.");
     }
 
     private static List<(Entities.ProductVariant Variant, decimal Quantity, decimal UnitPrice)> NormalizeSaleLines(
@@ -67,22 +58,26 @@ public class CreateSaleHandler(
         }).ToList();
     }
 
-    private async Task EnsureStockAvailableForAllLinesAsync(
-        IReadOnlyList<(Entities.ProductVariant Variant, decimal Quantity, decimal UnitPrice)> lines,
-        CancellationToken cancellationToken = default)
+    private void EnsureStockAvailableForAllLines(
+        StockContext stockContext,
+        IReadOnlyList<(Entities.ProductVariant Variant, decimal Quantity, decimal UnitPrice)> lines)
     {
-        foreach (var (variant, quantity, _) in lines)
-        {
-            await stockService.EnsureStockRecordExistsAsync(variant.Id, cancellationToken);
+        // Multiple lines for the same variant must accumulate against the same stock row.
+        var requiredByVariant = lines
+            .GroupBy(l => l.Variant.Id)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
 
-            if (await stockService.CheckStockAvailabilityAsync(variant.Id, quantity, cancellationToken))
+        foreach (var (variantId, required) in requiredByVariant)
+        {
+            if (stockService.HasStockAvailable(stockContext, variantId, required))
                 continue;
 
-            var available = await stockService.GetAvailableStockAsync(variant.Id, cancellationToken);
+            var variant = stockContext.GetVariant(variantId);
+            var available = stockService.GetAvailable(stockContext, variantId);
             var productTitle = variant.Product?.Title ?? "Product";
             throw new InvalidOperationException(
                 $"Insufficient stock for SKU '{variant.Sku}' ({productTitle}). " +
-                $"Available: {available}, Required: {quantity}.");
+                $"Available: {available}, Required: {required}.");
         }
     }
 
@@ -109,10 +104,10 @@ public class CreateSaleHandler(
             metadata: new Entities.Sale.SaleMetadata { PaymentMethod = request.PaymentMethod });
     }
 
-    private async Task AddSaleLinesAndStockMovementsAsync(
+    private void AddSaleLinesAndStockMovements(
         Entities.Sale sale,
         IReadOnlyList<(Entities.ProductVariant Variant, decimal Quantity, decimal UnitPrice)> lines,
-        CancellationToken cancellationToken = default)
+        StockContext stockContext)
     {
         foreach (var (variant, quantity, unitPrice) in lines)
         {
@@ -129,21 +124,17 @@ public class CreateSaleHandler(
                 TenantId = sale.TenantId
             });
 
-            await stockService.RecordMovementAsync(
+            // Pure in-memory: mutates tracked Stock + adds StockMovement to dbContext.
+            stockService.RecordMovement(
+                stockContext,
                 variant.Id,
-                sale.TenantId,
-                sale.BranchId,
                 -quantity,
                 Entities.StockMovementType.Sale,
-                sale.Id,
-                cancellationToken: cancellationToken);
+                sale.Id);
         }
     }
 
-    private async Task AddOptionalPaymentAsync(
-        CreateSaleCommand request,
-        Entities.Sale sale,
-        CancellationToken cancellationToken = default)
+    private void AddOptionalPayment(CreateSaleCommand request, Entities.Sale sale)
     {
         if (!ShouldCreatePayment(request, sale.FinalAmount))
             return;
@@ -153,7 +144,7 @@ public class CreateSaleHandler(
             : Entities.PaymentMethodType.Other;
 
         var amount = Math.Min(request.PaidAmount ?? 0m, sale.FinalAmount);
-        await dbContext.SalePayments.AddAsync(new Entities.SalePayment
+        dbContext.SalePayments.Add(new Entities.SalePayment
         {
             Id = Guid.NewGuid(),
             Title = $"Payment — {DateTime.UtcNow:yyyy-MM-dd}",
@@ -163,7 +154,7 @@ public class CreateSaleHandler(
             PaidAt = DateTime.UtcNow,
             TenantId = sale.TenantId,
             CreatedAt = DateTime.UtcNow
-        }, cancellationToken);
+        });
     }
 
     private static bool ShouldCreatePayment(CreateSaleCommand request, decimal finalAmount) =>

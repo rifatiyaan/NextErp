@@ -1,3 +1,4 @@
+using NextErp.Application.Common.Extensions;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 using MediatR;
@@ -31,13 +32,13 @@ namespace NextErp.Application.Handlers.QueryHandlers.Purchase
                 : dbContext.Purchases.AsQueryable();
 
             var searchText = request.SearchText;
-            var query = root.Where(x =>
-                (string.IsNullOrEmpty(searchText)
-                 || x.Title.Contains(searchText)
-                 || x.PurchaseNumber.Contains(searchText)
-                 || (x.Party != null && x.Party.Title.Contains(searchText)))
-                && (!nonGlobal || x.BranchId == branchId!.Value)
-                && (isActiveFilter == null || (isActiveFilter.Value ? x.IsActive : !x.IsActive)));
+            var query = root
+                .WhereIfNotNullOrEmpty(searchText, x =>
+                    x.Title.Contains(searchText!)
+                    || x.PurchaseNumber.Contains(searchText!)
+                    || (x.Party != null && x.Party.Title.Contains(searchText!)))
+                .WhereIf(nonGlobal, x => x.BranchId == branchId!.Value)
+                .WhereIfHasValue(isActiveFilter, x => isActiveFilter!.Value ? x.IsActive : !x.IsActive);
 
             var total = await query.CountAsync(cancellationToken);
 

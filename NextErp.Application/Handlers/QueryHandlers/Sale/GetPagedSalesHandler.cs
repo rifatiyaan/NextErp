@@ -1,4 +1,5 @@
 using NextErp.Application.Common;
+using NextErp.Application.Common.Extensions;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 using MediatR;
@@ -14,16 +15,13 @@ namespace NextErp.Application.Handlers.QueryHandlers.Sale
             GetPagedSalesQuery request,
             CancellationToken cancellationToken = default)
         {
-            var baseQuery = dbContext.Sales.AsNoTracking();
-
-            if (!string.IsNullOrWhiteSpace(request.SearchText))
-            {
-                var term = request.SearchText.Trim();
-                baseQuery = baseQuery.Where(s =>
-                    s.Title.Contains(term) ||
-                    s.SaleNumber.Contains(term) ||
-                    (s.Party != null && s.Party.Title.Contains(term)));
-            }
+            var term = request.SearchText?.Trim();
+            var baseQuery = dbContext.Sales
+                .AsNoTracking()
+                .WhereIfNotEmpty(term, s =>
+                    s.Title.Contains(term!) ||
+                    s.SaleNumber.Contains(term!) ||
+                    (s.Party != null && s.Party.Title.Contains(term!)));
 
             var total = await baseQuery.CountAsync(cancellationToken);
 

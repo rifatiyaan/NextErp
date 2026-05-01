@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using NextErp.Application.Common.Extensions;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 using NextErp.Domain.Entities;
@@ -19,10 +20,8 @@ public class GetStockAdjustmentHistoryHandler(IApplicationDbContext dbContext)
 
         var query = dbContext.StockMovements
             .AsNoTracking()
-            .Where(m => m.MovementType == StockMovementType.ManualAdjustment && m.IsActive);
-
-        if (request.ProductVariantId.HasValue)
-            query = query.Where(m => m.ProductVariantId == request.ProductVariantId.Value);
+            .Where(m => m.MovementType == StockMovementType.ManualAdjustment && m.IsActive)
+            .WhereIfHasValue(request.ProductVariantId, m => m.ProductVariantId == request.ProductVariantId!.Value);
 
         var total = await query.CountAsync(cancellationToken);
 

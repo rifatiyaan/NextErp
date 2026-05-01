@@ -18,11 +18,24 @@ jobs:
       with:
         dotnet-version: '8.x'
     
-    - name: Build with dotnet
-      run: dotnet build NextErp.API/NextErp.API.csproj --configuration Release
-      
+    - name: Restore solution
+      run: dotnet restore NextErp.sln
+
+    - name: Build solution
+      run: dotnet build NextErp.sln --configuration Release --no-restore
+
+    - name: Run tests
+      run: dotnet test NextErp.Application.Tests/NextErp.Application.Tests.csproj --configuration Release --no-build --logger "trx;LogFileName=test-results.trx"
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: '**/TestResults/*.trx'
+
     - name: dotnet publish
-      run: dotnet publish NextErp.API/NextErp.API.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
+      run: dotnet publish NextErp.API/NextErp.API.csproj -c Release --no-build -o ${{env.DOTNET_ROOT}}/myapp
       
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2

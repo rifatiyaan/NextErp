@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using NextErp.Application.Common.Extensions;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 using System.Linq.Dynamic.Core;
@@ -15,17 +16,15 @@ namespace NextErp.Application.Handlers.QueryHandlers.Party
             CancellationToken cancellationToken = default)
         {
             // Inlined from former IPartyRepository.GetTableDataAsync.
-            var partyType = request.PartyType;
             var searchText = request.SearchText;
 
             var query = dbContext.Parties
                 .AsNoTracking()
-                .Where(x =>
-                    (partyType == null || x.PartyType == partyType) &&
-                    (string.IsNullOrEmpty(searchText) ||
-                     x.Title.Contains(searchText) ||
-                     (x.Email != null && x.Email.Contains(searchText)) ||
-                     (x.Phone != null && x.Phone.Contains(searchText))));
+                .WhereIfHasValue(request.PartyType, x => x.PartyType == request.PartyType!.Value)
+                .WhereIfNotNullOrEmpty(searchText, x =>
+                    x.Title.Contains(searchText!) ||
+                    (x.Email != null && x.Email.Contains(searchText!)) ||
+                    (x.Phone != null && x.Phone.Contains(searchText!)));
 
             var total = await query.CountAsync(cancellationToken);
 

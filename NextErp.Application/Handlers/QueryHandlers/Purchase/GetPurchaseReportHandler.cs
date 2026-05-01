@@ -1,3 +1,4 @@
+using NextErp.Application.Common.Extensions;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 using NextErp.Application.DTOs;
@@ -20,12 +21,8 @@ namespace NextErp.Application.Handlers.QueryHandlers.Purchase
                     .ThenInclude(i => i.ProductVariant)
                         .ThenInclude(pv => pv.Product)
                             .ThenInclude(pr => pr.Category)
-                .Where(p => p.PurchaseDate >= request.StartDate && p.PurchaseDate <= request.EndDate);
-
-            if (request.PartyId.HasValue)
-            {
-                query = query.Where(p => p.PartyId == request.PartyId.Value);
-            }
+                .Where(p => p.PurchaseDate >= request.StartDate && p.PurchaseDate <= request.EndDate)
+                .WhereIfHasValue(request.PartyId, p => p.PartyId == request.PartyId!.Value);
 
             var purchaseDtos = await query
                 .Select(p => new DTOs.Purchase.Response.Get.Single
