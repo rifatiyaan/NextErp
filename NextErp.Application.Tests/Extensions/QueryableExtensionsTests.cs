@@ -7,11 +7,6 @@ using NSubstitute;
 
 namespace NextErp.Application.Tests.Extensions;
 
-/// <summary>
-/// Verifies WhereIf / IncludeIf / OrderByIf / PageIf produce correct SQL semantics
-/// against a real (SQLite) provider. Each "off" path must return data unchanged;
-/// each "on" path must apply the operator exactly as the manual equivalent.
-/// </summary>
 public class QueryableExtensionsTests : IDisposable
 {
     private readonly TestDbContextFactory.TestContext _ctx;
@@ -317,3 +312,4 @@ public class QueryableExtensionsTests : IDisposable
         result.Should().AllSatisfy(p => p.IsActive.Should().BeTrue());
     }
 }
+

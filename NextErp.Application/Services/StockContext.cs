@@ -2,12 +2,6 @@ using NextErp.Domain.Entities;
 
 namespace NextErp.Application.Services;
 
-/// <summary>
-/// In-memory snapshot of variants + their tracked Stock rows for a single branch,
-/// used by handlers that perform multiple stock movements in one transaction
-/// (e.g. CreateSale, CreatePurchase). All entities are EF-tracked, so mutations
-/// to Stock.AvailableQuantity flush on SaveChangesAsync without further queries.
-/// </summary>
 public sealed class StockContext
 {
     public Guid BranchId { get; }
@@ -44,3 +38,4 @@ public sealed class StockContext
         _stocks[stock.ProductVariantId] = stock;
     }
 }
+

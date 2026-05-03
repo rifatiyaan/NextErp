@@ -4,12 +4,6 @@ using NextErp.Domain.Entities;
 
 namespace NextErp.Application.Validators.Stock;
 
-/// <summary>
-/// Pilot validator for the FluentValidation pipeline.
-/// Enforces input-shape rules for stock adjustments. Business rules
-/// (variant exists, branch context, negative-stock prevention) remain
-/// in the handler.
-/// </summary>
 public sealed class CreateStockAdjustmentCommandValidator
     : AbstractValidator<CreateStockAdjustmentCommand>
 {
@@ -44,3 +38,4 @@ public sealed class CreateStockAdjustmentCommandValidator
             .WithMessage("Notes cannot exceed 500 characters.");
     }
 }
+

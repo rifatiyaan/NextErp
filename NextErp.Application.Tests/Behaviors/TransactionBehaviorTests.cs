@@ -7,10 +7,6 @@ using NSubstitute;
 
 namespace NextErp.Application.Tests.Behaviors;
 
-/// <summary>
-/// TransactionBehavior is the only thing wrapping multi-write commands in a DB transaction
-/// after the UnitOfWork removal — these tests are critical-path regression coverage.
-/// </summary>
 public class TransactionBehaviorTests : IDisposable
 {
     private readonly TestDbContextFactory.TestContext _ctx;
@@ -115,3 +111,4 @@ public class TransactionBehaviorTests : IDisposable
         await outerTx.RollbackAsync();
     }
 }
+

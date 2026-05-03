@@ -1,6 +1,5 @@
 namespace NextErp.Domain.Entities;
 
-/// <summary>Canonical reason codes for manual stock adjustments. Stored as strings on <see cref="StockMovement.Reason"/>.</summary>
 public static class StockAdjustmentReason
 {
     public const string PhysicalCountCorrection = "PhysicalCountCorrection";
@@ -22,3 +21,4 @@ public static class StockAdjustmentReason
         Other
     };
 }
+

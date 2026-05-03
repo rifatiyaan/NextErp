@@ -6,11 +6,6 @@ using NextErp.Domain.Entities;
 
 namespace NextErp.Application.Tests.Handlers.Sale;
 
-/// <summary>
-/// Verifies CreateSaleHandler against a real SQLite-backed StockService.
-/// Critical regression target after the UoW removal: ensures atomic Sale + SaleItems +
-/// StockMovements + Stock decrement, and that no rows persist on insufficient-stock.
-/// </summary>
 public class CreateSaleHandlerTests : HandlerTestBase
 {
     private CreateSaleHandler BuildHandler()
@@ -144,3 +139,4 @@ public class CreateSaleHandlerTests : HandlerTestBase
         stockB.AvailableQuantity.Should().Be(1m);
     }
 }
+

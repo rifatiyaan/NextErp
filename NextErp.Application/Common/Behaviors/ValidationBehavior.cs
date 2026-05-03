@@ -4,12 +4,6 @@ using ValidationException = NextErp.Application.Common.Exceptions.ValidationExce
 
 namespace NextErp.Application.Common.Behaviors;
 
-/// <summary>
-/// MediatR pipeline behavior that runs all registered FluentValidation validators
-/// for the incoming request. If any rule fails, throws <see cref="ValidationException"/>
-/// which the API layer maps to HTTP 422 with a per-field error dictionary.
-/// Requests without a registered validator pass through unchanged.
-/// </summary>
 public sealed class ValidationBehavior<TRequest, TResponse>(
     IEnumerable<IValidator<TRequest>> validators)
     : IPipelineBehavior<TRequest, TResponse>
@@ -38,3 +32,4 @@ public sealed class ValidationBehavior<TRequest, TResponse>(
         return await next(cancellationToken);
     }
 }
+

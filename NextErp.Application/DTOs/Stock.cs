@@ -50,7 +50,6 @@ namespace NextErp.Application.DTOs
                 public string Status { get; set; } = null!;
             }
 
-            /// <summary>Single immutable ledger line for stock history APIs.</summary>
             public class MovementLine
             {
                 public Guid Id { get; set; }
@@ -67,7 +66,6 @@ namespace NextErp.Application.DTOs
                 public DateTime CreatedAt { get; set; }
             }
 
-            /// <summary>Display row for manual stock adjustment history.</summary>
             public class AdjustmentLine
             {
                 public Guid Id { get; set; }
@@ -92,3 +90,4 @@ namespace NextErp.Application.DTOs
         }
     }
 }
+

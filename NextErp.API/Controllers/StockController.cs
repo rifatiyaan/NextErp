@@ -54,7 +54,6 @@ public class StockController(IMediator mediator, IMapper mapper) : ControllerBas
         return NoContent();
     }
 
-    /// <summary>Append-only movement history for a variant in a branch (admin / inventory).</summary>
     [HttpGet("variant/{productVariantId:int}/movements")]
     public async Task<IActionResult> GetMovementHistory(
         int productVariantId,
@@ -88,3 +87,4 @@ public class StockController(IMediator mediator, IMapper mapper) : ControllerBas
     public IActionResult GetAdjustmentReasons()
         => Ok(StockAdjustmentReason.All);
 }
+

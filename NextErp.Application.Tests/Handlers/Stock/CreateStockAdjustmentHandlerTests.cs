@@ -6,11 +6,6 @@ using NSubstitute;
 
 namespace NextErp.Application.Tests.Handlers.Stock;
 
-/// <summary>
-/// Verifies CreateStockAdjustmentHandler against a real SQLite-backed StockService.
-/// We deliberately exercise the *real* service so the StockMovement insert + Stock update flow
-/// is covered end-to-end (the regression surface after the UoW removal).
-/// </summary>
 public class CreateStockAdjustmentHandlerTests : HandlerTestBase
 {
     private const int VariantId = 1;
@@ -208,3 +203,4 @@ public class CreateStockAdjustmentHandlerTests : HandlerTestBase
         movement.Notes.Should().Be("imported from legacy system");
     }
 }
+

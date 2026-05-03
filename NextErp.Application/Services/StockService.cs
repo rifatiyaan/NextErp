@@ -209,16 +209,30 @@ public class StockService(
 
     // Inlined from former IStockRepository.GetByProductVariantIdAndBranchIdAsync — returns tracked entity
     // so callers can mutate AvailableQuantity directly and have SaveChanges persist it.
+    //
+    // Checks the change tracker FIRST (DbSet.Local) before hitting the DB. This avoids a
+    // production-breaking race in handlers that stage a Stock row via
+    // EnsureStockRecordExistsAsync and then call SetAvailableQuantityAsync /
+    // RecordMovementAsync before SaveChanges flushes — without the Local check, the second
+    // call queried the DB, missed the staged Added entity, and inserted a duplicate row,
+    // tripping the UNIQUE(ProductVariantId, BranchId) index on SaveChanges.
     private Task<Stock?> GetTrackedStockByVariantAndBranchAsync(
         int productVariantId,
         Guid branchId,
-        CancellationToken cancellationToken = default) =>
-        dbContext.Stocks
+        CancellationToken cancellationToken = default)
+    {
+        var local = dbContext.Stocks.Local
+            .FirstOrDefault(s => s.ProductVariantId == productVariantId && s.BranchId == branchId);
+        if (local != null)
+            return Task.FromResult<Stock?>(local);
+
+        return dbContext.Stocks
             .Include(s => s.ProductVariant)
                 .ThenInclude(pv => pv.Product)
             .FirstOrDefaultAsync(
                 s => s.ProductVariantId == productVariantId && s.BranchId == branchId,
                 cancellationToken);
+    }
 
     private async Task<Stock> UpsertStockRowAsync(
         int productVariantId,

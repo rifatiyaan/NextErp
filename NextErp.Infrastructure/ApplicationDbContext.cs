@@ -32,6 +32,7 @@ namespace NextErp.Infrastructure
         public DbSet<Branch> Branches { get; set; }
         public DbSet<Party> Parties { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
+        public DbSet<SystemSettings> SystemSettings { get; set; }
 
         // Inventory Module DbSets
         public DbSet<Stock> Stocks { get; set; }

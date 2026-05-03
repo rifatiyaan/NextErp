@@ -5,15 +5,8 @@ using ProductGetSingle = NextErp.Application.DTOs.Product.Response.Get;
 
 namespace NextErp.Application.Products;
 
-/// <summary>
-/// Stock projection for product DTOs: batched reads from <see cref="Domain.Entities.Stock"/> (single source of truth).
-/// </summary>
 public static class ProductVariantStockLookup
 {
-    /// <summary>
-    /// One query: total <see cref="Domain.Entities.Stock.AvailableQuantity"/> per product,
-    /// counting only rows whose <c>BranchId</c> matches the product catalog row (Products.BranchId).
-    /// </summary>
     public static async Task<IReadOnlyDictionary<int, decimal>> GetProductAggregateStockTotalsAsync(
         IApplicationDbContext db,
         IReadOnlyCollection<int> productIds,
@@ -42,7 +35,6 @@ public static class ProductVariantStockLookup
         return result;
     }
 
-    /// <summary>Total on-hand for one product (same rules as <see cref="GetProductAggregateStockTotalsAsync"/>).</summary>
     public static async Task<decimal> GetProductAggregateStockTotalAsync(
         int productId,
         IApplicationDbContext db,
@@ -53,11 +45,6 @@ public static class ProductVariantStockLookup
         return map.GetValueOrDefault(productId, 0m);
     }
 
-    /// <summary>
-    /// Sums Stock.AvailableQuantity per variant.
-    /// When <see cref="IBranchProvider.GetBranchId"/> is set, restricts to that branch.
-    /// When global with no branch claim, aggregates across all branches.
-    /// </summary>
     public static async Task<IReadOnlyDictionary<int, decimal>> GetAvailableByVariantIdsAsync(
         IApplicationDbContext db,
         IBranchProvider branchProvider,
@@ -147,3 +134,4 @@ public static class ProductVariantStockLookup
             v.AvailableQuantity = quantityByVariantId.GetValueOrDefault(v.Id, 0m);
     }
 }
+

@@ -1,10 +1,5 @@
 namespace NextErp.Application.Common.Extensions;
 
-/// <summary>
-/// Conditional LINQ wrappers for in-memory <see cref="IEnumerable{T}"/>. Mirror the
-/// <see cref="QueryableExtensions"/> shape but take <see cref="Func{T, TResult}"/> delegates
-/// (in-memory predicates) instead of <see cref="System.Linq.Expressions.Expression{TDelegate}"/>.
-/// </summary>
 public static class EnumerableExtensions
 {
     public static IEnumerable<T> WhereIf<T>(
@@ -38,3 +33,4 @@ public static class EnumerableExtensions
         Func<T, bool> predicate)
         => items is { Count: > 0 } ? source.Where(predicate) : source;
 }
+

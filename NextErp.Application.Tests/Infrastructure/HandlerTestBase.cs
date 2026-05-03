@@ -4,11 +4,6 @@ using NSubstitute;
 
 namespace NextErp.Application.Tests.Infrastructure;
 
-/// <summary>
-/// Base for handler tests. Spins up a SQLite in-memory <see cref="ApplicationDbContext"/>
-/// scoped to a synthetic branch + tenant. Override <see cref="ConfigureBranchProvider"/>
-/// for tests that need global / different branch context.
-/// </summary>
 public abstract class HandlerTestBase : IDisposable
 {
     protected readonly Guid TenantId = Guid.NewGuid();
@@ -27,9 +22,6 @@ public abstract class HandlerTestBase : IDisposable
         Db = _ctx.Db;
     }
 
-    /// <summary>
-    /// Default: a non-global branch-scoped user. Override per-test if needed.
-    /// </summary>
     protected virtual void ConfigureBranchProvider(IBranchProvider provider)
     {
         provider.GetBranchId().Returns(BranchId);
@@ -39,3 +31,4 @@ public abstract class HandlerTestBase : IDisposable
 
     public void Dispose() => _ctx.Dispose();
 }
+

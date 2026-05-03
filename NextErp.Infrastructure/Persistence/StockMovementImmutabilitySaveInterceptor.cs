@@ -4,9 +4,6 @@ using NextErp.Domain.Entities;
 
 namespace NextErp.Infrastructure.Persistence;
 
-/// <summary>
-/// Rejects updates and deletes to <see cref="StockMovement"/> (append-only ledger).
-/// </summary>
 public sealed class StockMovementImmutabilitySaveInterceptor : SaveChangesInterceptor
 {
     public override InterceptionResult<int> SavingChanges(
@@ -41,3 +38,4 @@ public sealed class StockMovementImmutabilitySaveInterceptor : SaveChangesInterc
         }
     }
 }
+

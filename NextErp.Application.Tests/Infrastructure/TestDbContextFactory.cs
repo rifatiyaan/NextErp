@@ -5,12 +5,6 @@ using NextErp.Infrastructure;
 
 namespace NextErp.Application.Tests.Infrastructure;
 
-/// <summary>
-/// Builds a fresh <see cref="ApplicationDbContext"/> backed by SQLite in-memory.
-/// SQLite is closer to SQL Server semantics than the EF in-memory provider
-/// (real FK enforcement, real transactions). Keep one connection per test
-/// — closing it disposes the database.
-/// </summary>
 public static class TestDbContextFactory
 {
     public sealed record TestContext(ApplicationDbContext Db, SqliteConnection Connection) : IDisposable
@@ -39,12 +33,6 @@ public static class TestDbContextFactory
         return new TestContext(ctx, connection);
     }
 
-    /// <summary>
-    /// Test-only subclass that replaces SQL Server-specific column types with SQLite-compatible
-    /// equivalents. Production OnModelCreating runs first; we then sweep for any "nvarchar(max)" /
-    /// "varchar(max)" column types and rewrite them to plain "TEXT". This avoids modifying
-    /// production code and lets EnsureCreated emit valid SQLite DDL.
-    /// </summary>
     private sealed class SqliteFriendlyApplicationDbContext(
         DbContextOptions<ApplicationDbContext> options,
         IBranchProvider? branchProvider)
@@ -69,10 +57,13 @@ public static class TestDbContextFactory
                     // SQLite doesn't auto-generate rowversion / timestamp columns.
                     // Drop the IsRowVersion / ValueGeneratedOnAddOrUpdate behavior so the test can
                     // supply a byte[] in the builder and have it accepted on insert.
+                    // Also relax IsRequired so production code paths that insert rows without
+                    // providing a RowVersion (relying on SQL Server to auto-generate) work in SQLite.
                     if (prop.ClrType == typeof(byte[]) && prop.IsConcurrencyToken)
                     {
                         prop.ValueGenerated = Microsoft.EntityFrameworkCore.Metadata.ValueGenerated.Never;
                         prop.IsConcurrencyToken = false;
+                        prop.IsNullable = true;
                     }
 
                     // SQLite refuses Sum/Avg on decimal columns. EF translates decimal as TEXT,
@@ -98,3 +89,4 @@ public static class TestDbContextFactory
         }
     }
 }
+

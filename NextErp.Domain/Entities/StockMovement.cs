@@ -7,7 +7,6 @@ public class StockMovement : ISoftDeletable
 {
     public Guid Id { get; set; }
 
-    /// <summary>Stock row that was affected (ledger line).</summary>
     public Guid StockId { get; set; }
     public Stock Stock { get; set; } = null!;
 
@@ -18,7 +17,6 @@ public class StockMovement : ISoftDeletable
 
     public bool IsActive { get; set; } = true;
 
-    /// <summary>Delta applied (negative for outbound).</summary>
     public decimal QuantityChanged { get; set; }
 
     public decimal PreviousQuantity { get; set; }
@@ -27,14 +25,12 @@ public class StockMovement : ISoftDeletable
 
     public StockMovementType MovementType { get; set; }
 
-    /// <summary>Source document id when applicable (e.g. sale, purchase).</summary>
     public Guid ReferenceId { get; set; }
 
-    /// <summary>Reason code for manual adjustments (see <see cref="StockAdjustmentReason"/>).</summary>
     public string? Reason { get; set; }
 
-    /// <summary>Free-text notes for manual adjustments.</summary>
     public string? Notes { get; set; }
 
     public DateTime CreatedAt { get; set; }
 }
+
