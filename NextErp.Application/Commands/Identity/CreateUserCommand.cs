@@ -1,15 +1,19 @@
 using MediatR;
 using NextErp.Application.Common.Attributes;
 using NextErp.Application.Common.Interfaces;
+using NextErp.Application.DTOs;
 
 namespace NextErp.Application.Commands.Identity
 {
     [RequiresPermission("Settings.UserControl.Manage")]
-    public record PatchUserCommand(
-            Guid UserId,
+    public record CreateUserCommand(
+            string Email,
+            string Password,
+            string? FirstName,
+            string? LastName,
             Guid? BranchId,
             string? RoleName,
             bool CallerIsSuperAdmin,
             bool CallerIsGlobal
-        ) : IRequest<bool>, ITransactionalRequest;
+        ) : IRequest<IdentityUserEntry>, ITransactionalRequest;
 }

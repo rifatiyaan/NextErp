@@ -5,11 +5,7 @@ using NextErp.Application.Common.Interfaces;
 namespace NextErp.Application.Commands.Identity
 {
     [RequiresPermission("Settings.UserControl.Manage")]
-    public record PatchUserCommand(
-            Guid UserId,
-            Guid? BranchId,
-            string? RoleName,
-            bool CallerIsSuperAdmin,
-            bool CallerIsGlobal
+    public record DeleteRoleCommand(
+            Guid RoleId
         ) : IRequest<bool>, ITransactionalRequest;
 }

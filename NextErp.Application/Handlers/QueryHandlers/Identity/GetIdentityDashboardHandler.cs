@@ -15,14 +15,24 @@ namespace NextErp.Application.Handlers.QueryHandlers.Identity
             IBranchProvider branchProvider)
             : IRequestHandler<GetIdentityDashboardQuery, IdentityCommandCenterDto>
     {
-        private static string ResolveSummary(int permCount) => permCount switch
+        private static string ResolveSummary(string roleName, int permCount)
         {
-            >= 20 => "Full Access",
-            >= 14 => "Full Access (Branch)",
-            >= 8 => "Operational",
-            >= 3 => "Limited",
-            _ => "Read Only"
-        };
+            // SuperAdmin bypasses all permission checks at the auth layer regardless
+            // of what's stored in RolePermissions, so the explicit count is always 0
+            // for that role. Stamping it as "Read Only" is the opposite of the truth —
+            // override with a meaningful label for the UI.
+            if (string.Equals(roleName, "SuperAdmin", StringComparison.OrdinalIgnoreCase))
+                return "Full Access (auto)";
+
+            return permCount switch
+            {
+                >= 20 => "Full Access",
+                >= 14 => "Full Access (Branch)",
+                >= 8 => "Operational",
+                >= 3 => "Limited",
+                _ => "Read Only"
+            };
+        }
 
         public async Task<IdentityCommandCenterDto> Handle(
             GetIdentityDashboardQuery request,
@@ -93,7 +103,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Identity
                     Id = role.Id.ToString(),
                     Name = role.Name ?? string.Empty,
                     UserCount = count,
-                    PermissionSummary = ResolveSummary(perms.Count),
+                    PermissionSummary = ResolveSummary(role.Name ?? string.Empty, perms.Count),
                     Permissions = perms
                 };
             }).ToList();

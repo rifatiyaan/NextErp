@@ -16,11 +16,21 @@ namespace NextErp.Application.Handlers.CommandHandlers.Identity
             SetRolePermissionsCommand request,
             CancellationToken cancellationToken = default)
         {
-            var roleExists = await roleManager.Roles
-                .AnyAsync(r => r.Id == request.RoleId, cancellationToken);
+            var role = await roleManager.Roles
+                .FirstOrDefaultAsync(r => r.Id == request.RoleId, cancellationToken);
 
-            if (!roleExists)
+            if (role is null)
                 return false;
+
+            // SuperAdmin bypasses all permission checks at runtime, so editing its
+            // permission rows is misleading and could imply restrictions that do
+            // not actually apply. Block writes here as a safety net.
+            if (!string.IsNullOrEmpty(role.Name)
+                && string.Equals(role.Name, "SuperAdmin", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "Cannot modify SuperAdmin permissions; the role bypasses all checks by design.");
+            }
 
             // Remove all existing permissions for this role
             var existing = await dbContext.RolePermissions

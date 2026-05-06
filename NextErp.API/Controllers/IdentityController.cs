@@ -1,27 +1,19 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands.Identity;
 using NextErp.Application.DTOs;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
-using NextErp.Domain.Entities;
 
 namespace NextErp.API.Controllers;
-
-public class SetPermissionsDto
-{
-    public List<string> PermissionKeys { get; set; } = new();
-}
 
 [Authorize(Roles = "SuperAdmin,Admin")]
 [Route("api/[controller]")]
 [ApiController]
 public class IdentityController(
     ISender sender,
-    IBranchProvider branchProvider,
-    UserManager<ApplicationUser> userManager) : ControllerBase
+    IBranchProvider branchProvider) : ControllerBase
 {
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboard(CancellationToken cancellationToken = default)
@@ -46,43 +38,84 @@ public class IdentityController(
         return NoContent();
     }
 
-    [HttpPatch("users/{id:guid}")]
-    public async Task<IActionResult> PatchUser(
-        Guid id,
-        [FromBody] PatchUserDto dto,
+    [HttpPost("roles")]
+    public async Task<IActionResult> CreateRole(
+        [FromBody] CreateRoleDto dto,
         CancellationToken cancellationToken = default)
     {
-        var target = await userManager.FindByIdAsync(id.ToString());
-        if (target == null)
-            return NotFound();
+        var entry = await sender.Send(
+            new CreateRoleCommand(dto.Name, dto.Description),
+            cancellationToken);
 
-        var targetRoles = await userManager.GetRolesAsync(target);
-        var targetIsSuperAdmin = targetRoles.Any(r =>
-            string.Equals(r, "SuperAdmin", StringComparison.OrdinalIgnoreCase));
-        if (targetIsSuperAdmin && !User.IsInRole("SuperAdmin"))
-            return Forbid();
+        return StatusCode(StatusCodes.Status201Created, entry);
+    }
 
-        if (!string.IsNullOrWhiteSpace(dto.RoleName)
-            && string.Equals(dto.RoleName, "SuperAdmin", StringComparison.OrdinalIgnoreCase)
-            && !User.IsInRole("SuperAdmin"))
-            return Forbid();
-
-        if (!branchProvider.IsGlobal())
-        {
-            var callerBranch = branchProvider.GetRequiredBranchId();
-            if (target.BranchId != callerBranch)
-                return Forbid();
-            if (dto.BranchId is { } b && b != Guid.Empty && b != callerBranch)
-                return Forbid();
-        }
-
+    [HttpPut("roles/{roleId:guid}")]
+    public async Task<IActionResult> RenameRole(
+        Guid roleId,
+        [FromBody] RenameRoleDto dto,
+        CancellationToken cancellationToken = default)
+    {
         var success = await sender.Send(
-            new PatchUserCommand(id, dto.BranchId, dto.RoleName),
+            new RenameRoleCommand(roleId, dto.Name),
             cancellationToken);
 
         if (!success)
             return NotFound();
 
         return NoContent();
+    }
+
+    [HttpDelete("roles/{roleId:guid}")]
+    public async Task<IActionResult> DeleteRole(
+        Guid roleId,
+        CancellationToken cancellationToken = default)
+    {
+        var success = await sender.Send(
+            new DeleteRoleCommand(roleId),
+            cancellationToken);
+
+        if (!success)
+            return NotFound();
+
+        return NoContent();
+    }
+
+    [HttpPatch("users/{id:guid}")]
+    public async Task<IActionResult> PatchUser(
+        Guid id,
+        [FromBody] PatchUserDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        var success = await sender.Send(
+            new PatchUserCommand(
+                id,
+                dto.BranchId,
+                dto.RoleName,
+                CallerIsSuperAdmin: User.IsInRole("SuperAdmin"),
+                CallerIsGlobal: branchProvider.IsGlobal()),
+            cancellationToken);
+
+        return success ? NoContent() : NotFound();
+    }
+
+    [HttpPost("users")]
+    public async Task<IActionResult> CreateUser(
+        [FromBody] CreateUserDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        var entry = await sender.Send(
+            new CreateUserCommand(
+                dto.Email,
+                dto.Password,
+                dto.FirstName,
+                dto.LastName,
+                dto.BranchId,
+                dto.RoleName,
+                CallerIsSuperAdmin: User.IsInRole("SuperAdmin"),
+                CallerIsGlobal: branchProvider.IsGlobal()),
+            cancellationToken);
+
+        return StatusCode(StatusCodes.Status201Created, entry);
     }
 }
