@@ -9,7 +9,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Sale;
 public class CreateSaleHandler(
     IApplicationDbContext dbContext,
     IStockService stockService,
-    IBranchProvider branchProvider)
+    IBranchProvider branchProvider,
+    INotificationService notifications)
     : IRequestHandler<CreateSaleCommand, Guid>
 {
     public async Task<Guid> Handle(CreateSaleCommand request, CancellationToken cancellationToken = default)
@@ -38,6 +39,14 @@ public class CreateSaleHandler(
 
         AddSaleLinesAndStockMovements(sale, lines, stockContext);
         AddOptionalPayment(request, sale);
+
+        await notifications.RecordAsync(
+            type: "SaleCreated",
+            title: "Sale recorded",
+            message: $"{sale.SaleNumber} — {sale.FinalAmount:0.##}",
+            relatedEntityType: "Sale",
+            relatedEntityId: sale.Id.ToString(),
+            cancellationToken: cancellationToken);
 
         // ---- Phase 5: single round-trip persists everything ----
         await dbContext.SaveChangesAsync(cancellationToken);

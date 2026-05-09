@@ -1,8 +1,10 @@
 using NextErp.Application.Commands;
 using NextErp.Application.DTOs;
 using NextErp.Application.Handlers.CommandHandlers.Purchase;
+using NextErp.Application.Interfaces;
 using NextErp.Application.Services;
 using NextErp.Domain.Entities;
+using NSubstitute;
 
 namespace NextErp.Application.Tests.Handlers.Purchase;
 
@@ -11,7 +13,8 @@ public class CreatePurchaseHandlerTests : HandlerTestBase
     private CreatePurchaseHandler BuildHandler()
     {
         var service = new StockService(Db, BranchProvider);
-        return new CreatePurchaseHandler(Db, service, BranchProvider);
+        var notifications = Substitute.For<INotificationService>();
+        return new CreatePurchaseHandler(Db, service, BranchProvider, notifications);
     }
 
     private const int VariantA = 100;

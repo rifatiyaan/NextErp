@@ -24,6 +24,8 @@ namespace NextErp.Domain.Entities
 
         public bool IsActive { get; set; } = true;
 
+        public string TestString { get; set; } = "Test";
+
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 

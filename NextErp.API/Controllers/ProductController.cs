@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands;
 using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Common;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 
@@ -103,6 +104,18 @@ public class ProductController(IMediator mediator, IMapper mapper, IImageService
             return Problem(statusCode: StatusCodes.Status404NotFound, title: "Not found", detail: "Product was not found after create.");
 
         return CreatedAtAction(nameof(Get), new { id }, response);
+    }
+
+    // POST api/product/batch/deactivate
+    [HttpPost("batch/deactivate")]
+    public async Task<ActionResult<object>> BatchDeactivate(
+        [FromBody] BatchIdsDto<int> dto,
+        CancellationToken cancellationToken = default)
+    {
+        var count = await mediator.Send(
+            new BatchDeactivateProductsCommand(dto?.Ids ?? new List<int>()),
+            cancellationToken);
+        return Ok(new { deactivated = count });
     }
 
     [HttpPut("{id}")]

@@ -8,7 +8,10 @@ using SystemSettingsDto = NextErp.Application.DTOs.SystemSettings;
 
 namespace NextErp.Application.Handlers.CommandHandlers.SystemSettings;
 
-public class UpdateSystemSettingsHandler(IApplicationDbContext dbContext, IMapper mapper)
+public class UpdateSystemSettingsHandler(
+    IApplicationDbContext dbContext,
+    INotificationService notifications,
+    IMapper mapper)
     : IRequestHandler<UpdateSystemSettingsCommand, SystemSettingsDto.Response.Single>
 {
     public async Task<SystemSettingsDto.Response.Single> Handle(
@@ -44,6 +47,15 @@ public class UpdateSystemSettingsHandler(IApplicationDbContext dbContext, IMappe
         }
 
         entity.UpdatedAt = DateTime.UtcNow;
+
+        await notifications.RecordAsync(
+            type: "SystemSettingsUpdated",
+            title: "Appearance updated",
+            message: "Theme/branding changed",
+            relatedEntityType: "SystemSettings",
+            relatedEntityId: entity.Id.ToString(),
+            cancellationToken: cancellationToken);
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return mapper.Map<SystemSettingsDto.Response.Single>(entity);

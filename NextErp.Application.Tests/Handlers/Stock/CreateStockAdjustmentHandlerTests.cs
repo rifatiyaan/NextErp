@@ -1,5 +1,6 @@
 using NextErp.Application.Commands;
 using NextErp.Application.Handlers.CommandHandlers.Stock;
+using NextErp.Application.Interfaces;
 using NextErp.Application.Services;
 using NextErp.Domain.Entities;
 using NSubstitute;
@@ -13,7 +14,8 @@ public class CreateStockAdjustmentHandlerTests : HandlerTestBase
     private CreateStockAdjustmentHandler BuildHandler()
     {
         var service = new StockService(Db, BranchProvider);
-        return new CreateStockAdjustmentHandler(service, Db, BranchProvider);
+        var notifications = Substitute.For<INotificationService>();
+        return new CreateStockAdjustmentHandler(service, Db, BranchProvider, notifications);
     }
 
     private async Task SeedVariantWithStockAsync(decimal initialAvailable = 10m)

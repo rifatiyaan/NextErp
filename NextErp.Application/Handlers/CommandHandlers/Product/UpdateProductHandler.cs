@@ -10,6 +10,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
     public class UpdateProductHandler(
         IApplicationDbContext dbContext,
         IStockService stockService,
+        INotificationService notifications,
         IMapper mapper)
         : IRequestHandler<UpdateProductCommand, Unit>
     {
@@ -46,6 +47,14 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
 
             if (!existing.HasVariations)
                 await SyncDefaultVariantPriceAsync(existing.Id, existing.Price, cancellationToken);
+
+            await notifications.RecordAsync(
+                type: "ProductUpdated",
+                title: "Product updated",
+                message: $"{existing.Title} updated",
+                relatedEntityType: "Product",
+                relatedEntityId: existing.Id.ToString(),
+                cancellationToken: cancellationToken);
 
             await dbContext.SaveChangesAsync(cancellationToken);
 

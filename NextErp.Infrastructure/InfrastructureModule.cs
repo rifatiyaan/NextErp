@@ -31,6 +31,10 @@ namespace NextErp.Infrastructure
             builder.RegisterType<StockService>()
                 .As<IStockService>()
                 .InstancePerLifetimeScope();
+
+            builder.RegisterType<NotificationService>()
+                .As<INotificationService>()
+                .InstancePerLifetimeScope();
         }
     }
 }

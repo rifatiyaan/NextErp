@@ -1,8 +1,10 @@
 using NextErp.Application.Commands;
 using NextErp.Application.DTOs;
 using NextErp.Application.Handlers.CommandHandlers.Sale;
+using NextErp.Application.Interfaces;
 using NextErp.Application.Services;
 using NextErp.Domain.Entities;
+using NSubstitute;
 
 namespace NextErp.Application.Tests.Handlers.Sale;
 
@@ -11,7 +13,8 @@ public class CreateSaleHandlerTests : HandlerTestBase
     private CreateSaleHandler BuildHandler()
     {
         var service = new StockService(Db, BranchProvider);
-        return new CreateSaleHandler(Db, service, BranchProvider);
+        var notifications = Substitute.For<INotificationService>();
+        return new CreateSaleHandler(Db, service, BranchProvider, notifications);
     }
 
     private const int VariantA = 1;

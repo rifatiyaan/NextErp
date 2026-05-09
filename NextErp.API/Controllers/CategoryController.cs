@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands;
 using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Common;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 
@@ -77,6 +78,19 @@ public class CategoryController(IMediator mediator, IMapper mapper, IImageServic
         var response = mapper.Map<Category.Response.Get.Single>(category);
 
         return CreatedAtAction(nameof(Get), new { id }, response);
+    }
+
+    // POST api/category/batch/deactivate
+    // Multi-row soft delete; transactional via the ITransactionalRequest pipeline behaviour.
+    [HttpPost("batch/deactivate")]
+    public async Task<ActionResult<object>> BatchDeactivate(
+        [FromBody] BatchIdsDto<int> dto,
+        CancellationToken cancellationToken = default)
+    {
+        var count = await mediator.Send(
+            new BatchDeactivateCategoriesCommand(dto?.Ids ?? new List<int>()),
+            cancellationToken);
+        return Ok(new { deactivated = count });
     }
 
     // PUT api/category/{id}

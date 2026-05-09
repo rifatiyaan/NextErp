@@ -11,6 +11,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
         IApplicationDbContext dbContext,
         IStockService stockService,
         IBranchProvider branchProvider,
+        INotificationService notifications,
         IMapper mapper)
         : IRequestHandler<CreateProductCommand, int>
     {
@@ -38,6 +39,15 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
 
             await stockService.EnsureStockRecordExistsAsync(variant.Id, cancellationToken);
             await stockService.SetAvailableQuantityAsync(variant.Id, request.InitialStock, cancellationToken);
+
+            // Stage notification before the final SaveChanges so it joins the same transaction.
+            await notifications.RecordAsync(
+                type: "ProductCreated",
+                title: "New product",
+                message: $"{product.Title} added",
+                relatedEntityType: "Product",
+                relatedEntityId: product.Id.ToString(),
+                cancellationToken: cancellationToken);
 
             await dbContext.SaveChangesAsync(cancellationToken);
 

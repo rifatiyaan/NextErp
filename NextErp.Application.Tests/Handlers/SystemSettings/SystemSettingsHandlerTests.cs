@@ -65,7 +65,7 @@ public class SystemSettingsHandlerTests : HandlerTestBase
     [Fact]
     public async Task Update_creates_row_on_first_call()
     {
-        var sut = new UpdateSystemSettingsHandler(Db, BuildMapper());
+        var sut = new UpdateSystemSettingsHandler(Db, Notifications, BuildMapper());
 
         var dto = new SystemSettingsDto.Request.Update
         {
@@ -99,7 +99,7 @@ public class SystemSettingsHandlerTests : HandlerTestBase
         });
         await Db.SaveChangesAsync();
 
-        var sut = new UpdateSystemSettingsHandler(Db, BuildMapper());
+        var sut = new UpdateSystemSettingsHandler(Db, Notifications, BuildMapper());
         var dto = new SystemSettingsDto.Request.Update { Radius = "none" };
         var result = await sut.Handle(new UpdateSystemSettingsCommand(dto), CancellationToken.None);
 
@@ -124,7 +124,7 @@ public class SystemSettingsHandlerTests : HandlerTestBase
         });
         await Db.SaveChangesAsync();
 
-        var sut = new UpdateSystemSettingsHandler(Db, BuildMapper());
+        var sut = new UpdateSystemSettingsHandler(Db, Notifications, BuildMapper());
         var dto = new SystemSettingsDto.Request.Update { PresetAccentTheme = "theme-violet" };
         var result = await sut.Handle(new UpdateSystemSettingsCommand(dto), CancellationToken.None);
 
@@ -148,7 +148,7 @@ public class SystemSettingsHandlerTests : HandlerTestBase
         });
         await Db.SaveChangesAsync();
 
-        var sut = new UpdateSystemSettingsHandler(Db, BuildMapper());
+        var sut = new UpdateSystemSettingsHandler(Db, Notifications, BuildMapper());
         var dto = new SystemSettingsDto.Request.Update { CustomPrimary = "12 88% 50%" };
         var result = await sut.Handle(new UpdateSystemSettingsCommand(dto), CancellationToken.None);
 
@@ -159,7 +159,7 @@ public class SystemSettingsHandlerTests : HandlerTestBase
     [Fact]
     public async Task Update_sets_UpdatedAt()
     {
-        var sut = new UpdateSystemSettingsHandler(Db, BuildMapper());
+        var sut = new UpdateSystemSettingsHandler(Db, Notifications, BuildMapper());
         var dto = new SystemSettingsDto.Request.Update { PresetAccentTheme = "theme-green" };
 
         await sut.Handle(new UpdateSystemSettingsCommand(dto), CancellationToken.None);

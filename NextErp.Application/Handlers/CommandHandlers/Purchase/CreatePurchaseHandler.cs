@@ -9,7 +9,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Purchase;
 public class CreatePurchaseHandler(
     IApplicationDbContext dbContext,
     IStockService stockService,
-    IBranchProvider branchProvider)
+    IBranchProvider branchProvider,
+    INotificationService notifications)
     : IRequestHandler<CreatePurchaseCommand, Guid>
 {
     public async Task<Guid> Handle(CreatePurchaseCommand request, CancellationToken cancellationToken = default)
@@ -31,6 +32,14 @@ public class CreatePurchaseHandler(
         var purchase = CreatePurchaseHeader(request, tenantId, branchId);
         dbContext.Purchases.Add(purchase);
         purchase.TotalAmount = AddLineItemsAndMovements(purchase, request, stockContext);
+
+        await notifications.RecordAsync(
+            type: "PurchaseCreated",
+            title: "Purchase recorded",
+            message: purchase.PurchaseNumber,
+            relatedEntityType: "Purchase",
+            relatedEntityId: purchase.Id.ToString(),
+            cancellationToken: cancellationToken);
 
         // ---- Phase 4: single SaveChanges persists everything ----
         await dbContext.SaveChangesAsync(cancellationToken);

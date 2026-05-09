@@ -14,6 +14,7 @@ namespace NextErp.Application.Interfaces
         DbSet<Party> Parties { get; set; }
         DbSet<RolePermission> RolePermissions { get; set; }
         DbSet<SystemSettings> SystemSettings { get; set; }
+        DbSet<Notification> Notifications { get; set; }
 
         // Inventory Module DbSets
         DbSet<Stock> Stocks { get; set; }

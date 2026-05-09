@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands;
+using NextErp.Application.DTOs.Common;
 using NextErp.Application.Queries;
 using NextErp.Domain.Entities;
 using PartyDto = NextErp.Application.DTOs.Party;
@@ -67,6 +68,31 @@ public class PartyController(IMediator mediator, IMapper mapper) : ControllerBas
         var command = mapper.Map<UpdatePartyCommand>(dto);
         await mediator.Send(command);
         return NoContent();
+    }
+
+    // POST api/party/customers/batch/deactivate
+    // Filters by PartyType=Customer in the handler so only customers are touched.
+    [HttpPost("customers/batch/deactivate")]
+    public async Task<ActionResult<object>> BatchDeactivateCustomers(
+        [FromBody] BatchIdsDto<Guid> dto,
+        CancellationToken cancellationToken = default)
+    {
+        var count = await mediator.Send(
+            new BatchDeactivateCustomersCommand(dto?.Ids ?? new List<Guid>()),
+            cancellationToken);
+        return Ok(new { deactivated = count });
+    }
+
+    // POST api/party/suppliers/batch/deactivate
+    [HttpPost("suppliers/batch/deactivate")]
+    public async Task<ActionResult<object>> BatchDeactivateSuppliers(
+        [FromBody] BatchIdsDto<Guid> dto,
+        CancellationToken cancellationToken = default)
+    {
+        var count = await mediator.Send(
+            new BatchDeactivateSuppliersCommand(dto?.Ids ?? new List<Guid>()),
+            cancellationToken);
+        return Ok(new { deactivated = count });
     }
 
     // DELETE api/party/{id} — soft delete

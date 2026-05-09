@@ -22,7 +22,7 @@ public class CreateProductHandlerTests : HandlerTestBase
     private CreateProductHandler BuildHandler()
     {
         var stockService = new StockService(Db, BranchProvider);
-        return new CreateProductHandler(Db, stockService, BranchProvider, Mapper);
+        return new CreateProductHandler(Db, stockService, BranchProvider, Notifications, Mapper);
     }
 
     private async Task SeedAsync()

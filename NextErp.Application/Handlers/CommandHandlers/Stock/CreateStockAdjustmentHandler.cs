@@ -10,7 +10,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Stock;
 public class CreateStockAdjustmentHandler(
     IStockService stockService,
     IApplicationDbContext dbContext,
-    IBranchProvider branchProvider)
+    IBranchProvider branchProvider,
+    INotificationService notifications)
     : IRequestHandler<CreateStockAdjustmentCommand, Guid>
 {
     public async Task<Guid> Handle(CreateStockAdjustmentCommand request, CancellationToken cancellationToken = default)

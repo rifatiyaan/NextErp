@@ -20,7 +20,7 @@ public class UpdateProductHandlerTests : HandlerTestBase
     private UpdateProductHandler BuildHandler()
     {
         var stockService = new StockService(Db, BranchProvider);
-        return new UpdateProductHandler(Db, stockService, Mapper);
+        return new UpdateProductHandler(Db, stockService, Notifications, Mapper);
     }
 
     private const int ProductId = 100;
