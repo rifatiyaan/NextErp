@@ -20,7 +20,11 @@ namespace NextErp.Application.Mappings
                         : "Unknown"))
                 .ForMember(dest => dest.VariantSku, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.Sku : ""))
                 .ForMember(dest => dest.VariantTitle, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.Title : ""))
-                .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => src.Metadata));
+                .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => src.Metadata))
+                // Enum -> string for the response payload.
+                .ForMember(dest => dest.DiscountSource,
+                    opt => opt.MapFrom(src =>
+                        src.DiscountSource.HasValue ? src.DiscountSource.Value.ToString() : null));
 
             CreateMap<Entities.Purchase, NextErp.Application.DTOs.Purchase.Response.Create.Single>();
 

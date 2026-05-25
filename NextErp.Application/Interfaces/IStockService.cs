@@ -1,4 +1,5 @@
 using NextErp.Application.Services;
+using NextErp.Application.Settings;
 using NextErp.Domain.Entities;
 
 namespace NextErp.Application.Interfaces
@@ -54,6 +55,31 @@ namespace NextErp.Application.Interfaces
         bool HasStockAvailable(StockContext context, int productVariantId, decimal requiredQuantity);
 
         decimal GetAvailable(StockContext context, int productVariantId);
+
+        // ---- Batch ledger ----
+        // Invariant: sum(open batches.RemainingQuantity) == Stock.AvailableQuantity per (variant, branch).
+
+        StockBatch CreateBatch(
+            StockContext context,
+            int productVariantId,
+            decimal quantity,
+            decimal unitCost,
+            Guid? purchaseItemId);
+
+        // Returns empty when order == Single; caller falls back to Product.Cost for COGS.
+        IReadOnlyList<BatchConsumption> ConsumeBatches(
+            StockContext context,
+            int productVariantId,
+            decimal quantity,
+            InventoryConsumptionOrder order);
+
+        // Always FIFO regardless of tenant setting — adjustments only need invariant preservation.
+        Task SyncBatchesOnAdjustmentAsync(
+            int productVariantId,
+            Guid branchId,
+            Guid tenantId,
+            decimal delta,
+            CancellationToken cancellationToken = default);
     }
 }
 

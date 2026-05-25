@@ -1,9 +1,11 @@
 using AutoMapper;
+using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands;
 using NextErp.Application.DTOs.Common;
+using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 using NextErp.Domain.Entities;
 using PartyDto = NextErp.Application.DTOs.Party;
@@ -13,7 +15,10 @@ namespace NextErp.API.Controllers;
 [Authorize]
 [Route("api/[controller]")]
 [ApiController]
-public class PartyController(IMediator mediator, IMapper mapper) : ControllerBase
+public class PartyController(
+    IMediator mediator,
+    IMapper mapper,
+    IBackgroundJobClient backgroundJobs) : ControllerBase
 {
     // GET api/party/{id}
     [HttpGet("{id:guid}")]
@@ -93,6 +98,51 @@ public class PartyController(IMediator mediator, IMapper mapper) : ControllerBas
             new BatchDeactivateSuppliersCommand(dto?.Ids ?? new List<Guid>()),
             cancellationToken);
         return Ok(new { deactivated = count });
+    }
+
+    // POST api/party/customers/bulk-email
+    //
+    // Body: { ids: [guid, …], subject: "...", body: "..." }
+    // Returns: { queued, skippedNoEmail, skippedNotFound }
+    //
+    // The endpoint is intentionally fast (returns immediately after
+    // partitioning). All actual SMTP sends happen on Hangfire workers.
+    // We do the Enqueue here in the controller — the handler stays
+    // Hangfire-agnostic for unit-test friendliness.
+    [HttpPost("customers/bulk-email")]
+    public async Task<ActionResult<object>> BulkEmailCustomers(
+        [FromBody] BulkEmailCustomersRequestDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        var subject = dto?.Subject ?? string.Empty;
+        var body = dto?.Body ?? string.Empty;
+
+        var result = await mediator.Send(
+            new BulkEmailCustomersCommand(
+                dto?.Ids ?? new List<Guid>(),
+                subject,
+                body),
+            cancellationToken);
+
+        foreach (var customerId in result.QueueableCustomerIds)
+        {
+            backgroundJobs.Enqueue<ICustomerBroadcastEmailService>(svc =>
+                svc.SendBroadcastAsync(customerId, subject, body, CancellationToken.None));
+        }
+
+        return Ok(new
+        {
+            queued = result.Queued,
+            skippedNoEmail = result.SkippedNoEmail,
+            skippedNotFound = result.SkippedNotFound,
+        });
+    }
+
+    public sealed class BulkEmailCustomersRequestDto
+    {
+        public List<Guid> Ids { get; set; } = new();
+        public string Subject { get; set; } = string.Empty;
+        public string Body { get; set; } = string.Empty;
     }
 
     // DELETE api/party/{id} — soft delete

@@ -14,7 +14,14 @@ public class CreateSaleHandlerTests : HandlerTestBase
     {
         var service = new StockService(Db, BranchProvider);
         var notifications = Substitute.For<INotificationService>();
-        return new CreateSaleHandler(Db, service, BranchProvider, notifications);
+        // Real PricingService against the in-memory test Db — promotions
+        // table is empty in these existing tests so it short-circuits and
+        // returns an empty resolution, preserving the original behavior.
+        var pricing = new PricingService(Db);
+        // Real SettingsProvider; empty ModuleSettings table means defaults
+        // are returned (InventoryConsumptionOrder.Single → no batch logic).
+        var settings = new NextErp.Infrastructure.Services.SettingsProvider(Db);
+        return new CreateSaleHandler(Db, service, BranchProvider, notifications, pricing, settings);
     }
 
     private const int VariantA = 1;

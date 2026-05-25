@@ -26,6 +26,14 @@ namespace NextErp.Domain.Entities
         public string? LoyaltyCode { get; set; }
         public string? NationalId { get; set; }
 
+        /// <summary>
+        /// Membership tier label (e.g. "silver", "gold", "platinum"). Joins
+        /// the Promotion entity's <c>Config.MembershipTier</c> field — when
+        /// a sale is rung up for a party with a matching tier, the engine
+        /// auto-applies that promotion.
+        /// </summary>
+        public string? MembershipTier { get; set; }
+
         // Merged from Supplier
         public string? ContactPerson { get; set; }
         public string? VatNumber { get; set; }

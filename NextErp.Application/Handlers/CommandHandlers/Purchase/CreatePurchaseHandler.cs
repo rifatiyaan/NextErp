@@ -64,6 +64,7 @@ public class CreatePurchaseHandler(
             PurchaseDate = request.PurchaseDate,
             TotalAmount = 0,
             Discount = request.Discount,
+            DiscountSource = request.Discount > 0 ? Entities.DiscountSource.Manual : null,
             Metadata = new Entities.Purchase.PurchaseMetadata
             {
                 BatchNo = request.Metadata?.BatchNo,
@@ -93,6 +94,13 @@ public class CreatePurchaseHandler(
                 ? $"{variant.Product?.Title ?? "Product"} — {variant.Title}"
                 : dto.Title;
 
+            // Cap discount at the line's gross so we never go negative.
+            // Purchase-side discounts are always Manual (no rule engine in MVP).
+            var rawDiscount = dto.Discount ?? 0m;
+            if (rawDiscount < 0) rawDiscount = 0m;
+            var lineGross = dto.Quantity * dto.UnitCost;
+            var discount = rawDiscount > lineGross ? lineGross : rawDiscount;
+
             var item = new Entities.PurchaseItem
             {
                 Id = Guid.NewGuid(),
@@ -101,6 +109,8 @@ public class CreatePurchaseHandler(
                 ProductVariantId = variant.Id,
                 Quantity = dto.Quantity,
                 UnitCost = dto.UnitCost,
+                Discount = discount,
+                DiscountSource = discount > 0 ? Entities.DiscountSource.Manual : null,
                 Metadata = new Entities.PurchaseItem.PurchaseItemMetadata
                 {
                     Description = dto.Metadata?.Description,
@@ -122,6 +132,13 @@ public class CreatePurchaseHandler(
                 dto.Quantity,
                 Entities.StockMovementType.Purchase,
                 purchase.Id);
+
+            stockService.CreateBatch(
+                stockContext,
+                variant.Id,
+                dto.Quantity,
+                dto.UnitCost,
+                item.Id);
         }
 
         return total;

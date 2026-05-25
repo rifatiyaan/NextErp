@@ -33,17 +33,34 @@ namespace NextErp.Infrastructure
         public DbSet<Party> Parties { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
         public DbSet<SystemSettings> SystemSettings { get; set; }
+        public DbSet<ModuleSetting> ModuleSettings { get; set; }
         public DbSet<Notification> Notifications { get; set; }
 
         // Inventory Module DbSets
         public DbSet<Stock> Stocks { get; set; }
         public DbSet<Purchase> Purchases { get; set; }
         public DbSet<PurchaseItem> PurchaseItems { get; set; }
+        public DbSet<PurchaseReturn> PurchaseReturns { get; set; }
+        public DbSet<PurchaseReturnItem> PurchaseReturnItems { get; set; }
         public DbSet<Sale> Sales { get; set; }
         public DbSet<SaleItem> SaleItems { get; set; }
         public DbSet<SalePayment> SalePayments { get; set; }
+        public DbSet<SaleReturn> SaleReturns { get; set; }
+        public DbSet<SaleReturnItem> SaleReturnItems { get; set; }
         public DbSet<StockMovement> StockMovements { get; set; }
+        public DbSet<StockBatch> StockBatches { get; set; }
         public DbSet<UnitOfMeasure> UnitOfMeasures { get; set; }
+
+        // Accounting
+        public DbSet<Account> Accounts { get; set; }
+        public DbSet<JournalEntry> JournalEntries { get; set; }
+        public DbSet<JournalLine> JournalLines { get; set; }
+
+        // Loyalty / membership
+        public DbSet<LoyaltyTransaction> LoyaltyTransactions { get; set; }
+
+        // Promotions / discounts
+        public DbSet<Promotion> Promotions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

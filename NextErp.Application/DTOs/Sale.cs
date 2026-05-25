@@ -51,6 +51,14 @@ namespace NextErp.Application.DTOs
                     public decimal Quantity { get; set; }
                     public decimal Price { get; set; }
                     public decimal Subtotal { get; set; }
+
+                    /// <summary>
+                    /// Optional per-line discount typed by the operator. The
+                    /// handler subtracts this from (Quantity × Price) to get
+                    /// the line total. Promotion-engine-applied discounts
+                    /// land in the same field but with DiscountSource=Promotion.
+                    /// </summary>
+                    public decimal? Discount { get; set; }
                 }
             }
 
@@ -59,6 +67,23 @@ namespace NextErp.Application.DTOs
                 public string? ReferenceNo { get; set; }
                 public string? PaymentMethod { get; set; }
                 public string? Notes { get; set; }
+            }
+
+            public partial class Preview
+            {
+                public class Single
+                {
+                    public List<PreviewLineRequest> Lines { get; set; } = new();
+                    public Guid? PartyId { get; set; }
+                }
+
+                public class PreviewLineRequest
+                {
+                    public int ProductVariantId { get; set; }
+                    public decimal Quantity { get; set; }
+                    public decimal UnitPrice { get; set; }
+                    public decimal ManualDiscount { get; set; }
+                }
             }
         }
 
@@ -111,6 +136,9 @@ namespace NextErp.Application.DTOs
                     public string VariantTitle { get; set; } = null!;
                     public decimal Quantity { get; set; }
                     public decimal UnitPrice { get; set; }
+                    public decimal Discount { get; set; }
+                    public string? DiscountSource { get; set; }
+                    public Guid? PromotionId { get; set; }
                     public decimal Total { get; set; }
                 }
 
@@ -142,6 +170,27 @@ namespace NextErp.Application.DTOs
                     public string SaleNumber { get; set; } = null!;
                     public decimal TotalAmount { get; set; }
                     public DateTime CreatedAt { get; set; }
+                }
+            }
+
+            public partial class Preview
+            {
+                public class Single
+                {
+                    public decimal Subtotal { get; set; }
+                    public List<LineDiscount> LineDiscounts { get; set; } = new();
+                    public decimal InvoiceDiscount { get; set; }
+                    public Guid? InvoicePromotionId { get; set; }
+                    public string? InvoicePromotionName { get; set; }
+                    public decimal FinalAmount { get; set; }
+                }
+
+                public class LineDiscount
+                {
+                    public int ProductVariantId { get; set; }
+                    public decimal Discount { get; set; }
+                    public Guid? PromotionId { get; set; }
+                    public string? PromotionName { get; set; }
                 }
             }
         }

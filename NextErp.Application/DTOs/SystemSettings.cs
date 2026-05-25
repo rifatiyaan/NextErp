@@ -16,6 +16,7 @@ public class SystemSettings
             public string? CustomSidebarForeground { get; set; }
 
             public string NavigationPlacement { get; set; } = "sidebar";
+            public string NavigationShape { get; set; } = "flat";
             public string Radius { get; set; } = "md";
 
             public string? CompanyName { get; set; }
@@ -38,6 +39,7 @@ public class SystemSettings
             public string? CustomSidebarForeground { get; set; }
 
             public string? NavigationPlacement { get; set; }
+            public string? NavigationShape { get; set; }
             public string? Radius { get; set; }
 
             public string? CompanyName { get; set; }

@@ -13,6 +13,12 @@ namespace NextErp.Domain.Entities
         public ICollection<Product> Children { get; set; } = new List<Product>();
 
         public decimal Price { get; set; }
+
+        // Average / standard cost — used for profit-margin reporting and stock
+        // valuation. Defaults to 0 so existing records remain consistent until
+        // costs are backfilled (manually or from purchase order weighted-avg).
+        public decimal Cost { get; set; }
+
         public int CategoryId { get; set; }
         public Category Category { get; set; } = null!;
 
@@ -23,8 +29,6 @@ namespace NextErp.Domain.Entities
         public UnitOfMeasure? UnitOfMeasure { get; set; }
 
         public bool IsActive { get; set; } = true;
-
-        public string TestString { get; set; } = "Test";
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

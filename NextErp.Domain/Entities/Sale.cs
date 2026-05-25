@@ -16,7 +16,20 @@ namespace NextErp.Domain.Entities
 
         public DateTime SaleDate { get; set; }
         public decimal TotalAmount { get; set; }
+
+        /// <summary>
+        /// Final $ off the invoice (after manual + rule-engine resolution).
+        /// Pre-discount-feature this was the operator's flat input;
+        /// post-feature it's the captured sum of all invoice-level discounts.
+        /// </summary>
         public decimal Discount { get; set; } = 0;
+
+        /// <summary>Audit — Manual operator entry, Promotion auto-applied, or both stacked.</summary>
+        public DiscountSource? DiscountSource { get; set; }
+
+        /// <summary>Link to the InvoiceDiscount/Membership promotion that contributed, if any.</summary>
+        public Guid? InvoicePromotionId { get; set; }
+
         public decimal Tax { get; set; } = 0;
         public decimal FinalAmount { get; set; }
 

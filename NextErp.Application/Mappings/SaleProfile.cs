@@ -24,7 +24,14 @@ namespace NextErp.Application.Mappings
                         ? src.ProductVariant.Product.Title
                         : "Unknown"))
                 .ForMember(dest => dest.VariantSku, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.Sku : ""))
-                .ForMember(dest => dest.VariantTitle, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.Title : ""));
+                .ForMember(dest => dest.VariantTitle, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.Title : ""))
+                // Discount fields use the same names so they auto-map;
+                // DiscountSource needs an explicit string conversion since
+                // the DTO carries the name (Manual/Promotion) instead of
+                // the int enum value.
+                .ForMember(dest => dest.DiscountSource,
+                    opt => opt.MapFrom(src =>
+                        src.DiscountSource.HasValue ? src.DiscountSource.Value.ToString() : null));
 
             CreateMap<Entities.Sale, NextErp.Application.DTOs.Sale.Response.Create.Single>();
 

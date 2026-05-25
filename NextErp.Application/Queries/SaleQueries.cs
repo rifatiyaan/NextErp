@@ -22,4 +22,9 @@ namespace NextErp.Application.Queries
         DateTime EndDate,
         Guid? PartyId
     ) : IRequest<SaleDto.Response.Get.Report>;
+
+    public record PreviewSalePricingQuery(
+        List<SaleDto.Request.Preview.PreviewLineRequest> Lines,
+        Guid? PartyId
+    ) : IRequest<SaleDto.Response.Preview.Single>;
 }

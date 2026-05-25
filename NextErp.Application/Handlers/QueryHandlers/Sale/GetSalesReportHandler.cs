@@ -51,6 +51,9 @@ namespace NextErp.Application.Handlers.QueryHandlers.Sale
                         VariantTitle = i.ProductVariant != null ? i.ProductVariant.Title : "",
                         Quantity = i.Quantity,
                         UnitPrice = i.UnitPrice,
+                        Discount = i.Discount,
+                        DiscountSource = i.DiscountSource.HasValue ? i.DiscountSource.Value.ToString() : null,
+                        PromotionId = i.PromotionId,
                         Total = i.Total
                     }).ToList(),
                     Payments = s.Payments

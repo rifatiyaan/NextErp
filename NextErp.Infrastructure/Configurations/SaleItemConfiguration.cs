@@ -26,6 +26,9 @@ namespace NextErp.Infrastructure.Configurations
             builder.Property(si => si.UnitPrice)
                 .HasPrecision(18, 2);
 
+            builder.Property(si => si.UnitCostAtSale)
+                .HasPrecision(18, 4);
+
             // Computed column (Total) - ignored in database
             builder.Ignore(si => si.Total);
 

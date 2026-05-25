@@ -1,7 +1,9 @@
 using MediatR;
 using NextErp.Application.Commands;
+using NextErp.Application.Common.Settings;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Services;
+using NextErp.Application.Settings;
 using Entities = NextErp.Domain.Entities;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Sale;
@@ -10,7 +12,9 @@ public class CreateSaleHandler(
     IApplicationDbContext dbContext,
     IStockService stockService,
     IBranchProvider branchProvider,
-    INotificationService notifications)
+    INotificationService notifications,
+    IPricingService pricingService,
+    ISettingsProvider settingsProvider)
     : IRequestHandler<CreateSaleCommand, Guid>
 {
     public async Task<Guid> Handle(CreateSaleCommand request, CancellationToken cancellationToken = default)
@@ -32,12 +36,33 @@ public class CreateSaleHandler(
         var lines = NormalizeSaleLines(request, variants);
         EnsureStockAvailableForAllLines(stockContext, lines);
 
+        // ---- Phase 3.5: run the promotion engine against the lines ----
+        // Manual discounts are kept separate so the rule engine doesn't double-
+        // count them — they're added back to the line in step 4.
+        var pricingResolution = await ResolvePromotionsAsync(
+            request, lines, cancellationToken);
+
+        var inventorySettings = await settingsProvider.GetAsync<InventorySettings>(cancellationToken);
+        var consumptionOrder = inventorySettings.ConsumptionOrder;
+
         // ---- Phase 4: build sale + stage line items + stock movements (no DB calls) ----
-        var grossTotal = lines.Sum(l => l.UnitPrice * l.Quantity);
+        // Items-gross = sum of (qty × unitPrice − all line discounts).
+        var grossTotal = lines.Sum(l =>
+            l.UnitPrice * l.Quantity - l.Discount - GetRuleDiscount(pricingResolution, l));
         var sale = CreateSaleEntity(request, tenantId, branchId, grossTotal);
+        // Tag invoice-level discount source and link any auto-applied promotion.
+        var manualInvoiceDiscount = request.Discount;
+        sale.Discount = manualInvoiceDiscount + pricingResolution.InvoiceDiscount;
+        sale.InvoicePromotionId = pricingResolution.InvoicePromotionId;
+        if (manualInvoiceDiscount > 0 && pricingResolution.InvoiceDiscount > 0)
+            sale.DiscountSource = Entities.DiscountSource.Manual; // both — manual wins as label
+        else if (manualInvoiceDiscount > 0)
+            sale.DiscountSource = Entities.DiscountSource.Manual;
+        else if (pricingResolution.InvoiceDiscount > 0)
+            sale.DiscountSource = Entities.DiscountSource.Promotion;
         dbContext.Sales.Add(sale);
 
-        AddSaleLinesAndStockMovements(sale, lines, stockContext);
+        AddSaleLinesAndStockMovements(sale, lines, stockContext, pricingResolution, consumptionOrder);
         AddOptionalPayment(request, sale);
 
         await notifications.RecordAsync(
@@ -53,7 +78,7 @@ public class CreateSaleHandler(
         return sale.Id;
     }
 
-    private static List<(Entities.ProductVariant Variant, decimal Quantity, decimal UnitPrice)> NormalizeSaleLines(
+    private static List<(Entities.ProductVariant Variant, decimal Quantity, decimal UnitPrice, decimal Discount)> NormalizeSaleLines(
         CreateSaleCommand request,
         IReadOnlyDictionary<int, Entities.ProductVariant> variants)
     {
@@ -63,13 +88,20 @@ public class CreateSaleHandler(
                 throw new InvalidOperationException("Sale item quantity must be greater than zero.");
 
             var variant = variants[dto.ProductVariantId];
-            return (variant, dto.Quantity, variant.Price);
+            // Per-line discount is optional + capped at the line subtotal so
+            // we never end up with a negative line total. A NULL means "no
+            // discount" so manual entry of 0 also stays clean.
+            var rawDiscount = dto.Discount ?? 0m;
+            if (rawDiscount < 0) rawDiscount = 0m;
+            var lineGross = dto.Quantity * variant.Price;
+            var discount = rawDiscount > lineGross ? lineGross : rawDiscount;
+            return (variant, dto.Quantity, variant.Price, discount);
         }).ToList();
     }
 
     private void EnsureStockAvailableForAllLines(
         StockContext stockContext,
-        IReadOnlyList<(Entities.ProductVariant Variant, decimal Quantity, decimal UnitPrice)> lines)
+        IReadOnlyList<(Entities.ProductVariant Variant, decimal Quantity, decimal UnitPrice, decimal Discount)> lines)
     {
         // Multiple lines for the same variant must accumulate against the same stock row.
         var requiredByVariant = lines
@@ -113,14 +145,70 @@ public class CreateSaleHandler(
             metadata: new Entities.Sale.SaleMetadata { PaymentMethod = request.PaymentMethod });
     }
 
+    private async Task<PricingResolution> ResolvePromotionsAsync(
+        CreateSaleCommand request,
+        IReadOnlyList<(Entities.ProductVariant Variant, decimal Quantity, decimal UnitPrice, decimal Discount)> lines,
+        CancellationToken cancellationToken)
+    {
+        var pricingLines = lines.Select(l => new PricingLine(
+            ProductVariantId: l.Variant.Id,
+            ProductId: l.Variant.ProductId,
+            CategoryId: l.Variant.Product?.CategoryId ?? 0,
+            Quantity: l.Quantity,
+            UnitPrice: l.UnitPrice,
+            ManualDiscount: l.Discount)).ToList();
+        return await pricingService.ResolveForSaleAsync(
+            pricingLines, request.PartyId, DateTime.UtcNow, cancellationToken);
+    }
+
+    private static decimal GetRuleDiscount(
+        PricingResolution resolution,
+        (Entities.ProductVariant Variant, decimal Quantity, decimal UnitPrice, decimal Discount) line)
+        => resolution.LineDiscounts.FirstOrDefault(d => d.ProductVariantId == line.Variant.Id)?.RuleDiscount ?? 0m;
+
     private void AddSaleLinesAndStockMovements(
         Entities.Sale sale,
-        IReadOnlyList<(Entities.ProductVariant Variant, decimal Quantity, decimal UnitPrice)> lines,
-        StockContext stockContext)
+        IReadOnlyList<(Entities.ProductVariant Variant, decimal Quantity, decimal UnitPrice, decimal Discount)> lines,
+        StockContext stockContext,
+        PricingResolution resolution,
+        InventoryConsumptionOrder consumptionOrder)
     {
-        foreach (var (variant, quantity, unitPrice) in lines)
+        foreach (var (variant, quantity, unitPrice, manualDiscount) in lines)
         {
             var lineTitle = $"{variant.Product?.Title ?? "Product"} — {variant.Title}";
+            var ruleApplied = resolution.LineDiscounts.FirstOrDefault(d => d.ProductVariantId == variant.Id);
+            var ruleDiscount = ruleApplied?.RuleDiscount ?? 0m;
+            var totalDiscount = manualDiscount + ruleDiscount;
+            // Source label: if both manual + rule apply, "Manual" wins so
+            // reports treat the operator's stamp as the canonical reason.
+            Entities.DiscountSource? source =
+                manualDiscount > 0 ? Entities.DiscountSource.Manual
+                : ruleDiscount > 0 ? Entities.DiscountSource.Promotion
+                : null;
+
+            stockService.RecordMovement(
+                stockContext,
+                variant.Id,
+                -quantity,
+                Entities.StockMovementType.Sale,
+                sale.Id);
+
+            // Empty in Single mode — UnitCostAtSale stays null in that case.
+            var consumptions = stockService.ConsumeBatches(stockContext, variant.Id, quantity, consumptionOrder);
+
+            decimal? unitCostAtSale = null;
+            if (consumptions.Count > 0)
+            {
+                var totalQty = consumptions.Sum(c => c.Quantity);
+                if (totalQty > 0)
+                {
+                    unitCostAtSale = decimal.Round(
+                        consumptions.Sum(c => c.Quantity * c.UnitCost) / totalQty,
+                        4,
+                        MidpointRounding.AwayFromZero);
+                }
+            }
+
             sale.Items.Add(new Entities.SaleItem
             {
                 Id = Guid.NewGuid(),
@@ -129,17 +217,13 @@ public class CreateSaleHandler(
                 ProductVariantId = variant.Id,
                 Quantity = quantity,
                 Price = unitPrice,
+                Discount = totalDiscount,
+                DiscountSource = source,
+                PromotionId = ruleApplied?.PromotionId,
+                UnitCostAtSale = unitCostAtSale,
                 CreatedAt = DateTime.UtcNow,
                 TenantId = sale.TenantId
             });
-
-            // Pure in-memory: mutates tracked Stock + adds StockMovement to dbContext.
-            stockService.RecordMovement(
-                stockContext,
-                variant.Id,
-                -quantity,
-                Entities.StockMovementType.Sale,
-                sale.Id);
         }
     }
 

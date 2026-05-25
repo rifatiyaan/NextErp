@@ -56,6 +56,13 @@ public class CreateStockAdjustmentHandler(
             notes: request.Notes,
             cancellationToken: cancellationToken);
 
+        await stockService.SyncBatchesOnAdjustmentAsync(
+            request.ProductVariantId,
+            branchId,
+            variant.TenantId,
+            delta,
+            cancellationToken);
+
         // RecordMovementAsync staged a StockMovement on the change tracker.
         // Capture its Id before SaveChanges so we can return it to the caller.
         var movementId = dbContext.StockMovements

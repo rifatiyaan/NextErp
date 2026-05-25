@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Settings;
 using NextErp.Domain.Entities;
 
 namespace NextErp.Application.Services;
@@ -303,8 +304,66 @@ public class StockService(
             .Where(s => s.BranchId == branchId && ids.Contains(s.ProductVariantId))
             .ToListAsync(cancellationToken);
 
+        // Tracked load (no AsNoTracking) so in-place RemainingQuantity decrements persist on SaveChanges.
+        var batchRows = await dbContext.StockBatches
+            .Where(b => b.BranchId == branchId
+                        && ids.Contains(b.ProductVariantId)
+                        && b.RemainingQuantity > 0
+                        && b.IsActive)
+            .OrderBy(b => b.ReceivedAt)
+            .ToListAsync(cancellationToken);
+
         var stocksByVariant = stockRows.ToDictionary(s => s.ProductVariantId);
-        return new StockContext(branchId, tenantId, variants, stocksByVariant);
+        var batchesByVariant = batchRows
+            .GroupBy(b => b.ProductVariantId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        // Self-heal: top up any variant whose batch sum is short of Stock.AvailableQuantity
+        // (legacy / pre-ledger rows) with a synthetic opening batch at Product.Cost.
+        foreach (var (variantId, stock) in stocksByVariant)
+        {
+            batchesByVariant.TryGetValue(variantId, out var existing);
+            var openSum = existing?.Sum(b => b.RemainingQuantity) ?? 0m;
+            var shortfall = stock.AvailableQuantity - openSum;
+            if (shortfall <= 0) continue;
+            var variant = variants[variantId];
+            var opening = StageSyntheticOpeningBatch(variantId, branchId, tenantId, shortfall, variant.Product?.Cost ?? 0m);
+            if (existing == null)
+            {
+                batchesByVariant[variantId] = new List<StockBatch> { opening };
+            }
+            else
+            {
+                existing.Add(opening);
+            }
+        }
+
+        return new StockContext(branchId, tenantId, variants, stocksByVariant, batchesByVariant);
+    }
+
+    private StockBatch StageSyntheticOpeningBatch(
+        int productVariantId,
+        Guid branchId,
+        Guid tenantId,
+        decimal quantity,
+        decimal unitCost)
+    {
+        var batch = new StockBatch
+        {
+            Id = Guid.NewGuid(),
+            ProductVariantId = productVariantId,
+            BranchId = branchId,
+            TenantId = tenantId,
+            ReceivedAt = DateTime.UtcNow,
+            OriginalQuantity = quantity,
+            RemainingQuantity = quantity,
+            UnitCost = unitCost,
+            PurchaseItemId = null,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+        };
+        dbContext.StockBatches.Add(batch);
+        return batch;
     }
 
     public StockMovement RecordMovement(
@@ -363,4 +422,152 @@ public class StockService(
 
     public decimal GetAvailable(StockContext context, int productVariantId) =>
         context.GetStockOrNull(productVariantId)?.AvailableQuantity ?? 0m;
+
+    // ---- Batch ledger ----
+
+    public StockBatch CreateBatch(
+        StockContext context,
+        int productVariantId,
+        decimal quantity,
+        decimal unitCost,
+        Guid? purchaseItemId)
+    {
+        if (quantity <= 0)
+            throw new InvalidOperationException("Batch quantity must be positive.");
+
+        var variant = context.GetVariant(productVariantId);
+        var batch = new StockBatch
+        {
+            Id = Guid.NewGuid(),
+            ProductVariantId = variant.Id,
+            BranchId = context.BranchId,
+            TenantId = context.TenantId,
+            ReceivedAt = DateTime.UtcNow,
+            OriginalQuantity = quantity,
+            RemainingQuantity = quantity,
+            UnitCost = unitCost,
+            PurchaseItemId = purchaseItemId,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+        };
+        dbContext.StockBatches.Add(batch);
+        context.RegisterBatch(batch);
+        return batch;
+    }
+
+    public IReadOnlyList<BatchConsumption> ConsumeBatches(
+        StockContext context,
+        int productVariantId,
+        decimal quantity,
+        InventoryConsumptionOrder order)
+    {
+        if (order == InventoryConsumptionOrder.Single || quantity <= 0)
+            return Array.Empty<BatchConsumption>();
+
+        var batches = context.GetOpenBatches(productVariantId);
+        var walkOrder = order == InventoryConsumptionOrder.Lifo
+            ? batches.AsEnumerable().Reverse()
+            : batches.AsEnumerable();
+
+        var consumptions = new List<BatchConsumption>();
+        var remaining = quantity;
+        foreach (var batch in walkOrder)
+        {
+            if (remaining <= 0) break;
+            if (batch.RemainingQuantity <= 0) continue;
+            var take = Math.Min(batch.RemainingQuantity, remaining);
+            batch.RemainingQuantity -= take;
+            batch.UpdatedAt = DateTime.UtcNow;
+            remaining -= take;
+            consumptions.Add(new BatchConsumption(batch.Id, take, batch.UnitCost));
+        }
+
+        if (remaining > 0)
+        {
+            var variant = context.GetVariant(productVariantId);
+            throw new InvalidOperationException(
+                $"Batch ledger underflow for SKU '{variant.Sku}': could not consume {quantity} units " +
+                $"({remaining} short). This typically indicates a Stock.AvailableQuantity / StockBatch " +
+                $"invariant break — investigate before proceeding.");
+        }
+
+        return consumptions;
+    }
+
+    public async Task SyncBatchesOnAdjustmentAsync(
+        int productVariantId,
+        Guid branchId,
+        Guid tenantId,
+        decimal delta,
+        CancellationToken cancellationToken = default)
+    {
+        if (delta == 0) return;
+
+        if (delta > 0)
+        {
+            // No PO to source cost from — adjustment increase records zero-cost stock.
+            dbContext.StockBatches.Add(new StockBatch
+            {
+                Id = Guid.NewGuid(),
+                ProductVariantId = productVariantId,
+                BranchId = branchId,
+                TenantId = tenantId,
+                ReceivedAt = DateTime.UtcNow,
+                OriginalQuantity = delta,
+                RemainingQuantity = delta,
+                UnitCost = 0m,
+                PurchaseItemId = null,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+            });
+            return;
+        }
+
+        var toConsume = -delta;
+        var batches = await dbContext.StockBatches
+            .Where(b => b.BranchId == branchId
+                        && b.ProductVariantId == productVariantId
+                        && b.RemainingQuantity > 0
+                        && b.IsActive)
+            .OrderBy(b => b.ReceivedAt)
+            .ToListAsync(cancellationToken);
+
+        // AsNoTracking reads pre-adjustment from DB — RecordMovementAsync mutated the
+        // tracked entity but SaveChanges hasn't run yet, so DB still holds the old value.
+        var openSum = batches.Sum(b => b.RemainingQuantity);
+        var stockRow = await dbContext.Stocks
+            .AsNoTracking()
+            .Where(s => s.ProductVariantId == productVariantId && s.BranchId == branchId)
+            .Select(s => new { s.AvailableQuantity })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (stockRow != null)
+        {
+            var shortfall = stockRow.AvailableQuantity - openSum;
+            if (shortfall > 0)
+            {
+                var variant = await dbContext.ProductVariants
+                    .Include(v => v.Product)
+                    .AsNoTracking()
+                    .FirstAsync(v => v.Id == productVariantId, cancellationToken);
+                var opening = StageSyntheticOpeningBatch(productVariantId, branchId, tenantId, shortfall, variant.Product?.Cost ?? 0m);
+                batches.Insert(0, opening);
+            }
+        }
+
+        foreach (var batch in batches)
+        {
+            if (toConsume <= 0) break;
+            var take = Math.Min(batch.RemainingQuantity, toConsume);
+            batch.RemainingQuantity -= take;
+            batch.UpdatedAt = DateTime.UtcNow;
+            toConsume -= take;
+        }
+
+        if (toConsume > 0)
+        {
+            throw new InvalidOperationException(
+                $"Batch ledger underflow on adjustment: variant {productVariantId} short by {toConsume} units. " +
+                "This indicates a Stock.AvailableQuantity / StockBatch invariant break.");
+        }
+    }
 }

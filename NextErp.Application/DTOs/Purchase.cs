@@ -50,6 +50,14 @@ namespace NextErp.Application.DTOs
                     public int ProductVariantId { get; set; }
                     public decimal Quantity { get; set; }
                     public decimal UnitCost { get; set; }
+
+                    /// <summary>
+                    /// Optional supplier-negotiated per-line discount. Caps at
+                    /// (Quantity × UnitCost) so the line never goes negative.
+                    /// Purchase side is manual-only (no rule engine in MVP).
+                    /// </summary>
+                    public decimal? Discount { get; set; }
+
                     public PurchaseItemMetadata? Metadata { get; set; }
                 }
 
@@ -106,6 +114,8 @@ namespace NextErp.Application.DTOs
                     public string VariantTitle { get; set; } = null!;
                     public decimal Quantity { get; set; }
                     public decimal UnitCost { get; set; }
+                    public decimal Discount { get; set; }
+                    public string? DiscountSource { get; set; }
                     public decimal Total { get; set; }
                     public PurchaseItemMetadata? Metadata { get; set; }
                 }

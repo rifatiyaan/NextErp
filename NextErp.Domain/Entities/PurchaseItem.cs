@@ -13,7 +13,18 @@ namespace NextErp.Domain.Entities
 
         public decimal Quantity { get; set; }
         public decimal UnitCost { get; set; }
-        public decimal Total => Quantity * UnitCost;
+
+        /// <summary>
+        /// Final $ amount discounted from this line. Purchase side accepts
+        /// manual operator entries only (no rule engine on purchases in
+        /// MVP). LineTotal = Quantity*UnitCost - Discount.
+        /// </summary>
+        public decimal Discount { get; set; }
+
+        /// <summary>Audit hint — Manual is the only valid value on purchase side for MVP.</summary>
+        public DiscountSource? DiscountSource { get; set; }
+
+        public decimal Total => Quantity * UnitCost - Discount;
 
         public PurchaseItemMetadata Metadata { get; set; } = new PurchaseItemMetadata();
 

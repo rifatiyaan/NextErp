@@ -15,6 +15,10 @@ namespace NextErp.Domain.Entities
         public DateTime PurchaseDate { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal Discount { get; set; }
+
+        /// <summary>Audit — Manual is the only valid value on purchase side for MVP.</summary>
+        public DiscountSource? DiscountSource { get; set; }
+
         public decimal NetTotal => TotalAmount - Discount;
 
         public ICollection<PurchaseItem> Items { get; set; } = new List<PurchaseItem>();

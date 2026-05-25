@@ -17,6 +17,12 @@ public class SystemSettings : IEntity<Guid>
     // ─── Layout ───
     public string NavigationPlacement { get; set; } = "sidebar";
 
+    /// <summary>
+    /// "flat" or "tree" — navigation shape applied to both the sidebar and
+    /// the topbar. Tenant-wide so the UX stays consistent across all users.
+    /// </summary>
+    public string NavigationShape { get; set; } = "flat";
+
     public string Radius { get; set; } = "md";
 
     // ─── Branding ───
@@ -32,6 +38,7 @@ public class SystemSettings : IEntity<Guid>
         TenantId = tenantId,
         PresetAccentTheme = "theme-slate",
         NavigationPlacement = "sidebar",
+        NavigationShape = "flat",
         Radius = "md",
         CreatedAt = DateTime.UtcNow,
     };

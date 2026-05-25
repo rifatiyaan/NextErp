@@ -85,4 +85,13 @@ public class SaleController(IMediator mediator, IMapper mapper) : ControllerBase
 
         return Ok(report);
     }
+
+    // POST api/sale/preview-pricing — dry-run pricing, writes nothing.
+    [HttpPost("preview-pricing")]
+    public async Task<IActionResult> PreviewPricing([FromBody] Sale.Request.Preview.Single dto)
+    {
+        var query = new PreviewSalePricingQuery(dto.Lines, dto.PartyId);
+        var result = await mediator.Send(query);
+        return Ok(result);
+    }
 }

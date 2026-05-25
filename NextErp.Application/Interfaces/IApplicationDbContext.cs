@@ -14,16 +14,22 @@ namespace NextErp.Application.Interfaces
         DbSet<Party> Parties { get; set; }
         DbSet<RolePermission> RolePermissions { get; set; }
         DbSet<SystemSettings> SystemSettings { get; set; }
+        DbSet<ModuleSetting> ModuleSettings { get; set; }
         DbSet<Notification> Notifications { get; set; }
 
         // Inventory Module DbSets
         DbSet<Stock> Stocks { get; set; }
         DbSet<Purchase> Purchases { get; set; }
         DbSet<PurchaseItem> PurchaseItems { get; set; }
+        DbSet<PurchaseReturn> PurchaseReturns { get; set; }
+        DbSet<PurchaseReturnItem> PurchaseReturnItems { get; set; }
         DbSet<Sale> Sales { get; set; }
         DbSet<SaleItem> SaleItems { get; set; }
         DbSet<SalePayment> SalePayments { get; set; }
+        DbSet<SaleReturn> SaleReturns { get; set; }
+        DbSet<SaleReturnItem> SaleReturnItems { get; set; }
         DbSet<StockMovement> StockMovements { get; set; }
+        DbSet<StockBatch> StockBatches { get; set; }
         DbSet<UnitOfMeasure> UnitOfMeasures { get; set; }
 
         // Variation System DbSets
@@ -31,6 +37,17 @@ namespace NextErp.Application.Interfaces
         DbSet<VariationValue> VariationValues { get; set; }
         DbSet<ProductVariationOption> ProductVariationOptions { get; set; }
         DbSet<ProductVariant> ProductVariants { get; set; }
+
+        // Accounting
+        DbSet<Account> Accounts { get; set; }
+        DbSet<JournalEntry> JournalEntries { get; set; }
+        DbSet<JournalLine> JournalLines { get; set; }
+
+        // Loyalty / membership
+        DbSet<LoyaltyTransaction> LoyaltyTransactions { get; set; }
+
+        // Promotions / discounts
+        DbSet<Promotion> Promotions { get; set; }
 
         // Transaction Support
         DatabaseFacade Database { get; }
