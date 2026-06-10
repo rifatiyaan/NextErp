@@ -113,5 +113,45 @@ public class CreateProductHandlerTests : HandlerTestBase
         fresh.BranchId.Should().Be(BranchId);
         fresh.TenantId.Should().Be(TenantId);
     }
+
+    [Fact]
+    public async Task Blank_code_is_assigned_first_sequential_code()
+    {
+        await SeedAsync();
+        var sut = BuildHandler();
+
+        var id = await sut.Handle(BuildCommand(code: ""), CancellationToken.None);
+
+        var fresh = await Db.Products.AsNoTracking().FirstAsync(p => p.Id == id);
+        fresh.Code.Should().Be("P000001");
+    }
+
+    [Fact]
+    public async Task Blank_code_continues_sequence_from_existing_max()
+    {
+        await SeedAsync();
+        Db.Products.Add(new ProductBuilder()
+            .WithCode("P000005").WithCategory(CategoryIdA)
+            .WithTenant(TenantId).WithBranch(BranchId).Build());
+        await Db.SaveChangesAsync();
+        var sut = BuildHandler();
+
+        var id = await sut.Handle(BuildCommand(code: ""), CancellationToken.None);
+
+        var fresh = await Db.Products.AsNoTracking().FirstAsync(p => p.Id == id);
+        fresh.Code.Should().Be("P000006");
+    }
+
+    [Fact]
+    public async Task Provided_code_is_preserved_not_regenerated()
+    {
+        await SeedAsync();
+        var sut = BuildHandler();
+
+        var id = await sut.Handle(BuildCommand(code: "ABC123"), CancellationToken.None);
+
+        var fresh = await Db.Products.AsNoTracking().FirstAsync(p => p.Id == id);
+        fresh.Code.Should().Be("ABC123");
+    }
 }
 

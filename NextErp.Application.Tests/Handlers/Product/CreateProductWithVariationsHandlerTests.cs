@@ -256,5 +256,39 @@ public class CreateProductWithVariationsHandlerTests : HandlerTestBase
         variant.Title.Should().Be("S / Red");
         variant.Name.Should().Be("S / Red");
     }
+
+    [Fact]
+    public async Task Blank_code_is_assigned_first_sequential_code()
+    {
+        await SeedSchemaAsync(seedColorOption: false);
+        var sut = BuildHandler();
+
+        var cmd = new CreateProductWithVariationsCommand(
+            Title: "Mug",
+            Code: "",
+            ParentId: null,
+            CategoryId: CategoryId,
+            Price: 50m,
+            InitialStock: 0m,
+            IsActive: true,
+            ImageUrl: null,
+            ImageGallery: null,
+            Description: null,
+            Color: null,
+            Warranty: null,
+            VariationOptions: new()
+            {
+                OptionDto("Size", "S"),
+            },
+            ProductVariants: new()
+            {
+                VariantDto("MUGS", 50m, 0m, "0:0"),
+            });
+
+        var productId = await sut.Handle(cmd, CancellationToken.None);
+
+        var product = await Db.Products.AsNoTracking().FirstAsync(p => p.Id == productId);
+        product.Code.Should().Be("P000001");
+    }
 }
 

@@ -22,28 +22,38 @@ public class CreateSaleHandler(
         if (request.Items.Count == 0)
             throw new InvalidOperationException("A sale must contain at least one line item.");
 
-        // ---- Phase 1: load all variants in one query ----
+        // ---- Phase 1: load cart variants ----
         var variantIds = request.Items.Select(i => i.ProductVariantId).Distinct().ToList();
-        var variants = await stockService.LoadVariantsAsync(variantIds, cancellationToken);
+        var loaded = await stockService.LoadVariantsAsync(variantIds, cancellationToken);
+        var variants = new Dictionary<int, Entities.ProductVariant>(loaded);
 
         var tenantId = variants.Values.First().TenantId;
         var branchId = ResolveWriteBranchId(variants.Values);
-
-        // ---- Phase 2: load all stock rows for the resolved branch in one query ----
-        var stockContext = await stockService.LoadStockContextAsync(variants, branchId, tenantId, cancellationToken);
-
-        // ---- Phase 3: validate availability against the loaded context (no DB calls) ----
         var lines = NormalizeSaleLines(request, variants);
-        EnsureStockAvailableForAllLines(stockContext, lines);
 
-        // ---- Phase 3.5: run the promotion engine against the lines ----
-        // Manual discounts are kept separate so the rule engine doesn't double-
-        // count them — they're added back to the line in step 4.
-        var pricingResolution = await ResolvePromotionsAsync(
-            request, lines, cancellationToken);
-
+        // ---- Phase 2: promotion engine. May emit BOGO bonus items for
+        // products that aren't in the cart (cross-product rewards). ----
+        var pricingResolution = await ResolvePromotionsAsync(request, lines, cancellationToken);
         var inventorySettings = await settingsProvider.GetAsync<InventorySettings>(cancellationToken);
         var consumptionOrder = inventorySettings.ConsumptionOrder;
+
+        // Pull in bonus GET variants not already in the cart so their stock +
+        // batches are decremented alongside the typed lines.
+        var bonusVariantIds = pricingResolution.BonusItems
+            .Select(b => b.ProductVariantId)
+            .Where(id => !variants.ContainsKey(id))
+            .Distinct()
+            .ToList();
+        if (bonusVariantIds.Count > 0)
+        {
+            var bonusVariants = await stockService.LoadVariantsAsync(bonusVariantIds, cancellationToken);
+            foreach (var kv in bonusVariants)
+                variants[kv.Key] = kv.Value;
+        }
+
+        // ---- Phase 3: stock context over cart + bonus variants ----
+        var stockContext = await stockService.LoadStockContextAsync(variants, branchId, tenantId, cancellationToken);
+        EnsureStockAvailableForAllLines(stockContext, lines);
 
         // ---- Phase 4: build sale + stage line items + stock movements (no DB calls) ----
         // Items-gross = sum of (qty × unitPrice − all line discounts).
@@ -220,6 +230,58 @@ public class CreateSaleHandler(
                 Discount = totalDiscount,
                 DiscountSource = source,
                 PromotionId = ruleApplied?.PromotionId,
+                UnitCostAtSale = unitCostAtSale,
+                CreatedAt = DateTime.UtcNow,
+                TenantId = sale.TenantId
+            });
+        }
+
+        // Phantom SaleItems for BogoSame bonus units: physical stock leaves the
+        // store at 100% off. Decrement stock + walk batches at the chosen order.
+        foreach (var bonus in resolution.BonusItems)
+        {
+            if (bonus.Quantity <= 0) continue;
+            if (!stockContext.Variants.TryGetValue(bonus.ProductVariantId, out var variant))
+                continue;
+            var lineTitle = $"{variant.Product?.Title ?? "Product"} — {variant.Title} (free)";
+
+            stockService.RecordMovement(
+                stockContext,
+                bonus.ProductVariantId,
+                -bonus.Quantity,
+                Entities.StockMovementType.Sale,
+                sale.Id);
+
+            var consumptions = stockService.ConsumeBatches(
+                stockContext, bonus.ProductVariantId, bonus.Quantity, consumptionOrder);
+            decimal? unitCostAtSale = null;
+            if (consumptions.Count > 0)
+            {
+                var totalQty = consumptions.Sum(c => c.Quantity);
+                if (totalQty > 0)
+                {
+                    unitCostAtSale = decimal.Round(
+                        consumptions.Sum(c => c.Quantity * c.UnitCost) / totalQty,
+                        4,
+                        MidpointRounding.AwayFromZero);
+                }
+            }
+
+            var bonusDiscount = decimal.Round(
+                bonus.Quantity * bonus.UnitPrice * (bonus.DiscountPercent / 100m),
+                2,
+                MidpointRounding.AwayFromZero);
+            sale.Items.Add(new Entities.SaleItem
+            {
+                Id = Guid.NewGuid(),
+                Title = lineTitle,
+                SaleId = sale.Id,
+                ProductVariantId = bonus.ProductVariantId,
+                Quantity = bonus.Quantity,
+                Price = bonus.UnitPrice,
+                Discount = bonusDiscount, // DiscountPercent off (100% = free)
+                DiscountSource = Entities.DiscountSource.Promotion,
+                PromotionId = bonus.PromotionId,
                 UnitCostAtSale = unitCostAtSale,
                 CreatedAt = DateTime.UtcNow,
                 TenantId = sale.TenantId

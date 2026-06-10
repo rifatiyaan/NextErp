@@ -30,7 +30,10 @@ namespace NextErp.Application.Handlers.CommandHandlers.Identity
             }
             else
             {
-                if (request.BranchId is null || request.BranchId == Guid.Empty)
+                // A global caller must explicitly pick a branch. Guid.Empty is a
+                // legitimate branch id here (the single-tenant Main Branch), so
+                // only a missing (null) value is rejected.
+                if (request.BranchId is null)
                     throw new InvalidOperationException("BranchId is required for global user creation.");
                 branchId = request.BranchId.Value;
             }

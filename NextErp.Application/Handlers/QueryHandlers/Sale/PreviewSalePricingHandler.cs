@@ -43,9 +43,26 @@ public class PreviewSalePricingHandler(
         var resolution = await pricingService.ResolveForSaleAsync(
             pricingLines, request.PartyId, DateTime.UtcNow, cancellationToken);
 
+        // Bonus (BOGO reward) variants are often cross-product — not in the cart,
+        // so not in `variants`. Load their product title + image in one query so
+        // the UI can render them as standalone lines.
+        var bonusVariantIds = resolution.BonusItems
+            .Select(b => b.ProductVariantId)
+            .Where(id => !variants.ContainsKey(id))
+            .Distinct()
+            .ToList();
+        var bonusVariants = bonusVariantIds.Count == 0
+            ? new Dictionary<int, Domain.Entities.ProductVariant>()
+            : await db.ProductVariants
+                .AsNoTracking()
+                .Include(pv => pv.Product)
+                .Where(pv => bonusVariantIds.Contains(pv.Id))
+                .ToDictionaryAsync(pv => pv.Id, cancellationToken);
+
         var promoIds = resolution.LineDiscounts
             .Where(ld => ld.PromotionId.HasValue)
             .Select(ld => ld.PromotionId!.Value)
+            .Concat(resolution.BonusItems.Select(b => b.PromotionId))
             .Concat(resolution.InvoicePromotionId.HasValue
                 ? new[] { resolution.InvoicePromotionId.Value }
                 : Array.Empty<Guid>())
@@ -77,6 +94,26 @@ public class PreviewSalePricingHandler(
                 PromotionName = d.PromotionId.HasValue && promoNames.TryGetValue(d.PromotionId.Value, out var name)
                     ? name
                     : null,
+            }).ToList(),
+            BonusItems = resolution.BonusItems.Select(b =>
+            {
+                var variant = variants.GetValueOrDefault(b.ProductVariantId)
+                    ?? bonusVariants.GetValueOrDefault(b.ProductVariantId);
+                var product = variant?.Product;
+                var title = product == null
+                    ? $"#{b.ProductVariantId}"
+                    : product.HasVariations ? $"{product.Title} ({variant!.Title})" : product.Title;
+                return new SaleDto.Response.Preview.BonusItem
+                {
+                    ProductVariantId = b.ProductVariantId,
+                    Title = title,
+                    ImageUrl = product?.ImageUrl,
+                    Quantity = b.Quantity,
+                    UnitPrice = b.UnitPrice,
+                    DiscountPercent = b.DiscountPercent,
+                    PromotionId = b.PromotionId,
+                    PromotionName = promoNames.TryGetValue(b.PromotionId, out var bn) ? bn : null,
+                };
             }).ToList(),
             InvoiceDiscount = resolution.InvoiceDiscount,
             InvoicePromotionId = resolution.InvoicePromotionId,

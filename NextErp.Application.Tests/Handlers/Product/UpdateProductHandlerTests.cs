@@ -78,6 +78,19 @@ public class UpdateProductHandlerTests : HandlerTestBase
     }
 
     [Fact]
+    public async Task Blank_code_on_update_keeps_existing_code()
+    {
+        await SeedAsync();
+        var sut = BuildHandler();
+
+        var cmd = BuildUpdateCommand() with { Code = "" };
+        await sut.Handle(cmd, CancellationToken.None);
+
+        var fresh = await Db.Products.AsNoTracking().FirstAsync(p => p.Id == ProductId);
+        fresh.Code.Should().Be("ORIG-001");
+    }
+
+    [Fact]
     public async Task Not_found_throws_KeyNotFoundException()
     {
         await SeedAsync();

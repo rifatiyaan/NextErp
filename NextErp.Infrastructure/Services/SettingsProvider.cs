@@ -172,10 +172,28 @@ public sealed class SettingsProvider : ISettingsProvider
 
     public async Task<IReadOnlyDictionary<string, IReadOnlyDictionary<string, object?>>> GetAllValuesAsync(CancellationToken cancellationToken = default)
     {
+        var tenantId = GetTenantId();
+
+        // One round-trip for every module's blob (was N queries — one per
+        // module via LoadJsonAsync). Warm the cache so later single-module
+        // reads hit memory.
+        var byModule = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var rows = await _db.ModuleSettings
+            .AsNoTracking()
+            .Where(s => s.TenantId == tenantId)
+            .Select(s => new { s.Module, s.SettingsJson })
+            .ToListAsync(cancellationToken);
+        foreach (var row in rows)
+        {
+            byModule[row.Module] = row.SettingsJson;
+            _cache[(tenantId, row.Module)] = row.SettingsJson;
+        }
+
         var result = new Dictionary<string, IReadOnlyDictionary<string, object?>>(StringComparer.OrdinalIgnoreCase);
         foreach (var reg in _byName.Values)
         {
-            var instance = Deserialize(reg, await LoadJsonAsync(reg.ModuleName, cancellationToken));
+            byModule.TryGetValue(reg.ModuleName, out var json);
+            var instance = Deserialize(reg, json);
             var moduleValues = new Dictionary<string, object?>(reg.Properties.Count);
             foreach (var p in reg.Properties)
             {

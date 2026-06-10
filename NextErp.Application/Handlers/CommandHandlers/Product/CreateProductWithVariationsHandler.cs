@@ -20,6 +20,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
         {
             var product = mapper.Map<Entities.Product>(request);
             await ProductBranchScope.ApplyToProductAsync(product, dbContext, branchProvider, cancellationToken);
+            product.Code = await ProductCodeFactory.EnsureCodeAsync(product.Code, product.TenantId, dbContext, cancellationToken);
             product.HasVariations = true;
             product.CreatedAt = DateTime.UtcNow;
 

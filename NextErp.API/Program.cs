@@ -1,6 +1,7 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using FluentValidation;
+using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -92,6 +93,19 @@ builder.Services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<Ap
 builder.Services.AddScoped<IUserContext, HttpContextUserContext>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+// =======================================================
+// 🔹 HANGFIRE (background jobs — e.g. customer bulk-email)
+// Registers IBackgroundJobClient (consumed by PartyController) and a
+// worker server. SQL Server storage reuses DefaultConnection and creates
+// its own [HangFire] schema on first run.
+// =======================================================
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(connectionString));
+builder.Services.AddHangfireServer();
 
 // =======================================================
 // 🔹 IDENTITY

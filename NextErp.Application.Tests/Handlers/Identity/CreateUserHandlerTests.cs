@@ -200,6 +200,35 @@ public class CreateUserHandlerTests : HandlerTestBase
             .WithMessage("*BranchId is required*");
     }
 
+    [Fact]
+    public async Task CreateUser_global_caller_with_empty_guid_main_branch_succeeds()
+    {
+        // The single-tenant Main Branch is seeded with Id = Guid.Empty. Selecting
+        // it must create the user, not be rejected as "no branch chosen".
+        var seededUsers = new List<ApplicationUser>();
+        var seededRoles = new List<IdentityRole<Guid>>();
+
+        var sut = new CreateUserHandler(
+            CreateUserManager(seededUsers),
+            CreateRoleManager(seededRoles),
+            CreateBranchProvider(isGlobal: true));
+
+        var entry = await sut.Handle(
+            new CreateUserCommand(
+                Email: "frank@example.com",
+                Password: "Pa$$w0rd!",
+                FirstName: null,
+                LastName: null,
+                BranchId: Guid.Empty,
+                RoleName: null,
+                CallerIsSuperAdmin: false,
+                CallerIsGlobal: true),
+            CancellationToken.None);
+
+        entry.BranchId.Should().Be(Guid.Empty);
+        seededUsers.Should().ContainSingle(u => u.Email == "frank@example.com");
+    }
+
     // =====================================================
     //  SuperAdmin guard
     // =====================================================

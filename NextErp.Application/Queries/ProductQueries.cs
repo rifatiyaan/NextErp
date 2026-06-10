@@ -7,6 +7,9 @@ namespace NextErp.Application.Queries
     // Get Product by Id
     public record GetProductByIdQuery(int Id) : IRequest<DTOs.Product.Response.Get.Single?>;
 
+    // Next auto-generated product code (preview for the create form, e.g. "P000001")
+    public record GetNextProductCodeQuery() : IRequest<string>;
+
     // Get Paged Products
     public record GetPagedProductsQuery(
         int PageIndex = 1,

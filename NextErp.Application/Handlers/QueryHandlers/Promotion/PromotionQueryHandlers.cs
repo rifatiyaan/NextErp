@@ -49,12 +49,10 @@ public sealed class GetPromotionByIdHandler(IApplicationDbContext db)
         BuyQuantity = c.BuyQuantity,
         GetQuantity = c.GetQuantity,
         GetDiscountPercent = c.GetDiscountPercent,
-        BogoProductId = c.BogoProductId,
-        BogoVariantId = c.BogoVariantId,
-        BuyProductId = c.BuyProductId,
-        BuyCategoryId = c.BuyCategoryId,
-        GetProductId = c.GetProductId,
-        GetCategoryId = c.GetCategoryId,
+        BuyProductIds = c.BuyProductIds?.ToList(),
+        BuyCategoryIds = c.BuyCategoryIds?.ToList(),
+        GetProductIds = c.GetProductIds?.ToList(),
+        MaxRewardQuantity = c.MaxRewardQuantity,
         MembershipTier = c.MembershipTier,
     };
 }

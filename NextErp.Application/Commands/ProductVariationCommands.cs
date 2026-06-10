@@ -13,7 +13,7 @@ namespace NextErp.Application.Commands
     public record CreateProductWithVariationsCommand(
         // Base product fields
         string Title,
-        string Code,
+        string? Code,
         int? ParentId,
         int CategoryId,
         decimal Price, // Base price (variants can override)

@@ -40,6 +40,9 @@ public sealed record PricingLine(
 public sealed class PricingResolution
 {
     public IReadOnlyList<LineResolution> LineDiscounts { get; init; } = Array.Empty<LineResolution>();
+    // Free units added on top of cart qty (BogoSame "bonus" semantic).
+    // CreateSaleHandler turns these into phantom SaleItems at 100% discount.
+    public IReadOnlyList<BonusItem> BonusItems { get; init; } = Array.Empty<BonusItem>();
     public decimal InvoiceDiscount { get; init; }
     public Guid? InvoicePromotionId { get; init; }
 }
@@ -48,3 +51,10 @@ public sealed record LineResolution(
     int ProductVariantId,
     decimal RuleDiscount,
     Guid? PromotionId);
+
+public sealed record BonusItem(
+    int ProductVariantId,
+    decimal Quantity,
+    decimal UnitPrice,
+    decimal DiscountPercent,   // 100 = free; <100 = added at a reduced price
+    Guid PromotionId);

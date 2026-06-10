@@ -128,6 +128,7 @@ public class ProductProfile : Profile
             }));
 
         CreateMap<UpdateProductCommand, ProductEntity>()
+            .ForMember(dest => dest.Code, opt => opt.Condition(src => !string.IsNullOrWhiteSpace(src.Code)))
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.TenantId, opt => opt.Ignore())
@@ -173,6 +174,7 @@ public class ProductProfile : Profile
 
         // UpdateProductWithVariationsCommand -> Product Entity
         CreateMap<UpdateProductWithVariationsCommand, ProductEntity>()
+            .ForMember(dest => dest.Code, opt => opt.Condition(src => !string.IsNullOrWhiteSpace(src.Code)))
             .ForMember(dest => dest.Id, opt => opt.Ignore()) // Use existing entity's ID
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())

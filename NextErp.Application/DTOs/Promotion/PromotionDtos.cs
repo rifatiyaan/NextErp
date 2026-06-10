@@ -52,12 +52,10 @@ public partial class PromotionDto
             public decimal? BuyQuantity { get; set; }
             public decimal? GetQuantity { get; set; }
             public decimal? GetDiscountPercent { get; set; }
-            public int? BogoProductId { get; set; }
-            public int? BogoVariantId { get; set; }
-            public int? BuyProductId { get; set; }
-            public int? BuyCategoryId { get; set; }
-            public int? GetProductId { get; set; }
-            public int? GetCategoryId { get; set; }
+            public List<int>? BuyProductIds { get; set; }
+            public List<int>? BuyCategoryIds { get; set; }
+            public List<int>? GetProductIds { get; set; }
+            public decimal? MaxRewardQuantity { get; set; }
             public string? MembershipTier { get; set; }
         }
     }

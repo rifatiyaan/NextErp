@@ -85,20 +85,17 @@ public class PromotionConfig
     public List<int>? ScopeProductIds { get; set; }
     public List<int>? ScopeCategoryIds { get; set; }
 
-    // BOGO mechanics (both Same and Cross)
-    public decimal? BuyQuantity { get; set; }       // e.g. 2
-    public decimal? GetQuantity { get; set; }       // e.g. 1
+    // BOGO mechanics. BUY set qualifies the cart; GET products are auto-added
+    // as bonus lines. Same-product BOGO = GetProductIds holds the buy product.
+    public decimal? BuyQuantity { get; set; }        // N — buy this many to earn a set
+    public decimal? GetQuantity { get; set; }        // M — free/discounted units of EACH get product per set
     public decimal? GetDiscountPercent { get; set; } // 100 = free, 50 = half-off
-
-    // BogoSame: same product on both sides
-    public int? BogoProductId { get; set; }
-    public int? BogoVariantId { get; set; }
-
-    // BogoCross: separate buy + get sets
-    public int? BuyProductId { get; set; }
-    public int? BuyCategoryId { get; set; }
-    public int? GetProductId { get; set; }
-    public int? GetCategoryId { get; set; }
+    public List<int>? BuyProductIds { get; set; }
+    public List<int>? BuyCategoryIds { get; set; }
+    public List<int>? GetProductIds { get; set; }
+    // Optional ceiling on reward units per GET product across the whole cart
+    // (e.g. "buy 2, get 1 free — up to 5"). Null = uncapped.
+    public decimal? MaxRewardQuantity { get; set; }
 
     // Membership match key — joins Party.MembershipTier
     public string? MembershipTier { get; set; }

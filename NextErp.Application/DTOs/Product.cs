@@ -25,7 +25,7 @@ namespace NextErp.Application.DTOs
             public abstract class Base
             {
                 public string Title { get; set; } = null!;
-                public string Code { get; set; } = null!;
+                public string? Code { get; set; }
                 public decimal Price { get; set; }
                 public int? CategoryId { get; set; }
                 public string? ImageUrl { get; set; }

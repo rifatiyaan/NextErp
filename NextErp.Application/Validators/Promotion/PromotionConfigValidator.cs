@@ -63,21 +63,14 @@ public sealed class CreatePromotionCommandValidator : AbstractValidator<CreatePr
                 ForbidBogo(cfg, ctx);
                 ForbidMembership(cfg, ctx);
                 break;
-            case PromotionType.BogoSame:
+            case PromotionType.Bogo:
                 RequireBogoMechanics(cfg, ctx);
-                if (cfg.BogoProductId == null && cfg.BogoVariantId == null)
-                    ctx.AddFailure("Config", "BogoSame requires BogoProductId or BogoVariantId.");
-                ForbidCrossSet(cfg, ctx);
-                ForbidMembership(cfg, ctx);
-                ForbidPlainDiscountValue(cfg, ctx);
-                break;
-            case PromotionType.BogoCross:
-                RequireBogoMechanics(cfg, ctx);
-                if (cfg.BuyProductId == null && cfg.BuyCategoryId == null)
-                    ctx.AddFailure("Config", "BogoCross requires BuyProductId or BuyCategoryId.");
-                if (cfg.GetProductId == null && cfg.GetCategoryId == null)
-                    ctx.AddFailure("Config", "BogoCross requires GetProductId or GetCategoryId.");
-                ForbidBogoSameSet(cfg, ctx);
+                if (!(cfg.BuyProductIds?.Count > 0) && !(cfg.BuyCategoryIds?.Count > 0))
+                    ctx.AddFailure("Config", "BOGO requires a BUY set — at least one product or category.");
+                if (!(cfg.GetProductIds?.Count > 0))
+                    ctx.AddFailure("Config", "BOGO requires at least one GET (reward) product.");
+                if (cfg.MaxRewardQuantity is { } cap && cap <= 0)
+                    ctx.AddFailure("Config.MaxRewardQuantity", "Reward cap must be positive when set.");
                 ForbidMembership(cfg, ctx);
                 ForbidPlainDiscountValue(cfg, ctx);
                 break;
@@ -147,31 +140,11 @@ public sealed class CreatePromotionCommandValidator : AbstractValidator<CreatePr
         FluentValidation.ValidationContext<CreatePromotionCommand> ctx)
     {
         if (cfg.BuyQuantity != null || cfg.GetQuantity != null || cfg.GetDiscountPercent != null
-            || cfg.BogoProductId != null || cfg.BogoVariantId != null
-            || cfg.BuyProductId != null || cfg.BuyCategoryId != null
-            || cfg.GetProductId != null || cfg.GetCategoryId != null)
+            || cfg.BuyProductIds?.Count > 0 || cfg.BuyCategoryIds?.Count > 0
+            || cfg.GetProductIds?.Count > 0 || cfg.MaxRewardQuantity != null)
         {
-            ctx.AddFailure("Config", "BOGO fields are only valid for BogoSame/BogoCross types.");
+            ctx.AddFailure("Config", "BOGO fields are only valid for the Bogo type.");
         }
-    }
-
-    private static void ForbidCrossSet(
-        PromotionDto.Request.ConfigDto cfg,
-        FluentValidation.ValidationContext<CreatePromotionCommand> ctx)
-    {
-        if (cfg.BuyProductId != null || cfg.BuyCategoryId != null
-            || cfg.GetProductId != null || cfg.GetCategoryId != null)
-        {
-            ctx.AddFailure("Config", "Use BogoProductId/BogoVariantId for BogoSame, not Buy/Get sets.");
-        }
-    }
-
-    private static void ForbidBogoSameSet(
-        PromotionDto.Request.ConfigDto cfg,
-        FluentValidation.ValidationContext<CreatePromotionCommand> ctx)
-    {
-        if (cfg.BogoProductId != null || cfg.BogoVariantId != null)
-            ctx.AddFailure("Config", "Use Buy/Get sets for BogoCross, not BogoProductId/BogoVariantId.");
     }
 
     private static void ForbidPlainDiscountValue(

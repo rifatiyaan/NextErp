@@ -7,7 +7,7 @@ namespace NextErp.Application.Commands
     // Create Product
     public record CreateProductCommand(
         string Title,
-        string Code,
+        string? Code,
         int? ParentId,
         int CategoryId,
         decimal Price,
@@ -25,7 +25,7 @@ namespace NextErp.Application.Commands
     public record UpdateProductCommand(
         int Id,
         string Title,
-        string Code,
+        string? Code,
         int? ParentId,
         int CategoryId,
         decimal Price,
@@ -43,7 +43,7 @@ namespace NextErp.Application.Commands
     public record UpdateProductWithVariationsCommand(
         int Id,
         string Title,
-        string Code,
+        string? Code,
         int? ParentId,
         int CategoryId,
         decimal Price,

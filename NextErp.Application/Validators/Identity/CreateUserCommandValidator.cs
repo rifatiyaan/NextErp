@@ -25,15 +25,16 @@ public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCom
         RuleFor(x => x.LastName).MaximumLength(100);
         RuleFor(x => x.RoleName).MaximumLength(64);
 
-        // Branch is required for global callers — per-branch admins fall back to
-        // their own branch in the handler, so BranchId may be null in that case.
+        // Branch must be explicitly chosen by a global caller — per-branch admins
+        // fall back to their own branch in the handler, so BranchId may be null
+        // in that case. Guid.Empty is NOT rejected here: it's the legitimate id
+        // of the single-tenant Main Branch, so requiring "non-empty" would make
+        // that branch unselectable.
         When(x => x.CallerIsGlobal, () =>
         {
             RuleFor(x => x.BranchId)
-                .NotEqual(Guid.Empty)
-                .WithMessage("BranchId is required when creating a user from the global scope.")
-                .Must(b => b.HasValue && b.Value != Guid.Empty)
-                .WithMessage("BranchId must be a valid Guid.");
+                .Must(b => b.HasValue)
+                .WithMessage("BranchId is required when creating a user from the global scope.");
         });
     }
 }

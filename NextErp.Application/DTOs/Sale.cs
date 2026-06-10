@@ -179,6 +179,7 @@ namespace NextErp.Application.DTOs
                 {
                     public decimal Subtotal { get; set; }
                     public List<LineDiscount> LineDiscounts { get; set; } = new();
+                    public List<BonusItem> BonusItems { get; set; } = new();
                     public decimal InvoiceDiscount { get; set; }
                     public Guid? InvoicePromotionId { get; set; }
                     public string? InvoicePromotionName { get; set; }
@@ -190,6 +191,18 @@ namespace NextErp.Application.DTOs
                     public int ProductVariantId { get; set; }
                     public decimal Discount { get; set; }
                     public Guid? PromotionId { get; set; }
+                    public string? PromotionName { get; set; }
+                }
+
+                public class BonusItem
+                {
+                    public int ProductVariantId { get; set; }
+                    public string Title { get; set; } = null!;
+                    public string? ImageUrl { get; set; }
+                    public decimal Quantity { get; set; }
+                    public decimal UnitPrice { get; set; }
+                    public decimal DiscountPercent { get; set; }
+                    public Guid PromotionId { get; set; }
                     public string? PromotionName { get; set; }
                 }
             }

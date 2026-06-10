@@ -26,6 +26,14 @@ public class ProductController(IMediator mediator, IMapper mapper, IImageService
         return Ok(dto);
     }
 
+    // GET api/product/next-code — preview of the next auto code for the create form.
+    [HttpGet("next-code")]
+    public async Task<IActionResult> GetNextCode()
+    {
+        var code = await mediator.Send(new GetNextProductCodeQuery());
+        return Ok(new { code });
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetPaged(
         [FromQuery] int? page = null,

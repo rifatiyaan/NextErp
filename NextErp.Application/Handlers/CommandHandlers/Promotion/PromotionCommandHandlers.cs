@@ -63,12 +63,16 @@ public sealed class CreatePromotionHandler(
         BuyQuantity = c.BuyQuantity,
         GetQuantity = c.GetQuantity,
         GetDiscountPercent = c.GetDiscountPercent,
-        BogoProductId = c.BogoProductId,
-        BogoVariantId = c.BogoVariantId,
-        BuyProductId = c.BuyProductId,
-        BuyCategoryId = c.BuyCategoryId,
-        GetProductId = c.GetProductId,
-        GetCategoryId = c.GetCategoryId,
+        BuyProductIds = (c.BuyProductIds != null && c.BuyProductIds.Count > 0)
+            ? c.BuyProductIds.Distinct().ToList()
+            : null,
+        BuyCategoryIds = (c.BuyCategoryIds != null && c.BuyCategoryIds.Count > 0)
+            ? c.BuyCategoryIds.Distinct().ToList()
+            : null,
+        GetProductIds = (c.GetProductIds != null && c.GetProductIds.Count > 0)
+            ? c.GetProductIds.Distinct().ToList()
+            : null,
+        MaxRewardQuantity = c.MaxRewardQuantity is > 0 ? c.MaxRewardQuantity : null,
         MembershipTier = string.IsNullOrWhiteSpace(c.MembershipTier) ? null : c.MembershipTier.Trim(),
     };
 }

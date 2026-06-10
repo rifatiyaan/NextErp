@@ -10,7 +10,7 @@ namespace NextErp.Application.Services;
 /// then walks each rule type's matching logic against the proposed lines.
 ///
 /// Order matters (and is unit-tested):
-///  1. Line-level promotions (LineDiscount, BogoSame, BogoCross) stamp
+///  1. Line-level promotions (LineDiscount, Bogo) stamp
 ///     per-line discounts.
 ///  2. Manual line discounts stack on top (in CreateSaleHandler, not here).
 ///  3. Invoice-level promotions (InvoiceDiscount) apply to subtotal.
@@ -60,20 +60,17 @@ public sealed class PricingService(IApplicationDbContext db) : IPricingService
         var lineResults = new Dictionary<int, decimal>();   // variantId -> accumulated rule discount
         var linePromotionIds = new Dictionary<int, Guid>(); // variantId -> first applied promo
         var lineTypeBlocked = new HashSet<(int variantId, PromotionType type)>();
+        var bonusItems = new List<BonusItem>();             // BOGO auto-added GET lines
 
-        // Phase A: per-line types (LineDiscount, BogoSame). Each promotion is
-        // evaluated against each line in isolation.
-        foreach (var promo in eligible.Where(p => IsPerLineLevel(p.Type)))
+        // Phase A: line-level $ discounts (LineDiscount only).
+        foreach (var promo in eligible.Where(p => p.Type == PromotionType.LineDiscount))
         {
-            // Per-line blocking: a non-stackable promotion of a given type
-            // claims the line scope and prevents further promotions of the
-            // same type from touching the same variant.
             foreach (var line in lines)
             {
                 if (lineTypeBlocked.Contains((line.ProductVariantId, promo.Type)))
                     continue;
-
-                var lineDiscount = ApplyLinePromotion(promo, line);
+                if (!LineMatchesScope(promo.Config, line)) continue;
+                var lineDiscount = ComputeFlatOrPercent(promo.Config, line.Quantity * line.UnitPrice);
                 if (lineDiscount <= 0) continue;
 
                 lineResults.TryGetValue(line.ProductVariantId, out var current);
@@ -84,12 +81,19 @@ public sealed class PricingService(IApplicationDbContext db) : IPricingService
             }
         }
 
-        // Phase B: BogoCross is cart-aware — the BUY-set qty is summed across
-        // the whole cart, not per line, before any GET-set lines are eligible
-        // for the discount. Distributed cheapest-first.
-        foreach (var promo in eligible.Where(p => p.Type == PromotionType.BogoCross))
+        // Phase B: BOGO — cart-aware. BUY-set qty is summed across the whole
+        // cart; each GET product is auto-added as a bonus line. GET products'
+        // primary variants are batch-loaded once.
+        var bogoPromos = eligible.Where(p => p.Type == PromotionType.Bogo).ToList();
+        if (bogoPromos.Count > 0)
         {
-            ApplyBogoCross(promo, lines, lineResults, linePromotionIds, lineTypeBlocked);
+            var getProductIds = bogoPromos
+                .SelectMany(p => p.Config.GetProductIds ?? Enumerable.Empty<int>())
+                .Distinct()
+                .ToList();
+            var getVariants = await LoadPrimaryVariantsAsync(getProductIds, cancellationToken);
+            foreach (var promo in bogoPromos)
+                ApplyBogo(promo, lines, getVariants, bonusItems);
         }
 
         // 3. Subtotal AFTER line discounts (manual line discounts are stacked
@@ -139,78 +143,78 @@ public sealed class PricingService(IApplicationDbContext db) : IPricingService
                 kv.Key,
                 decimal.Round(kv.Value, 2, MidpointRounding.AwayFromZero),
                 linePromotionIds.TryGetValue(kv.Key, out var pid) ? pid : null)).ToList(),
+            BonusItems = bonusItems,
             InvoiceDiscount = decimal.Round(invoiceDiscount, 2, MidpointRounding.AwayFromZero),
             InvoicePromotionId = invoicePromoId,
         };
     }
 
-    private static bool IsPerLineLevel(PromotionType t) =>
-        t == PromotionType.LineDiscount
-        || t == PromotionType.BogoSame;
-
-    private static decimal ApplyLinePromotion(NextErp.Domain.Entities.Promotion promo, PricingLine line)
-    {
-        switch (promo.Type)
-        {
-            case PromotionType.LineDiscount:
-                if (!LineMatchesScope(promo.Config, line)) return 0m;
-                return ComputeFlatOrPercent(promo.Config, line.Quantity * line.UnitPrice);
-            case PromotionType.BogoSame:
-                if (!BogoSameMatches(promo.Config, line)) return 0m;
-                return ComputeBogoDiscount(promo.Config, line);
-            default:
-                return 0m;
-        }
-    }
-
-    // BUY-side items are not discounted — they only qualify the cart for
-    // distributing discounts across GET-side lines (cheapest-first).
-    private static void ApplyBogoCross(
+    // Cart-aware: BUY-set qty summed across all matching lines decides how
+    // many "sets" were earned; each GET product is auto-added as a bonus line
+    // (getN units per set, at GetDiscountPercent). Same-product BOGO is just
+    // the case where GetProductIds holds the BUY product.
+    private static void ApplyBogo(
         NextErp.Domain.Entities.Promotion promo,
         IReadOnlyList<PricingLine> lines,
-        Dictionary<int, decimal> lineResults,
-        Dictionary<int, Guid> linePromotionIds,
-        HashSet<(int variantId, PromotionType type)> lineTypeBlocked)
+        IReadOnlyDictionary<int, (int VariantId, decimal Price)> getVariants,
+        List<BonusItem> bonusItems)
     {
         var cfg = promo.Config;
         var buyN = cfg.BuyQuantity.GetValueOrDefault();
         var getN = cfg.GetQuantity.GetValueOrDefault();
         var pct = cfg.GetDiscountPercent.GetValueOrDefault();
         if (buyN <= 0 || getN <= 0 || pct <= 0) return;
+        if (cfg.GetProductIds == null || cfg.GetProductIds.Count == 0) return;
 
-        var totalBuy = lines.Where(l => BogoCrossBuyMatches(cfg, l)).Sum(l => l.Quantity);
+        var totalBuy = lines.Where(l => BogoBuyMatches(cfg, l)).Sum(l => l.Quantity);
         if (totalBuy < buyN) return;
-
         var sets = Math.Floor(totalBuy / buyN);
-        var unitsRemaining = sets * getN;
-        if (unitsRemaining <= 0) return;
+        if (sets <= 0) return;
 
-        var getCandidates = lines
-            .Where(l => BogoCrossGetMatches(cfg, l))
-            .Where(l => !lineTypeBlocked.Contains((l.ProductVariantId, promo.Type)))
-            .OrderBy(l => l.UnitPrice)
-            .ToList();
-
-        foreach (var line in getCandidates)
+        var qtyPerProduct = sets * getN;
+        // Optional cap: never give away more than MaxRewardQuantity units of
+        // each GET product, however large the cart.
+        if (cfg.MaxRewardQuantity is { } cap && cap > 0 && qtyPerProduct > cap)
+            qtyPerProduct = cap;
+        foreach (var productId in cfg.GetProductIds.Distinct())
         {
-            if (unitsRemaining <= 0) break;
-            var take = Math.Min(line.Quantity, unitsRemaining);
-            if (take <= 0) continue;
-            var discountForLine = take * line.UnitPrice * (pct / 100m);
-            lineResults.TryGetValue(line.ProductVariantId, out var current);
-            lineResults[line.ProductVariantId] = current + discountForLine;
-            linePromotionIds.TryAdd(line.ProductVariantId, promo.Id);
-            if (!promo.Stackable)
-                lineTypeBlocked.Add((line.ProductVariantId, promo.Type));
-            unitsRemaining -= take;
+            if (!getVariants.TryGetValue(productId, out var v)) continue;
+            bonusItems.Add(new BonusItem(
+                ProductVariantId: v.VariantId,
+                Quantity: qtyPerProduct,
+                UnitPrice: v.Price,
+                DiscountPercent: pct,
+                PromotionId: promo.Id));
         }
     }
 
-    private static bool BogoCrossBuyMatches(PromotionConfig cfg, PricingLine line)
+    private static bool BogoBuyMatches(PromotionConfig cfg, PricingLine line)
     {
-        if (cfg.BuyProductId.HasValue && cfg.BuyProductId.Value == line.ProductId) return true;
-        if (cfg.BuyCategoryId.HasValue && cfg.BuyCategoryId.Value == line.CategoryId) return true;
+        if (cfg.BuyProductIds != null && cfg.BuyProductIds.Contains(line.ProductId)) return true;
+        if (cfg.BuyCategoryIds != null && cfg.BuyCategoryIds.Contains(line.CategoryId)) return true;
         return false;
+    }
+
+    // Resolve each GET product's primary (lowest-id active) variant + price in
+    // one round-trip so bonus lines can be auto-added for products not in cart.
+    private async Task<Dictionary<int, (int VariantId, decimal Price)>> LoadPrimaryVariantsAsync(
+        IReadOnlyCollection<int> productIds,
+        CancellationToken cancellationToken)
+    {
+        var map = new Dictionary<int, (int, decimal)>();
+        if (productIds.Count == 0) return map;
+
+        var rows = await db.ProductVariants
+            .AsNoTracking()
+            .Where(v => productIds.Contains(v.ProductId))
+            .OrderBy(v => v.Id)
+            .Select(v => new { v.ProductId, v.Id, v.Price })
+            .ToListAsync(cancellationToken);
+
+        foreach (var r in rows)
+            if (!map.ContainsKey(r.ProductId))
+                map[r.ProductId] = (r.Id, r.Price);
+        return map;
     }
 
     private static decimal ApplyInvoicePromotion(NextErp.Domain.Entities.Promotion promo, decimal subtotal)
@@ -243,38 +247,5 @@ public sealed class PricingService(IApplicationDbContext db) : IPricingService
         return false;
     }
 
-    private static bool BogoSameMatches(PromotionConfig cfg, PricingLine line)
-    {
-        if (cfg.BogoVariantId.HasValue && cfg.BogoVariantId.Value == line.ProductVariantId) return true;
-        if (cfg.BogoProductId.HasValue && cfg.BogoProductId.Value == line.ProductId) return true;
-        return false;
-    }
 
-    private static bool BogoCrossGetMatches(PromotionConfig cfg, PricingLine line)
-    {
-        if (cfg.GetProductId.HasValue && cfg.GetProductId.Value == line.ProductId) return true;
-        if (cfg.GetCategoryId.HasValue && cfg.GetCategoryId.Value == line.CategoryId) return true;
-        return false;
-    }
-
-    /// <summary>
-    /// "Buy X, get Y at Z% off" — count how many free/discounted units the
-    /// quantity is eligible for, then discount that subset. Example:
-    /// "Buy 2 get 1 free" on qty 6 → 2 sets → 2 free units → 2×price discount.
-    /// </summary>
-    private static decimal ComputeBogoDiscount(PromotionConfig cfg, PricingLine line)
-    {
-        var buy = cfg.BuyQuantity.GetValueOrDefault();
-        var get = cfg.GetQuantity.GetValueOrDefault();
-        var pct = cfg.GetDiscountPercent.GetValueOrDefault();
-        if (buy <= 0 || get <= 0 || pct <= 0) return 0m;
-
-        var setSize = buy + get;
-        if (line.Quantity < setSize) return 0m;
-
-        var sets = Math.Floor(line.Quantity / setSize);
-        var discountedUnits = sets * get;
-        var perUnit = line.UnitPrice * (pct / 100m);
-        return decimal.Round(discountedUnits * perUnit, 2, MidpointRounding.AwayFromZero);
-    }
 }

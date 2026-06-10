@@ -13,7 +13,7 @@ namespace NextErp.API.Controllers;
 [ApiController]
 public class PromotionController(IMediator mediator) : ControllerBase
 {
-    // GET api/promotion?pageIndex=1&pageSize=50&type=BogoSame&onlyActive=true
+    // GET api/promotion?pageIndex=1&pageSize=50&type=Bogo&onlyActive=true
     [HttpGet]
     public async Task<IActionResult> GetPaged(
         [FromQuery] int pageIndex = 1,

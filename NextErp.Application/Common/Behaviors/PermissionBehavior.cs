@@ -33,16 +33,20 @@ public sealed class PermissionBehavior<TRequest, TResponse>(
         if (userContext.PrimaryRoleId is not Guid roleId)
             throw new ForbiddenAccessException("No role is assigned for permission checks.");
 
-        foreach (var permission in required)
-        {
-            var allowed = await db.RolePermissions
-                .AsNoTracking()
-                .AnyAsync(rp => rp.RoleId == roleId && rp.PermissionKey == permission, cancellationToken)
-                .ConfigureAwait(false);
+        // One query for the whole required set (was one AnyAsync per
+        // permission — N+1 on a hot path that runs for every authorized
+        // request). Check membership in memory afterwards.
+        var granted = await db.RolePermissions
+            .AsNoTracking()
+            .Where(rp => rp.RoleId == roleId && required.Contains(rp.PermissionKey))
+            .Select(rp => rp.PermissionKey)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var grantedSet = new HashSet<string>(granted, StringComparer.Ordinal);
 
-            if (!allowed)
-                throw new ForbiddenAccessException($"Missing permission: {permission}");
-        }
+        var missing = required.FirstOrDefault(p => !grantedSet.Contains(p));
+        if (missing is not null)
+            throw new ForbiddenAccessException($"Missing permission: {missing}");
 
         return await next(cancellationToken).ConfigureAwait(false);
     }
