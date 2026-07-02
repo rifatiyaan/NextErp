@@ -168,4 +168,23 @@ public class SettingsProviderTests : HandlerTestBase
         all.Should().ContainKey("uI");
         all.Should().ContainKey("locale");
     }
+
+    [Fact]
+    public async Task Ecommerce_settings_round_trip_defaults_and_update()
+    {
+        var sut = BuildSut();
+
+        var defaults = await sut.GetAsync<EcommerceSettings>();
+        defaults.StorefrontEnabled.Should().BeFalse();
+        defaults.DeliveryFee.Should().Be(0m);
+        defaults.StoreName.Should().Be("NextErp Store");
+
+        defaults.StorefrontEnabled = true;
+        defaults.DeliveryFee = 60m;
+        await sut.UpdateAsync(defaults);
+
+        var roundTrip = await sut.GetAsync<EcommerceSettings>();
+        roundTrip.StorefrontEnabled.Should().BeTrue();
+        roundTrip.DeliveryFee.Should().Be(60m);
+    }
 }
