@@ -1,23 +1,22 @@
-using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Common;
 using NextErp.Application.Common.Extensions;
+using NextErp.Application.DTOs.Product;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Mapping;
 using NextErp.Application.Products;
 using NextErp.Application.Queries;
 using Entities = NextErp.Domain.Entities;
-using ProductDto = NextErp.Application.DTOs.Product;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Product;
 
 public class GetPagedProductsHandler(
     IApplicationDbContext dbContext,
-    IBranchProvider branchProvider,
-    IMapper mapper)
-    : IRequestHandler<GetPagedProductsQuery, PagedResult<ProductDto.Response.Get.Single>>
+    IBranchProvider branchProvider)
+    : IRequestHandler<GetPagedProductsQuery, PagedResult<ProductResponse>>
 {
-    public async Task<PagedResult<ProductDto.Response.Get.Single>> Handle(
+    public async Task<PagedResult<ProductResponse>> Handle(
         GetPagedProductsQuery request,
         CancellationToken cancellationToken = default)
     {
@@ -49,7 +48,7 @@ public class GetPagedProductsHandler(
             .Take(request.PageSize)
             .ToListAsync(cancellationToken);
 
-        var dtos = mapper.Map<List<ProductDto.Response.Get.Single>>(records);
+        var dtos = records.Select(r => r.ToResponse()).ToList();
 
         if (dtos.Count > 0)
         {
@@ -61,7 +60,7 @@ public class GetPagedProductsHandler(
             ApplyStockColumns(dtos, await LoadStockLookupAsync(records, cancellationToken));
         }
 
-        return new PagedResult<ProductDto.Response.Get.Single>(dtos, total, total);
+        return new PagedResult<ProductResponse>(dtos, total, total);
     }
 
     private IQueryable<Entities.Product> ApplyStatusFilter(IQueryable<Entities.Product> query, string? status)
@@ -123,7 +122,7 @@ public class GetPagedProductsHandler(
     }
 
     private static void ApplyStockColumns(
-        IReadOnlyList<ProductDto.Response.Get.Single> dtos,
+        IReadOnlyList<ProductResponse> dtos,
         IReadOnlyDictionary<int, (decimal TotalAvailable, bool HasLowStock)> lookup)
     {
         foreach (var d in dtos)

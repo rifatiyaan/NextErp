@@ -2,16 +2,16 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries.Notifications;
-using NotificationDto = NextErp.Application.DTOs.Notification;
+using NextErp.Application.DTOs.Notification;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Notifications;
 
 public sealed class GetNotificationsHandler(
     IApplicationDbContext dbContext,
     IUserContext userContext)
-    : IRequestHandler<GetNotificationsQuery, NotificationDto.Response.List>
+    : IRequestHandler<GetNotificationsQuery, NotificationListResponse>
 {
-    public async Task<NotificationDto.Response.List> Handle(
+    public async Task<NotificationListResponse> Handle(
         GetNotificationsQuery request,
         CancellationToken cancellationToken = default)
     {
@@ -52,7 +52,7 @@ public sealed class GetNotificationsHandler(
             .OrderByDescending(n => n.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(n => new NotificationDto.Response.Item
+            .Select(n => new NotificationResponse
             {
                 Id = n.Id,
                 Title = n.Title,
@@ -65,7 +65,7 @@ public sealed class GetNotificationsHandler(
             })
             .ToListAsync(cancellationToken);
 
-        return new NotificationDto.Response.List
+        return new NotificationListResponse
         {
             Items = items,
             UnreadCount = unreadCount,

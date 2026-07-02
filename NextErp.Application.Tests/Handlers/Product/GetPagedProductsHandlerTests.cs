@@ -1,26 +1,11 @@
-using AutoMapper;
 using NextErp.Application.Handlers.QueryHandlers.Product;
 using NextErp.Application.Queries;
-using NSubstitute;
 
 namespace NextErp.Application.Tests.Handlers.Product;
 
 public class GetPagedProductsHandlerTests : HandlerTestBase
 {
-    private static readonly IMapper Mapper = BuildMapper();
-
-    private static IMapper BuildMapper()
-    {
-        var cfg = new MapperConfiguration(c =>
-        {
-            // Pull every Profile in the Application assembly so the Product map can resolve
-            // dependent maps (Category, ProductVariation, etc.) without manual registration.
-            c.AddMaps(typeof(NextErp.Application.Mappings.ProductProfile).Assembly);
-        });
-        return cfg.CreateMapper();
-    }
-
-    private GetPagedProductsHandler BuildHandler() => new(Db, BranchProvider, Mapper);
+    private GetPagedProductsHandler BuildHandler() => new(Db, BranchProvider);
 
     private async Task SeedSchemaAsync()
     {

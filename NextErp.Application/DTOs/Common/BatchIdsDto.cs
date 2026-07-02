@@ -5,7 +5,7 @@ namespace NextErp.Application.DTOs.Common
     /// (e.g. batch deactivate). Validation of count + non-empty lives in the per-command
     /// validator so this DTO stays a thin transport contract.
     /// </summary>
-    public class BatchIdsDto<T>
+    public sealed record BatchIdsDto<T>
     {
         public List<T> Ids { get; set; } = new();
     }

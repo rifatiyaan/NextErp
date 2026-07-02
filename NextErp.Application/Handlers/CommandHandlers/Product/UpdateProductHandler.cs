@@ -1,8 +1,8 @@
-using AutoMapper;
 using NextErp.Application.Commands;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Mapping;
 using NextErp.Application.Products;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Product
@@ -10,8 +10,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
     public class UpdateProductHandler(
         IApplicationDbContext dbContext,
         IStockService stockService,
-        INotificationService notifications,
-        IMapper mapper)
+        INotificationService notifications)
         : IRequestHandler<UpdateProductCommand, Unit>
     {
         public async Task<Unit> Handle(UpdateProductCommand request, CancellationToken cancellationToken = default)
@@ -22,7 +21,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
             if (existing == null)
                 throw new KeyNotFoundException($"Product with ID {request.Id} not found.");
 
-            mapper.Map(request, existing);
+            request.ApplyTo(existing);
             existing.UpdatedAt = DateTime.UtcNow;
 
             if (request.ImageGallery != null)

@@ -9,9 +9,9 @@ using SaleDto = NextErp.Application.DTOs.Sale;
 namespace NextErp.Application.Handlers.QueryHandlers.Sale
 {
     public class GetPagedSalesHandler(IApplicationDbContext dbContext)
-        : IRequestHandler<GetPagedSalesQuery, PagedResult<SaleDto.Response.Get.ListRow>>
+        : IRequestHandler<GetPagedSalesQuery, PagedResult<SaleDto.SaleListRowResponse>>
     {
-        public async Task<PagedResult<SaleDto.Response.Get.ListRow>> Handle(
+        public async Task<PagedResult<SaleDto.SaleListRowResponse>> Handle(
             GetPagedSalesQuery request,
             CancellationToken cancellationToken = default)
         {
@@ -36,7 +36,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Sale
             var rows = await baseQuery
                 .Skip((request.PageIndex - 1) * request.PageSize)
                 .Take(request.PageSize)
-                .Select(s => new SaleDto.Response.Get.ListRow
+                .Select(s => new SaleDto.SaleListRowResponse
                 {
                     Id = s.Id,
                     SaleNumber = s.SaleNumber,
@@ -48,7 +48,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Sale
                 })
                 .ToListAsync(cancellationToken);
 
-            return new PagedResult<SaleDto.Response.Get.ListRow>(rows, total, total);
+            return new PagedResult<SaleDto.SaleListRowResponse>(rows, total, total);
         }
     }
 }

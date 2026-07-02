@@ -1,4 +1,3 @@
-using AutoMapper;
 using NextErp.Application.Commands.Module;
 using NextErp.Application.DTOs;
 using NextErp.Application.Handlers.CommandHandlers.Module;
@@ -8,23 +7,14 @@ namespace NextErp.Application.Tests.Handlers.Module;
 
 public class CreateModuleHandlerTests : HandlerTestBase
 {
-    private static readonly IMapper Mapper = BuildMapper();
-
-    private static IMapper BuildMapper()
-    {
-        var cfg = new MapperConfiguration(c =>
-            c.AddMaps(typeof(NextErp.Application.ApplicationAssemblyMarker).Assembly));
-        return cfg.CreateMapper();
-    }
-
-    private CreateModuleHandler BuildHandler() => new(Db, Mapper);
+    private CreateModuleHandler BuildHandler() => new(Db);
 
     [Fact]
     public async Task Happy_path_creates_top_level_module_and_returns_id()
     {
         var sut = BuildHandler();
 
-        var cmd = new CreateModuleCommand(new DTOs.Module.Request.Create.Single
+        var cmd = new CreateModuleCommand(new DTOs.Module.CreateModuleRequest
         {
             Title = "Inventory",
             Type = ModuleType.Module,
@@ -53,7 +43,7 @@ public class CreateModuleHandlerTests : HandlerTestBase
         await Db.SaveChangesAsync();
 
         var sut = BuildHandler();
-        var cmd = new CreateModuleCommand(new DTOs.Module.Request.Create.Single
+        var cmd = new CreateModuleCommand(new DTOs.Module.CreateModuleRequest
         {
             Title = "Child",
             Type = ModuleType.Link,
@@ -70,4 +60,3 @@ public class CreateModuleHandlerTests : HandlerTestBase
         fresh.Type.Should().Be(ModuleType.Link);
     }
 }
-

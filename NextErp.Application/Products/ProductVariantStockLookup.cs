@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Product;
+using NextErp.Application.DTOs.ProductVariation;
 using NextErp.Application.Interfaces;
-using ProductGetSingle = NextErp.Application.DTOs.Product.Response.Get;
 
 namespace NextErp.Application.Products;
 
@@ -71,7 +71,7 @@ public static class ProductVariantStockLookup
     }
 
     public static async Task EnrichProductVariantStocksAsync(
-        ProductGetSingle.Single? dto,
+        ProductResponse? dto,
         IApplicationDbContext db,
         IBranchProvider branchProvider,
         CancellationToken cancellationToken = default)
@@ -90,7 +90,7 @@ public static class ProductVariantStockLookup
     }
 
     public static async Task EnrichProductListVariantStocksAsync(
-        IReadOnlyList<ProductGetSingle.Single> dtos,
+        IReadOnlyList<ProductResponse> dtos,
         IApplicationDbContext db,
         IBranchProvider branchProvider,
         CancellationToken cancellationToken = default)
@@ -116,7 +116,7 @@ public static class ProductVariantStockLookup
     }
 
     public static void ApplyProductAggregateStocks(
-        IReadOnlyList<ProductGetSingle.Single> dtos,
+        IReadOnlyList<ProductResponse> dtos,
         IReadOnlyDictionary<int, decimal> totalsByProductId)
     {
         foreach (var dto in dtos)
@@ -124,7 +124,7 @@ public static class ProductVariantStockLookup
     }
 
     private static void ApplyVariantQuantities(
-        IReadOnlyList<ProductVariation.Response.ProductVariantDto>? variants,
+        IReadOnlyList<ProductVariantResponse>? variants,
         IReadOnlyDictionary<int, decimal> quantityByVariantId)
     {
         if (variants is not { Count: > 0 })

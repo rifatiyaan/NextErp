@@ -2,65 +2,27 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.DTOs.Promotion;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Mapping;
 using NextErp.Application.Queries.Promotion;
-using DomainPromotionConfig = NextErp.Domain.Entities.PromotionConfig;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Promotion;
 
 public sealed class GetPromotionByIdHandler(IApplicationDbContext db)
-    : IRequestHandler<GetPromotionByIdQuery, PromotionDto.Response.Single?>
+    : IRequestHandler<GetPromotionByIdQuery, PromotionResponse?>
 {
-    public async Task<PromotionDto.Response.Single?> Handle(GetPromotionByIdQuery request, CancellationToken cancellationToken = default)
+    public async Task<PromotionResponse?> Handle(GetPromotionByIdQuery request, CancellationToken cancellationToken = default)
     {
         var p = await db.Promotions
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
-        return p == null ? null : MapToDto(p);
+        return p?.ToResponse();
     }
-
-    internal static PromotionDto.Response.Single MapToDto(NextErp.Domain.Entities.Promotion p) => new()
-    {
-        Id = p.Id,
-        Name = p.Name,
-        Description = p.Description,
-        Type = p.Type,
-        Config = MapConfig(p.Config),
-        IsActive = p.IsActive,
-        StartDate = p.StartDate,
-        EndDate = p.EndDate,
-        Priority = p.Priority,
-        Stackable = p.Stackable,
-        CreatedAt = p.CreatedAt,
-        UpdatedAt = p.UpdatedAt,
-    };
-
-    private static PromotionDto.Request.ConfigDto MapConfig(DomainPromotionConfig c) => new()
-    {
-        DiscountAmount = c.DiscountAmount,
-        DiscountPercent = c.DiscountPercent,
-        MinSubtotal = c.MinSubtotal,
-        ScopeProductId = c.ScopeProductId,
-        ScopeCategoryId = c.ScopeCategoryId,
-        ScopeProductVariantId = c.ScopeProductVariantId,
-        // Multi-select arrays — emit defensive copies so any later
-        // mutation of the response DTO can't reach back into the entity.
-        ScopeProductIds = c.ScopeProductIds?.ToList(),
-        ScopeCategoryIds = c.ScopeCategoryIds?.ToList(),
-        BuyQuantity = c.BuyQuantity,
-        GetQuantity = c.GetQuantity,
-        GetDiscountPercent = c.GetDiscountPercent,
-        BuyProductIds = c.BuyProductIds?.ToList(),
-        BuyCategoryIds = c.BuyCategoryIds?.ToList(),
-        GetProductIds = c.GetProductIds?.ToList(),
-        MaxRewardQuantity = c.MaxRewardQuantity,
-        MembershipTier = c.MembershipTier,
-    };
 }
 
 public sealed class GetPagedPromotionsHandler(IApplicationDbContext db)
-    : IRequestHandler<GetPagedPromotionsQuery, PromotionDto.Response.Paged>
+    : IRequestHandler<GetPagedPromotionsQuery, PagedPromotionResponse>
 {
-    public async Task<PromotionDto.Response.Paged> Handle(GetPagedPromotionsQuery request, CancellationToken cancellationToken = default)
+    public async Task<PagedPromotionResponse> Handle(GetPagedPromotionsQuery request, CancellationToken cancellationToken = default)
     {
         var page = request.PageIndex < 1 ? 1 : request.PageIndex;
         var pageSize = request.PageSize < 1 ? 50 : request.PageSize;
@@ -90,11 +52,11 @@ public sealed class GetPagedPromotionsHandler(IApplicationDbContext db)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
 
-        return new PromotionDto.Response.Paged
+        return new PagedPromotionResponse
         {
             Total = total,
             TotalDisplay = totalDisplay,
-            Data = rows.Select(GetPromotionByIdHandler.MapToDto).ToList(),
+            Data = rows.Select(r => r.ToResponse()).ToList(),
         };
     }
 }

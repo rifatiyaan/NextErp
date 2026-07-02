@@ -1,6 +1,6 @@
 namespace NextErp.Application.DTOs
 {
-    public class RegisterDto
+    public sealed record RegisterDto
     {
         public string Email { get; set; } = null!;
         public string Password { get; set; } = null!;
@@ -8,20 +8,20 @@ namespace NextErp.Application.DTOs
         public Guid BranchId { get; set; }
     }
 
-    public class LoginDto
+    public sealed record LoginDto
     {
         public string Email { get; set; } = null!;
         public string Password { get; set; } = null!;
     }
 
-    public class LoginResponseDto
+    public sealed record LoginResponseDto
     {
         public string Token { get; set; } = null!;
         public bool IsSuperAdmin { get; set; }
         public IReadOnlyList<string> PermissionKeys { get; set; } = Array.Empty<string>();
     }
 
-    public class CurrentUserDto
+    public sealed record CurrentUserDto
     {
         public Guid Id { get; set; }
         public string? Email { get; set; }

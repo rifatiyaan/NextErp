@@ -1,5 +1,5 @@
 using MediatR;
-using DashboardDto = NextErp.Application.DTOs.Dashboard;
+using NextErp.Application.DTOs.Dashboard;
 
 namespace NextErp.Application.Queries.Dashboard;
 
@@ -20,4 +20,4 @@ public record GetDashboardOverviewQuery(
     int TopCustomersLimit = 5,
     int RecentTransactionsLimit = 10,
     int ActivityLimit = 10)
-    : IRequest<DashboardDto.Response.Overview>;
+    : IRequest<DashboardOverviewResponse>;

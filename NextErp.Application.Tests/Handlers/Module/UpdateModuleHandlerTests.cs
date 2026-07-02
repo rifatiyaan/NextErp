@@ -1,4 +1,3 @@
-using AutoMapper;
 using NextErp.Application.Commands.Module;
 using NextErp.Application.DTOs;
 using NextErp.Application.Handlers.CommandHandlers.Module;
@@ -8,16 +7,7 @@ namespace NextErp.Application.Tests.Handlers.Module;
 
 public class UpdateModuleHandlerTests : HandlerTestBase
 {
-    private static readonly IMapper Mapper = BuildMapper();
-
-    private static IMapper BuildMapper()
-    {
-        var cfg = new MapperConfiguration(c =>
-            c.AddMaps(typeof(NextErp.Application.ApplicationAssemblyMarker).Assembly));
-        return cfg.CreateMapper();
-    }
-
-    private UpdateModuleHandler BuildHandler() => new(Db, Mapper);
+    private UpdateModuleHandler BuildHandler() => new(Db);
 
     private async Task<int> SeedModuleAsync(string title = "Old Module", string? icon = "old-icon")
     {
@@ -35,7 +25,7 @@ public class UpdateModuleHandlerTests : HandlerTestBase
         var id = await SeedModuleAsync();
         var sut = BuildHandler();
 
-        var dto = new DTOs.Module.Request.Update.Single
+        var dto = new DTOs.Module.UpdateModuleRequest
         {
             Id = id,
             Title = "New Module Title",
@@ -59,7 +49,7 @@ public class UpdateModuleHandlerTests : HandlerTestBase
     {
         var sut = BuildHandler();
 
-        var dto = new DTOs.Module.Request.Update.Single
+        var dto = new DTOs.Module.UpdateModuleRequest
         {
             Id = 9999,
             Title = "X",
@@ -80,7 +70,7 @@ public class UpdateModuleHandlerTests : HandlerTestBase
         var before = DateTime.UtcNow;
         var sut = BuildHandler();
 
-        var dto = new DTOs.Module.Request.Update.Single
+        var dto = new DTOs.Module.UpdateModuleRequest
         {
             Id = id,
             Title = "T",
@@ -94,4 +84,3 @@ public class UpdateModuleHandlerTests : HandlerTestBase
         fresh.UpdatedAt!.Value.Should().BeOnOrAfter(before).And.BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
     }
 }
-

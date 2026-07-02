@@ -1,5 +1,5 @@
 using MediatR;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.ProductVariation;
 using NextErp.Domain.Entities;
 
 namespace NextErp.Application.Queries
@@ -12,6 +12,6 @@ namespace NextErp.Application.Queries
 
     public record GetAllVariationOptionsQuery() : IRequest<List<VariationOption>>;
 
-    public record GetAllDistinctVariationOptionsQuery() : IRequest<List<DTOs.ProductVariation.Response.BulkVariationOptionDto>>;
+    public record GetAllDistinctVariationOptionsQuery() : IRequest<List<BulkVariationOptionResponse>>;
 }
 

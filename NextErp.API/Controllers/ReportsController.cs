@@ -71,7 +71,7 @@ public class ReportsController(
     // JSON variant of the sales report. Same query as the PDF endpoint —
     // splitting the route keeps Content-Type-based content-negotiation
     // simple (the frontend table consumer needs JSON; the iframe wants
-    // application/pdf). Returns Sale.Response.Get.Report directly so the
+    // application/pdf). Returns SaleReportResponse directly so the
     // shape matches the existing OpenAPI contract used by other consumers.
     [HttpGet("sales")]
     public async Task<IActionResult> SalesReportData(

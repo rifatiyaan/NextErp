@@ -1,6 +1,6 @@
 using MediatR;
-using SystemSettingsDto = NextErp.Application.DTOs.SystemSettings;
+using NextErp.Application.DTOs.SystemSettings;
 
 namespace NextErp.Application.Queries;
 
-public record GetSystemSettingsQuery() : IRequest<SystemSettingsDto.Response.Single>;
+public record GetSystemSettingsQuery() : IRequest<SystemSettingsResponse>;

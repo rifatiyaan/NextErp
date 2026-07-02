@@ -1,4 +1,3 @@
-using AutoMapper;
 using NextErp.Application.Commands.Module;
 using NextErp.Application.DTOs;
 using NextErp.Application.Handlers.CommandHandlers.Module;
@@ -8,18 +7,9 @@ namespace NextErp.Application.Tests.Handlers.Module;
 
 public class CreateBulkModulesHandlerTests : HandlerTestBase
 {
-    private static readonly IMapper Mapper = BuildMapper();
+    private CreateBulkModulesHandler BuildHandler() => new(Db);
 
-    private static IMapper BuildMapper()
-    {
-        var cfg = new MapperConfiguration(c =>
-            c.AddMaps(typeof(NextErp.Application.ApplicationAssemblyMarker).Assembly));
-        return cfg.CreateMapper();
-    }
-
-    private CreateBulkModulesHandler BuildHandler() => new(Db, Mapper);
-
-    private static DTOs.Module.Request.Create.Hierarchical Hier(string title, params DTOs.Module.Request.Create.Hierarchical[] children) =>
+    private static DTOs.Module.CreateModuleHierarchicalRequest Hier(string title, params DTOs.Module.CreateModuleHierarchicalRequest[] children) =>
         new()
         {
             Title = title,
@@ -31,9 +21,9 @@ public class CreateBulkModulesHandlerTests : HandlerTestBase
     public async Task Two_parents_two_children_each_creates_six_modules_total()
     {
         var sut = BuildHandler();
-        var cmd = new CreateBulkModulesCommand(new DTOs.Module.Request.Create.Bulk
+        var cmd = new CreateBulkModulesCommand(new DTOs.Module.CreateBulkModulesRequest
         {
-            Modules = new List<DTOs.Module.Request.Create.Hierarchical>
+            Modules = new List<DTOs.Module.CreateModuleHierarchicalRequest>
             {
                 Hier("P1", Hier("P1-C1"), Hier("P1-C2")),
                 Hier("P2", Hier("P2-C1"), Hier("P2-C2")),
@@ -56,9 +46,9 @@ public class CreateBulkModulesHandlerTests : HandlerTestBase
     public async Task Empty_input_creates_zero_modules_and_reports_zero_counts()
     {
         var sut = BuildHandler();
-        var cmd = new CreateBulkModulesCommand(new DTOs.Module.Request.Create.Bulk
+        var cmd = new CreateBulkModulesCommand(new DTOs.Module.CreateBulkModulesRequest
         {
-            Modules = new List<DTOs.Module.Request.Create.Hierarchical>()
+            Modules = new List<DTOs.Module.CreateModuleHierarchicalRequest>()
         });
 
         var response = await sut.Handle(cmd, CancellationToken.None);
@@ -74,9 +64,9 @@ public class CreateBulkModulesHandlerTests : HandlerTestBase
     public async Task Children_have_ParentId_pointing_at_newly_created_parent_ids()
     {
         var sut = BuildHandler();
-        var cmd = new CreateBulkModulesCommand(new DTOs.Module.Request.Create.Bulk
+        var cmd = new CreateBulkModulesCommand(new DTOs.Module.CreateBulkModulesRequest
         {
-            Modules = new List<DTOs.Module.Request.Create.Hierarchical>
+            Modules = new List<DTOs.Module.CreateModuleHierarchicalRequest>
             {
                 Hier("Alpha", Hier("AlphaChild1"), Hier("AlphaChild2")),
                 Hier("Beta", Hier("BetaChild1")),
@@ -103,4 +93,3 @@ public class CreateBulkModulesHandlerTests : HandlerTestBase
         beta.ParentId.Should().BeNull();
     }
 }
-

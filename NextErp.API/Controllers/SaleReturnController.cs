@@ -37,7 +37,7 @@ public class SaleReturnController(IMediator mediator) : ControllerBase
     // POST api/saleReturn
     [HttpPost]
     public async Task<IActionResult> Create(
-        [FromBody] SaleReturnDto.Request.Create.Single dto,
+        [FromBody] CreateSaleReturnRequest dto,
         CancellationToken ct = default)
     {
         var id = await mediator.Send(new CreateSaleReturnCommand(dto), ct);

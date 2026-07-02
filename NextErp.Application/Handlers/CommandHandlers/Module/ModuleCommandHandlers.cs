@@ -1,51 +1,52 @@
-using AutoMapper;
 using NextErp.Application.Commands.Module;
-using NextErp.Domain.Entities;
+using NextErp.Application.DTOs;
+using NextErp.Application.Mapping;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Common.Caching;
+using DomainModule = NextErp.Domain.Entities.Module;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Module
 {
-    public class CreateModuleHandler(IApplicationDbContext dbContext, IMapper mapper)
+    public class CreateModuleHandler(IApplicationDbContext dbContext, IModuleCacheSignal? cacheSignal = null)
         : IRequestHandler<CreateModuleCommand, int>
     {
         public async Task<int> Handle(CreateModuleCommand request, CancellationToken cancellationToken = default)
         {
-            var module = mapper.Map<NextErp.Domain.Entities.Module>(request.Dto);
+            var module = request.Dto.ToEntity();
             module.CreatedAt = DateTime.UtcNow;
 
             dbContext.Modules.Add(module);
             await dbContext.SaveChangesAsync(cancellationToken);
+            cacheSignal?.Invalidate();
 
             return module.Id;
         }
     }
 
-    public class CreateBulkModulesHandler(
-        IApplicationDbContext dbContext,
-        IMapper mapper)
-        : IRequestHandler<CreateBulkModulesCommand, DTOs.Module.Response.Create.Bulk>
+    public class CreateBulkModulesHandler(IApplicationDbContext dbContext, IModuleCacheSignal? cacheSignal = null)
+        : IRequestHandler<CreateBulkModulesCommand, DTOs.Module.CreateBulkModulesResponse>
     {
-        public async Task<DTOs.Module.Response.Create.Bulk> Handle(
+        public async Task<DTOs.Module.CreateBulkModulesResponse> Handle(
             CreateBulkModulesCommand request,
             CancellationToken cancellationToken = default)
         {
-            var response = new DTOs.Module.Response.Create.Bulk
+            var response = new DTOs.Module.CreateBulkModulesResponse
             {
-                Modules = new List<DTOs.Module.Response.Create.Hierarchical>(),
+                Modules = new List<DTOs.Module.CreateModuleHierarchicalResponse>(),
                 SuccessCount = 0,
                 FailureCount = 0,
                 Errors = new List<string>()
             };
 
-            var parentModules = new List<(DTOs.Module.Request.Create.Hierarchical Dto, NextErp.Domain.Entities.Module Entity)>();
+            var parentModules = new List<(DTOs.Module.CreateModuleHierarchicalRequest Dto, DomainModule Entity)>();
 
             foreach (var moduleDto in request.Dto.Modules)
             {
                 try
                 {
-                    var module = mapper.Map<NextErp.Domain.Entities.Module>(moduleDto);
+                    var module = moduleDto.ToEntity();
                     module.ParentId = null;
                     module.CreatedAt = DateTime.UtcNow;
                     module.TenantId = Guid.Empty;
@@ -62,7 +63,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Module
 
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            var allChildren = new List<(DTOs.Module.Request.Create.Hierarchical ChildDto, int ParentId)>();
+            var allChildren = new List<(DTOs.Module.CreateModuleHierarchicalRequest ChildDto, int ParentId)>();
 
             foreach (var (dto, entity) in parentModules)
             {
@@ -79,7 +80,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Module
             {
                 try
                 {
-                    var childModule = mapper.Map<NextErp.Domain.Entities.Module>(childDto);
+                    var childModule = childDto.ToEntity();
                     childModule.ParentId = parentId;
                     childModule.CreatedAt = DateTime.UtcNow;
                     childModule.TenantId = Guid.Empty;
@@ -94,13 +95,14 @@ namespace NextErp.Application.Handlers.CommandHandlers.Module
             }
 
             await dbContext.SaveChangesAsync(cancellationToken);
+            cacheSignal?.Invalidate();
 
             var childErrorCount = response.Errors.Count(e => e.Contains("child module"));
             response.SuccessCount = parentModules.Count + (allChildren.Count - childErrorCount);
 
             foreach (var (dto, entity) in parentModules)
             {
-                var responseModule = mapper.Map<DTOs.Module.Response.Create.Hierarchical>(entity);
+                var responseModule = entity.ToCreateHierarchicalResponse();
                 response.Modules.Add(responseModule);
             }
 
@@ -108,7 +110,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Module
         }
     }
 
-    public class UpdateModuleHandler(IApplicationDbContext dbContext, IMapper mapper)
+    public class UpdateModuleHandler(IApplicationDbContext dbContext, IModuleCacheSignal? cacheSignal = null)
         : IRequestHandler<UpdateModuleCommand, Unit>
     {
         public async Task<Unit> Handle(UpdateModuleCommand request, CancellationToken cancellationToken = default)
@@ -118,16 +120,17 @@ namespace NextErp.Application.Handlers.CommandHandlers.Module
             if (existing == null)
                 throw new KeyNotFoundException($"Module with ID {request.Id} not found.");
 
-            mapper.Map(request.Dto, existing);
+            request.Dto.ApplyTo(existing);
             existing.UpdatedAt = DateTime.UtcNow;
 
             await dbContext.SaveChangesAsync(cancellationToken);
+            cacheSignal?.Invalidate();
 
             return Unit.Value;
         }
     }
 
-    public class DeleteModuleHandler(IApplicationDbContext dbContext)
+    public class DeleteModuleHandler(IApplicationDbContext dbContext, IModuleCacheSignal? cacheSignal = null)
         : IRequestHandler<DeleteModuleCommand, Unit>
     {
         public async Task<Unit> Handle(DeleteModuleCommand request, CancellationToken cancellationToken = default)
@@ -141,6 +144,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Module
             existing.IsActive = false;
             existing.UpdatedAt = DateTime.UtcNow;
             await dbContext.SaveChangesAsync(cancellationToken);
+            cacheSignal?.Invalidate();
 
             return Unit.Value;
         }

@@ -1,16 +1,17 @@
 using NextErp.Application.Common.Extensions;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
-using NextErp.Application.DTOs;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using SaleDto = NextErp.Application.DTOs.Sale;
+using PaymentDto = NextErp.Application.DTOs.Payment;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Sale
 {
     public class GetSalesReportHandler(IApplicationDbContext dbContext)
-        : IRequestHandler<GetSalesReportQuery, DTOs.Sale.Response.Get.Report>
+        : IRequestHandler<GetSalesReportQuery, SaleDto.SaleReportResponse>
     {
-        public async Task<DTOs.Sale.Response.Get.Report> Handle(
+        public async Task<SaleDto.SaleReportResponse> Handle(
             GetSalesReportQuery request,
             CancellationToken cancellationToken = default)
         {
@@ -25,7 +26,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Sale
                 .WhereIfHasValue(request.PartyId, s => s.PartyId == request.PartyId!.Value);
 
             var saleDtos = await query
-                .Select(s => new DTOs.Sale.Response.Get.Single
+                .Select(s => new SaleDto.SaleResponse
                 {
                     Id = s.Id,
                     Title = s.Title,
@@ -39,7 +40,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Sale
                     FinalAmount = s.FinalAmount,
                     TotalPaid = s.Payments.Sum(p => p.Amount),
                     BalanceDue = s.FinalAmount - s.Payments.Sum(p => p.Amount),
-                    Items = s.Items.Select(i => new DTOs.Sale.Response.Get.SaleItemResponse
+                    Items = s.Items.Select(i => new SaleDto.SaleItemResponse
                     {
                         Id = i.Id,
                         Title = i.Title,
@@ -59,7 +60,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Sale
                     Payments = s.Payments
                         .OrderBy(p => p.PaidAt)
                         .ThenBy(p => p.CreatedAt)
-                        .Select(p => new DTOs.Payment.Response.Line
+                        .Select(p => new PaymentDto.PaymentLineResponse
                         {
                             Id = p.Id,
                             SaleId = p.SaleId,
@@ -70,7 +71,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Sale
                             CreatedAt = p.CreatedAt
                         })
                         .ToList(),
-                    Metadata = new DTOs.Sale.Request.Metadata
+                    Metadata = new SaleDto.SaleMetadataRequest
                     {
                         ReferenceNo = s.Metadata.ReferenceNo,
                         PaymentMethod = s.Metadata.PaymentMethod,
@@ -84,7 +85,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Sale
                 })
                 .ToListAsync(cancellationToken);
 
-            return new DTOs.Sale.Response.Get.Report
+            return new SaleDto.SaleReportResponse
             {
                 Sales = saleDtos,
                 TotalSalesAmount = saleDtos.Sum(s => s.TotalAmount),

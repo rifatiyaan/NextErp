@@ -1,4 +1,3 @@
-using AutoMapper;
 using NextErp.Application.Handlers.QueryHandlers.Product;
 using NextErp.Application.Queries;
 
@@ -6,16 +5,7 @@ namespace NextErp.Application.Tests.Handlers.Product;
 
 public class GetProductByIdHandlerTests : HandlerTestBase
 {
-    private static readonly IMapper Mapper = BuildMapper();
-
-    private static IMapper BuildMapper()
-    {
-        var cfg = new MapperConfiguration(c =>
-            c.AddMaps(typeof(NextErp.Application.ApplicationAssemblyMarker).Assembly));
-        return cfg.CreateMapper();
-    }
-
-    private GetProductByIdHandler BuildHandler() => new(Db, BranchProvider, Mapper);
+    private GetProductByIdHandler BuildHandler() => new(Db, BranchProvider);
 
     [Fact]
     public async Task Existing_product_returned_with_id_title_code()

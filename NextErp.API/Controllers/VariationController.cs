@@ -1,9 +1,9 @@
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.ProductVariation;
+using NextErp.Application.Mapping;
 using NextErp.Application.Queries;
 
 namespace NextErp.API.Controllers;
@@ -11,19 +11,19 @@ namespace NextErp.API.Controllers;
 [Authorize]
 [Route("api/[controller]")]
 [ApiController]
-public class VariationController(IMediator mediator, IMapper mapper) : ControllerBase
+public class VariationController(IMediator mediator) : ControllerBase
 {
     [HttpGet("options")]
     public async Task<IActionResult> GetAllOptions()
     {
         var query = new GetAllVariationOptionsQuery();
         var options = await mediator.Send(query);
-        var dtoList = mapper.Map<List<ProductVariation.Response.VariationOptionDto>>(options);
+        var dtoList = options.Select(o => o.ToResponse()).ToList();
         return Ok(dtoList);
     }
 
     [HttpPost("options")]
-    public async Task<IActionResult> CreateOption([FromBody] ProductVariation.Request.VariationOptionDto dto)
+    public async Task<IActionResult> CreateOption([FromBody] VariationOptionRequest dto)
     {
         var tenantId = Guid.TryParse(User.FindFirst("TenantId")?.Value, out var tid) ? tid : Guid.Empty;
         var command = new CreateVariationOptionCommandGlobal(dto.Name, dto.DisplayOrder, tenantId);
@@ -37,12 +37,12 @@ public class VariationController(IMediator mediator, IMapper mapper) : Controlle
         var query = new GetVariationOptionByIdQuery(id);
         var option = await mediator.Send(query);
         if (option == null) return NotFound();
-        var dto = mapper.Map<ProductVariation.Response.VariationOptionDto>(option);
+        var dto = option.ToResponse();
         return Ok(dto);
     }
 
     [HttpPut("options/{id}")]
-    public async Task<IActionResult> UpdateOption(int id, [FromBody] ProductVariation.Request.VariationOptionDto dto)
+    public async Task<IActionResult> UpdateOption(int id, [FromBody] VariationOptionRequest dto)
     {
         var command = new UpdateVariationOptionCommand(id, dto.Name, dto.DisplayOrder);
         await mediator.Send(command);
@@ -58,7 +58,7 @@ public class VariationController(IMediator mediator, IMapper mapper) : Controlle
     }
 
     [HttpPost("options/{optionId}/values")]
-    public async Task<IActionResult> CreateValue(int optionId, [FromBody] ProductVariation.Request.VariationValueDto dto)
+    public async Task<IActionResult> CreateValue(int optionId, [FromBody] VariationValueRequest dto)
     {
         var command = new CreateVariationValueCommand(optionId, dto.Value, dto.DisplayOrder);
         var valueId = await mediator.Send(command);
@@ -71,12 +71,12 @@ public class VariationController(IMediator mediator, IMapper mapper) : Controlle
         var query = new GetVariationValueByIdQuery(id);
         var value = await mediator.Send(query);
         if (value == null) return NotFound();
-        var dto = mapper.Map<ProductVariation.Response.VariationValueDto>(value);
+        var dto = value.ToResponse();
         return Ok(dto);
     }
 
     [HttpPut("values/{id}")]
-    public async Task<IActionResult> UpdateValue(int id, [FromBody] ProductVariation.Request.VariationValueDto dto)
+    public async Task<IActionResult> UpdateValue(int id, [FromBody] VariationValueRequest dto)
     {
         var command = new UpdateVariationValueCommand(id, dto.Value, dto.DisplayOrder);
         await mediator.Send(command);
@@ -96,7 +96,7 @@ public class VariationController(IMediator mediator, IMapper mapper) : Controlle
     {
         var query = new GetVariationOptionsByProductIdQuery(productId);
         var options = await mediator.Send(query);
-        var dtoList = mapper.Map<List<ProductVariation.Response.VariationOptionDto>>(options);
+        var dtoList = options.Select(o => o.ToResponse()).ToList();
         return Ok(dtoList);
     }
 

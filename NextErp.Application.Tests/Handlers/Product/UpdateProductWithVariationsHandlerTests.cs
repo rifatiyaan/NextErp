@@ -1,6 +1,5 @@
-using AutoMapper;
-using AppDtos = NextErp.Application.DTOs;
 using NextErp.Application.Commands;
+using NextErp.Application.DTOs.ProductVariation;
 using NextErp.Application.Handlers.CommandHandlers.Product;
 using NextErp.Application.Services;
 using NextErp.Domain.Entities;
@@ -9,15 +8,6 @@ namespace NextErp.Application.Tests.Handlers.Product;
 
 public class UpdateProductWithVariationsHandlerTests : HandlerTestBase
 {
-    private static readonly IMapper Mapper = BuildMapper();
-
-    private static IMapper BuildMapper()
-    {
-        var cfg = new MapperConfiguration(c =>
-            c.AddMaps(typeof(NextErp.Application.ApplicationAssemblyMarker).Assembly));
-        return cfg.CreateMapper();
-    }
-
     private const int CategoryId = 500;
     private const int ProductId = 500;
     private const int OptSizeId = 500;
@@ -36,7 +26,7 @@ public class UpdateProductWithVariationsHandlerTests : HandlerTestBase
     private UpdateProductWithVariationsHandler BuildHandler()
     {
         var stockService = new StockService(Db, BranchProvider);
-        return new UpdateProductWithVariationsHandler(Db, stockService, Mapper);
+        return new UpdateProductWithVariationsHandler(Db, stockService);
     }
 
     private async Task SeedAsync()
@@ -155,19 +145,19 @@ public class UpdateProductWithVariationsHandlerTests : HandlerTestBase
         await Db.SaveChangesAsync();
     }
 
-    private static AppDtos.ProductVariation.Request.VariationOptionDto OptionDto(string name, params string[] values) =>
+    private static VariationOptionRequest OptionDto(string name, params string[] values) =>
         new()
         {
             Name = name,
             DisplayOrder = 0,
-            Values = values.Select((v, i) => new AppDtos.ProductVariation.Request.VariationValueDto
+            Values = values.Select((v, i) => new VariationValueRequest
             {
                 Value = v,
                 DisplayOrder = i,
             }).ToList(),
         };
 
-    private static AppDtos.ProductVariation.Request.ProductVariantDto VariantDto(
+    private static ProductVariantRequest VariantDto(
         string sku,
         decimal price,
         params string[] valueKeys) =>
@@ -181,8 +171,8 @@ public class UpdateProductWithVariationsHandlerTests : HandlerTestBase
         };
 
     private static UpdateProductWithVariationsCommand BuildCmd(
-        List<AppDtos.ProductVariation.Request.VariationOptionDto> options,
-        List<AppDtos.ProductVariation.Request.ProductVariantDto> variants,
+        List<VariationOptionRequest> options,
+        List<ProductVariantRequest> variants,
         string title = "Updated") =>
         new(
             Id: ProductId,

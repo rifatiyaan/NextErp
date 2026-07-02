@@ -1,6 +1,5 @@
-using AutoMapper;
-using AppDtos = NextErp.Application.DTOs;
 using NextErp.Application.Commands;
+using NextErp.Application.DTOs.ProductVariation;
 using NextErp.Application.Handlers.CommandHandlers.Product;
 using NextErp.Application.Services;
 using NextErp.Domain.Entities;
@@ -9,15 +8,6 @@ namespace NextErp.Application.Tests.Handlers.Product;
 
 public class CreateProductWithVariationsHandlerTests : HandlerTestBase
 {
-    private static readonly IMapper Mapper = BuildMapper();
-
-    private static IMapper BuildMapper()
-    {
-        var cfg = new MapperConfiguration(c =>
-            c.AddMaps(typeof(NextErp.Application.ApplicationAssemblyMarker).Assembly));
-        return cfg.CreateMapper();
-    }
-
     private const int CategoryId = 300;
     private const int OptSizeId = 300;
     private const int OptColorId = 301;
@@ -25,7 +15,7 @@ public class CreateProductWithVariationsHandlerTests : HandlerTestBase
     private CreateProductWithVariationsHandler BuildHandler()
     {
         var stockService = new StockService(Db, BranchProvider);
-        return new CreateProductWithVariationsHandler(Db, stockService, BranchProvider, Mapper);
+        return new CreateProductWithVariationsHandler(Db, stockService, BranchProvider);
     }
 
     private async Task SeedSchemaAsync(bool seedColorOption = true)
@@ -62,19 +52,19 @@ public class CreateProductWithVariationsHandlerTests : HandlerTestBase
         await Db.SaveChangesAsync();
     }
 
-    private static AppDtos.ProductVariation.Request.VariationOptionDto OptionDto(string name, params string[] values) =>
+    private static VariationOptionRequest OptionDto(string name, params string[] values) =>
         new()
         {
             Name = name,
             DisplayOrder = 0,
-            Values = values.Select((v, i) => new AppDtos.ProductVariation.Request.VariationValueDto
+            Values = values.Select((v, i) => new VariationValueRequest
             {
                 Value = v,
                 DisplayOrder = i,
             }).ToList(),
         };
 
-    private static AppDtos.ProductVariation.Request.ProductVariantDto VariantDto(
+    private static ProductVariantRequest VariantDto(
         string sku,
         decimal price,
         decimal initialStock,

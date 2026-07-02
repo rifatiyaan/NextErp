@@ -3,16 +3,16 @@ using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Common.Exceptions;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
-using StockDto = NextErp.Application.DTOs.Stock;
+using NextErp.Application.DTOs.Stock;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Stock;
 
 public class GetStockMovementHistoryHandler(
     IApplicationDbContext dbContext,
     IBranchProvider branchProvider)
-    : IRequestHandler<GetStockMovementHistoryQuery, IReadOnlyList<StockDto.Response.MovementLine>>
+    : IRequestHandler<GetStockMovementHistoryQuery, IReadOnlyList<MovementLine>>
 {
-    public async Task<IReadOnlyList<StockDto.Response.MovementLine>> Handle(
+    public async Task<IReadOnlyList<MovementLine>> Handle(
         GetStockMovementHistoryQuery request,
         CancellationToken cancellationToken = default)
     {
@@ -31,7 +31,7 @@ public class GetStockMovementHistoryHandler(
                 && m.BranchId == request.BranchId
                 && m.IsActive)
             .OrderByDescending(m => m.CreatedAt)
-            .Select(m => new StockDto.Response.MovementLine
+            .Select(m => new MovementLine
             {
                 Id = m.Id,
                 StockId = m.StockId,

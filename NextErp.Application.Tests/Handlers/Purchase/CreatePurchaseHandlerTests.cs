@@ -1,5 +1,5 @@
 using NextErp.Application.Commands;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Purchase;
 using NextErp.Application.Handlers.CommandHandlers.Purchase;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Services;
@@ -55,7 +55,7 @@ public class CreatePurchaseHandlerTests : HandlerTestBase
             PartyId: partyId,
             PurchaseDate: DateTime.UtcNow,
             Discount: 0m,
-            Items: new List<DTOs.Purchase.Request.Create.PurchaseItemRequest>
+            Items: new List<PurchaseItemRequest>
             {
                 new() { Title = "Item A", ProductVariantId = VariantA, Quantity = 5m, UnitCost = 40m },
                 new() { Title = "Item B", ProductVariantId = VariantB, Quantity = 7m, UnitCost = 20m },
@@ -96,7 +96,7 @@ public class CreatePurchaseHandlerTests : HandlerTestBase
             PartyId: null,
             PurchaseDate: DateTime.UtcNow,
             Discount: 0m,
-            Items: new List<DTOs.Purchase.Request.Create.PurchaseItemRequest>(),
+            Items: new List<PurchaseItemRequest>(),
             Metadata: null);
 
         var act = async () => await sut.Handle(cmd, CancellationToken.None);
@@ -117,7 +117,7 @@ public class CreatePurchaseHandlerTests : HandlerTestBase
             PartyId: null,
             PurchaseDate: DateTime.UtcNow,
             Discount: 0m,
-            Items: new List<DTOs.Purchase.Request.Create.PurchaseItemRequest>
+            Items: new List<PurchaseItemRequest>
             {
                 new() { Title = "Missing variant", ProductVariantId = 9999, Quantity = 1m, UnitCost = 1m },
             },
@@ -141,7 +141,7 @@ public class CreatePurchaseHandlerTests : HandlerTestBase
             PartyId: null,
             PurchaseDate: DateTime.UtcNow,
             Discount: 0m,
-            Items: new List<DTOs.Purchase.Request.Create.PurchaseItemRequest>
+            Items: new List<PurchaseItemRequest>
             {
                 new() { Title = "Line 1", ProductVariantId = VariantA, Quantity = 3m, UnitCost = 10m },
                 new() { Title = "Line 2", ProductVariantId = VariantA, Quantity = 4m, UnitCost = 10m },

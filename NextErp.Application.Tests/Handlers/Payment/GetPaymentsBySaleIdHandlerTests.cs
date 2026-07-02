@@ -1,4 +1,3 @@
-using AutoMapper;
 using NextErp.Application.Handlers.QueryHandlers.Payment;
 using NextErp.Application.Queries;
 using NextErp.Domain.Entities;
@@ -7,16 +6,7 @@ namespace NextErp.Application.Tests.Handlers.Payment;
 
 public class GetPaymentsBySaleIdHandlerTests : HandlerTestBase
 {
-    private static readonly IMapper Mapper = BuildMapper();
-
-    private static IMapper BuildMapper()
-    {
-        var cfg = new MapperConfiguration(c =>
-            c.AddMaps(typeof(NextErp.Application.ApplicationAssemblyMarker).Assembly));
-        return cfg.CreateMapper();
-    }
-
-    private GetPaymentsBySaleIdHandler BuildHandler() => new(Db, Mapper);
+    private GetPaymentsBySaleIdHandler BuildHandler() => new(Db);
 
     [Fact]
     public async Task Payments_for_sale_returned_and_empty_for_unknown_sale()
@@ -55,4 +45,3 @@ public class GetPaymentsBySaleIdHandlerTests : HandlerTestBase
         unknown.Should().BeEmpty();
     }
 }
-

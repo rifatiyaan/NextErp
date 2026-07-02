@@ -1,15 +1,15 @@
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Stock;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Stock
 {
     public class GetCurrentStockReportHandler(IApplicationDbContext dbContext)
-        : IRequestHandler<GetCurrentStockReportQuery, DTOs.Stock.Response.CurrentStockReport>
+        : IRequestHandler<GetCurrentStockReportQuery, CurrentStockReport>
     {
-        public async Task<DTOs.Stock.Response.CurrentStockReport> Handle(
+        public async Task<CurrentStockReport> Handle(
             GetCurrentStockReportQuery request,
             CancellationToken cancellationToken = default)
         {
@@ -18,7 +18,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Stock
                 .Include(s => s.ProductVariant)
                     .ThenInclude(pv => pv.Product)
                         .ThenInclude(p => p!.UnitOfMeasure)
-                .Select(s => new DTOs.Stock.Response.Single
+                .Select(s => new StockResponse
                 {
                     Id = s.Id,
                     ProductVariantId = s.ProductVariantId,
@@ -44,7 +44,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Stock
                 })
                 .ToListAsync(cancellationToken);
 
-            return new DTOs.Stock.Response.CurrentStockReport
+            return new CurrentStockReport
             {
                 Stocks = stockDtos,
                 TotalVariants = stockDtos.Count,

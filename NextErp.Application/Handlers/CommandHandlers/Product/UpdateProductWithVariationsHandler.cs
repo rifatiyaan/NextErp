@@ -1,8 +1,8 @@
-using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Commands;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Mapping;
 using NextErp.Application.Products;
 using Entities = NextErp.Domain.Entities;
 
@@ -10,8 +10,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
 {
     public class UpdateProductWithVariationsHandler(
         IApplicationDbContext dbContext,
-        IStockService stockService,
-        IMapper mapper)
+        IStockService stockService)
         : IRequestHandler<UpdateProductWithVariationsCommand, Unit>
     {
         public async Task<Unit> Handle(UpdateProductWithVariationsCommand request, CancellationToken cancellationToken = default)
@@ -27,7 +26,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
             if (product == null)
                 throw new InvalidOperationException($"Product with ID {request.Id} not found.");
 
-            mapper.Map(request, product);
+            request.ApplyTo(product);
             product.UpdatedAt = DateTime.UtcNow;
 
             if (request.ImageGallery != null)
@@ -98,7 +97,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
 
                 if (existingVariantMap.TryGetValue(combinationKey, out var existingVariant))
                 {
-                    mapper.Map(variantDto, existingVariant);
+                    variantDto.ApplyTo(existingVariant);
                     existingVariant.Title = title;
                     existingVariant.Name = title;
                     existingVariant.UpdatedAt = DateTime.UtcNow;
@@ -108,7 +107,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                 }
                 else
                 {
-                    var productVariant = mapper.Map<Entities.ProductVariant>(variantDto);
+                    var productVariant = variantDto.ToEntity();
                     productVariant.Title = title;
                     productVariant.Name = title;
                     productVariant.ProductId = product.Id;

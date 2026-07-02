@@ -4,7 +4,7 @@ namespace NextErp.Application.Interfaces;
 
 /// <summary>
 /// Generates a printable PDF for a single sale invoice. Pure layout — the
-/// caller passes a fully-hydrated <see cref="SaleDto.Response.Get.Single"/>
+/// caller passes a fully-hydrated <see cref="SaleDto.SaleResponse"/>
 /// (including line items + payments) and gets back the rendered bytes.
 /// </summary>
 public interface IInvoicePdfService
@@ -15,6 +15,6 @@ public interface IInvoicePdfService
     /// a queued background job) without changing every call site.
     /// </summary>
     Task<byte[]> RenderSaleInvoiceAsync(
-        SaleDto.Response.Get.Single sale,
+        SaleDto.SaleResponse sale,
         CancellationToken cancellationToken = default);
 }

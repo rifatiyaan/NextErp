@@ -1,7 +1,7 @@
 using MediatR;
-using NextErp.Application.DTOs;
+using PaymentDto = NextErp.Application.DTOs.Payment;
 
 namespace NextErp.Application.Queries
 {
-    public record GetPaymentsBySaleIdQuery(Guid SaleId) : IRequest<IReadOnlyList<Payment.Response.Line>>;
+    public record GetPaymentsBySaleIdQuery(Guid SaleId) : IRequest<IReadOnlyList<PaymentDto.PaymentLineResponse>>;
 }

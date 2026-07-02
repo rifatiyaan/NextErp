@@ -1,4 +1,3 @@
-using AutoMapper;
 using NextErp.Application.Commands;
 using NextErp.Application.Handlers.CommandHandlers.Product;
 using NextErp.Application.Services;
@@ -8,21 +7,12 @@ namespace NextErp.Application.Tests.Handlers.Product;
 
 public class CreateProductHandlerTests : HandlerTestBase
 {
-    private static readonly IMapper Mapper = BuildMapper();
-
-    private static IMapper BuildMapper()
-    {
-        var cfg = new MapperConfiguration(c =>
-            c.AddMaps(typeof(NextErp.Application.ApplicationAssemblyMarker).Assembly));
-        return cfg.CreateMapper();
-    }
-
     private const int CategoryIdA = 200;
 
     private CreateProductHandler BuildHandler()
     {
         var stockService = new StockService(Db, BranchProvider);
-        return new CreateProductHandler(Db, stockService, BranchProvider, Notifications, Mapper);
+        return new CreateProductHandler(Db, stockService, BranchProvider, Notifications);
     }
 
     private async Task SeedAsync()

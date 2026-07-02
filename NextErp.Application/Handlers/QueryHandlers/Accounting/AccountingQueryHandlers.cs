@@ -7,14 +7,14 @@ using NextErp.Application.Queries.Accounting;
 namespace NextErp.Application.Handlers.QueryHandlers.Accounting;
 
 public sealed class GetAccountByIdHandler(IApplicationDbContext db)
-    : IRequestHandler<GetAccountByIdQuery, AccountDto.Response.Single?>
+    : IRequestHandler<GetAccountByIdQuery, AccountResponse?>
 {
-    public async Task<AccountDto.Response.Single?> Handle(GetAccountByIdQuery request, CancellationToken cancellationToken = default)
+    public async Task<AccountResponse?> Handle(GetAccountByIdQuery request, CancellationToken cancellationToken = default)
     {
         return await db.Accounts
             .AsNoTracking()
             .Where(a => a.Id == request.Id)
-            .Select(a => new AccountDto.Response.Single
+            .Select(a => new AccountResponse
             {
                 Id = a.Id,
                 Code = a.Code,
@@ -32,9 +32,9 @@ public sealed class GetAccountByIdHandler(IApplicationDbContext db)
 }
 
 public sealed class GetPagedAccountsHandler(IApplicationDbContext db)
-    : IRequestHandler<GetPagedAccountsQuery, AccountDto.Response.Paged>
+    : IRequestHandler<GetPagedAccountsQuery, PagedAccountResponse>
 {
-    public async Task<AccountDto.Response.Paged> Handle(GetPagedAccountsQuery request, CancellationToken cancellationToken = default)
+    public async Task<PagedAccountResponse> Handle(GetPagedAccountsQuery request, CancellationToken cancellationToken = default)
     {
         var page = request.PageIndex < 1 ? 1 : request.PageIndex;
         var pageSize = request.PageSize < 1 ? 50 : request.PageSize;
@@ -59,7 +59,7 @@ public sealed class GetPagedAccountsHandler(IApplicationDbContext db)
             .OrderBy(a => a.Code)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(a => new AccountDto.Response.Single
+            .Select(a => new AccountResponse
             {
                 Id = a.Id,
                 Code = a.Code,
@@ -74,7 +74,7 @@ public sealed class GetPagedAccountsHandler(IApplicationDbContext db)
             })
             .ToListAsync(cancellationToken);
 
-        return new AccountDto.Response.Paged
+        return new PagedAccountResponse
         {
             Total = total,
             TotalDisplay = totalDisplay,
@@ -84,14 +84,14 @@ public sealed class GetPagedAccountsHandler(IApplicationDbContext db)
 }
 
 public sealed class GetJournalEntryByIdHandler(IApplicationDbContext db)
-    : IRequestHandler<GetJournalEntryByIdQuery, JournalDto.Response.Single?>
+    : IRequestHandler<GetJournalEntryByIdQuery, JournalResponse?>
 {
-    public async Task<JournalDto.Response.Single?> Handle(GetJournalEntryByIdQuery request, CancellationToken cancellationToken = default)
+    public async Task<JournalResponse?> Handle(GetJournalEntryByIdQuery request, CancellationToken cancellationToken = default)
     {
         return await db.JournalEntries
             .AsNoTracking()
             .Where(e => e.Id == request.Id)
-            .Select(e => new JournalDto.Response.Single
+            .Select(e => new JournalResponse
             {
                 Id = e.Id,
                 EntryNumber = e.EntryNumber,
@@ -106,7 +106,7 @@ public sealed class GetJournalEntryByIdHandler(IApplicationDbContext db)
                 TotalCredit = e.Lines.Sum(l => l.Credit),
                 Lines = e.Lines
                     .OrderBy(l => l.LineOrder)
-                    .Select(l => new JournalDto.Response.JournalLine
+                    .Select(l => new JournalLineResponse
                     {
                         Id = l.Id,
                         AccountId = l.AccountId,
@@ -124,9 +124,9 @@ public sealed class GetJournalEntryByIdHandler(IApplicationDbContext db)
 }
 
 public sealed class GetPagedJournalEntriesHandler(IApplicationDbContext db)
-    : IRequestHandler<GetPagedJournalEntriesQuery, JournalDto.Response.Paged>
+    : IRequestHandler<GetPagedJournalEntriesQuery, PagedJournalResponse>
 {
-    public async Task<JournalDto.Response.Paged> Handle(GetPagedJournalEntriesQuery request, CancellationToken cancellationToken = default)
+    public async Task<PagedJournalResponse> Handle(GetPagedJournalEntriesQuery request, CancellationToken cancellationToken = default)
     {
         var page = request.PageIndex < 1 ? 1 : request.PageIndex;
         var pageSize = request.PageSize < 1 ? 10 : request.PageSize;
@@ -156,7 +156,7 @@ public sealed class GetPagedJournalEntriesHandler(IApplicationDbContext db)
             .ThenByDescending(e => e.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(e => new JournalDto.Response.ListRow
+            .Select(e => new JournalListRowResponse
             {
                 Id = e.Id,
                 EntryNumber = e.EntryNumber,
@@ -179,7 +179,7 @@ public sealed class GetPagedJournalEntriesHandler(IApplicationDbContext db)
             })
             .ToListAsync(cancellationToken);
 
-        return new JournalDto.Response.Paged
+        return new PagedJournalResponse
         {
             Total = total,
             TotalDisplay = totalDisplay,

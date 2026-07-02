@@ -1,6 +1,7 @@
 using MediatR;
 using NextErp.Application.Common.Interfaces;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Product;
+using NextErp.Application.DTOs.ProductVariation;
 
 namespace NextErp.Application.Commands
 {
@@ -14,7 +15,7 @@ namespace NextErp.Application.Commands
         decimal InitialStock,
         bool IsActive = true,
         string? ImageUrl = null,
-        IReadOnlyList<Product.Request.GalleryResolvedSlot>? ImageGallery = null,
+        IReadOnlyList<GalleryResolvedSlot>? ImageGallery = null,
         string? Description = null,
         string? Color = null,
         string? Warranty = null,
@@ -31,8 +32,8 @@ namespace NextErp.Application.Commands
         decimal Price,
         bool IsActive = true,
         string? ImageUrl = null,
-        IReadOnlyList<Product.Request.GalleryResolvedSlot>? ImageGallery = null,
-        IReadOnlyList<Product.Request.ProductImageThumbnailUpdate>? ImageThumbnailUpdates = null,
+        IReadOnlyList<GalleryResolvedSlot>? ImageGallery = null,
+        IReadOnlyList<ProductImageThumbnailUpdateRequest>? ImageThumbnailUpdates = null,
         string? Description = null,
         string? Color = null,
         string? Warranty = null,
@@ -49,13 +50,13 @@ namespace NextErp.Application.Commands
         decimal Price,
         bool IsActive,
         string? ImageUrl,
-        IReadOnlyList<Product.Request.GalleryResolvedSlot>? ImageGallery,
-        IReadOnlyList<Product.Request.ProductImageThumbnailUpdate>? ImageThumbnailUpdates,
+        IReadOnlyList<GalleryResolvedSlot>? ImageGallery,
+        IReadOnlyList<ProductImageThumbnailUpdateRequest>? ImageThumbnailUpdates,
         string? Description,
         string? Color,
         string? Warranty,
-        List<ProductVariation.Request.VariationOptionDto> VariationOptions,
-        List<ProductVariation.Request.ProductVariantDto> ProductVariants,
+        List<VariationOptionRequest> VariationOptions,
+        List<ProductVariantRequest> ProductVariants,
         int? UnitOfMeasureId = null
     ) : IRequest<Unit>, ITransactionalRequest; // No return
 }

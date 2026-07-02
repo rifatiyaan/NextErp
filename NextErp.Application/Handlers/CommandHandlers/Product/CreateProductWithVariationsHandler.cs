@@ -1,9 +1,9 @@
-using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Commands;
-using DTOs = NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Product;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Mapping;
 using NextErp.Application.Products;
 using Entities = NextErp.Domain.Entities;
 
@@ -12,13 +12,12 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
     public class CreateProductWithVariationsHandler(
         IApplicationDbContext dbContext,
         IStockService stockService,
-        IBranchProvider branchProvider,
-        IMapper mapper)
+        IBranchProvider branchProvider)
         : IRequestHandler<CreateProductWithVariationsCommand, int>
     {
         public async Task<int> Handle(CreateProductWithVariationsCommand request, CancellationToken cancellationToken = default)
         {
-            var product = mapper.Map<Entities.Product>(request);
+            var product = request.ToEntity();
             await ProductBranchScope.ApplyToProductAsync(product, dbContext, branchProvider, cancellationToken);
             product.Code = await ProductCodeFactory.EnsureCodeAsync(product.Code, product.TenantId, dbContext, cancellationToken);
             product.HasVariations = true;
@@ -29,7 +28,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
 
             await ProductGallerySync.ApplyFullGalleryAsync(
                 product,
-                request.ImageGallery ?? Array.Empty<DTOs.Product.Request.GalleryResolvedSlot>(),
+                request.ImageGallery ?? Array.Empty<GalleryResolvedSlot>(),
                 dbContext,
                 cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -65,7 +64,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
                     valueKeyMap);
 
                 var title = ConfigurableProductVariantFactory.BuildDisplayTitle(values);
-                var productVariant = mapper.Map<Entities.ProductVariant>(variantDto);
+                var productVariant = variantDto.ToEntity();
                 productVariant.Title = title;
                 productVariant.Name = title;
                 productVariant.ProductId = product.Id;

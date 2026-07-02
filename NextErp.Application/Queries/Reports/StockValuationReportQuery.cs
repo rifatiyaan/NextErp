@@ -1,5 +1,5 @@
 using MediatR;
-using ReportDto = NextErp.Application.DTOs.Report;
+using NextErp.Application.DTOs.Report;
 
 namespace NextErp.Application.Queries.Reports;
 
@@ -13,4 +13,4 @@ namespace NextErp.Application.Queries.Reports;
 /// would need to replay StockMovement deltas, which we defer to a follow-up.
 /// </param>
 public record StockValuationReportQuery(DateTime AsOf)
-    : IRequest<ReportDto.Response.StockValuation>;
+    : IRequest<StockValuationResponse>;

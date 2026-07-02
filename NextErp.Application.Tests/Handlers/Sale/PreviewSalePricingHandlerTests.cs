@@ -61,7 +61,7 @@ public class PreviewSalePricingHandlerTests : HandlerTestBase
         var sut = BuildHandler();
 
         var result = await sut.Handle(
-            new PreviewSalePricingQuery(new List<SaleDto.Request.Preview.PreviewLineRequest>(), null),
+            new PreviewSalePricingQuery(new List<SaleDto.PreviewLineRequest>(), null),
             CancellationToken.None);
 
         result.Subtotal.Should().Be(0m);
@@ -79,7 +79,7 @@ public class PreviewSalePricingHandlerTests : HandlerTestBase
         var sut = BuildHandler();
 
         var result = await sut.Handle(
-            new PreviewSalePricingQuery(new List<SaleDto.Request.Preview.PreviewLineRequest>
+            new PreviewSalePricingQuery(new List<SaleDto.PreviewLineRequest>
             {
                 new() { ProductVariantId = 9999, Quantity = 1m, UnitPrice = 100m },
                 new() { ProductVariantId = VariantA, Quantity = 2m, UnitPrice = 100m },
@@ -99,7 +99,7 @@ public class PreviewSalePricingHandlerTests : HandlerTestBase
         var sut = BuildHandler();
 
         var result = await sut.Handle(
-            new PreviewSalePricingQuery(new List<SaleDto.Request.Preview.PreviewLineRequest>
+            new PreviewSalePricingQuery(new List<SaleDto.PreviewLineRequest>
             {
                 new() { ProductVariantId = VariantA, Quantity = 2m, UnitPrice = 100m },
             }, null),
@@ -124,7 +124,7 @@ public class PreviewSalePricingHandlerTests : HandlerTestBase
         var sut = BuildHandler();
 
         var result = await sut.Handle(
-            new PreviewSalePricingQuery(new List<SaleDto.Request.Preview.PreviewLineRequest>
+            new PreviewSalePricingQuery(new List<SaleDto.PreviewLineRequest>
             {
                 new() { ProductVariantId = VariantA, Quantity = 2m, UnitPrice = 100m, ManualDiscount = 25m },
             }, null),
@@ -159,7 +159,7 @@ public class PreviewSalePricingHandlerTests : HandlerTestBase
         var sut = BuildHandler();
 
         var result = await sut.Handle(
-            new PreviewSalePricingQuery(new List<SaleDto.Request.Preview.PreviewLineRequest>
+            new PreviewSalePricingQuery(new List<SaleDto.PreviewLineRequest>
             {
                 new() { ProductVariantId = VariantA, Quantity = 1m, UnitPrice = 100m },
             }, PartyId: null),
@@ -179,7 +179,7 @@ public class PreviewSalePricingHandlerTests : HandlerTestBase
         var sut = BuildHandler();
 
         await sut.Handle(
-            new PreviewSalePricingQuery(new List<SaleDto.Request.Preview.PreviewLineRequest>
+            new PreviewSalePricingQuery(new List<SaleDto.PreviewLineRequest>
             {
                 new() { ProductVariantId = VariantA, Quantity = 3m, UnitPrice = 100m },
             }, null),

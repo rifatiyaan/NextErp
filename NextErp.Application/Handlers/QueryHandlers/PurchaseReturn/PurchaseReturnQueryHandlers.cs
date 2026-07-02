@@ -7,16 +7,16 @@ using NextErp.Application.DTOs.Returns;
 namespace NextErp.Application.Handlers.QueryHandlers.PurchaseReturn;
 
 public sealed class GetPurchaseReturnByIdHandler(IApplicationDbContext db)
-    : IRequestHandler<GetPurchaseReturnByIdQuery, PurchaseReturnDto.Response.Get.Single?>
+    : IRequestHandler<GetPurchaseReturnByIdQuery, PurchaseReturnResponse?>
 {
-    public async Task<PurchaseReturnDto.Response.Get.Single?> Handle(
+    public async Task<PurchaseReturnResponse?> Handle(
         GetPurchaseReturnByIdQuery request,
         CancellationToken cancellationToken = default)
     {
         return await db.PurchaseReturns
             .AsNoTracking()
             .Where(r => r.Id == request.Id)
-            .Select(r => new PurchaseReturnDto.Response.Get.Single
+            .Select(r => new PurchaseReturnResponse
             {
                 Id = r.Id,
                 ReturnNumber = r.ReturnNumber,
@@ -29,7 +29,7 @@ public sealed class GetPurchaseReturnByIdHandler(IApplicationDbContext db)
                 TotalAmount = r.TotalAmount,
                 IsActive = r.IsActive,
                 CreatedAt = r.CreatedAt,
-                Items = r.Items.Select(i => new PurchaseReturnDto.Response.Get.Line
+                Items = r.Items.Select(i => new PurchaseReturnLineResponse
                 {
                     Id = i.Id,
                     PurchaseItemId = i.PurchaseItemId,
@@ -49,9 +49,9 @@ public sealed class GetPurchaseReturnByIdHandler(IApplicationDbContext db)
 }
 
 public sealed class GetPagedPurchaseReturnsHandler(IApplicationDbContext db)
-    : IRequestHandler<GetPagedPurchaseReturnsQuery, PurchaseReturnDto.Response.Paged>
+    : IRequestHandler<GetPagedPurchaseReturnsQuery, PagedPurchaseReturnResponse>
 {
-    public async Task<PurchaseReturnDto.Response.Paged> Handle(
+    public async Task<PagedPurchaseReturnResponse> Handle(
         GetPagedPurchaseReturnsQuery request,
         CancellationToken cancellationToken = default)
     {
@@ -77,7 +77,7 @@ public sealed class GetPagedPurchaseReturnsHandler(IApplicationDbContext db)
             .ThenByDescending(r => r.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(r => new PurchaseReturnDto.Response.Get.ListRow
+            .Select(r => new PurchaseReturnListRowResponse
             {
                 Id = r.Id,
                 ReturnNumber = r.ReturnNumber,
@@ -90,7 +90,7 @@ public sealed class GetPagedPurchaseReturnsHandler(IApplicationDbContext db)
             })
             .ToListAsync(cancellationToken);
 
-        return new PurchaseReturnDto.Response.Paged
+        return new PagedPurchaseReturnResponse
         {
             Total = total,
             TotalDisplay = totalDisplay,

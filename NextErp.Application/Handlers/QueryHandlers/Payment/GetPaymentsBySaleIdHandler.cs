@@ -1,16 +1,16 @@
-using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Mapping;
 using NextErp.Application.Queries;
 using PaymentContracts = NextErp.Application.DTOs.Payment;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Payment
 {
-    public class GetPaymentsBySaleIdHandler(IApplicationDbContext dbContext, IMapper mapper)
-        : IRequestHandler<GetPaymentsBySaleIdQuery, IReadOnlyList<PaymentContracts.Response.Line>>
+    public class GetPaymentsBySaleIdHandler(IApplicationDbContext dbContext)
+        : IRequestHandler<GetPaymentsBySaleIdQuery, IReadOnlyList<PaymentContracts.PaymentLineResponse>>
     {
-        public async Task<IReadOnlyList<PaymentContracts.Response.Line>> Handle(
+        public async Task<IReadOnlyList<PaymentContracts.PaymentLineResponse>> Handle(
             GetPaymentsBySaleIdQuery request,
             CancellationToken cancellationToken = default)
         {
@@ -21,7 +21,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Payment
                 .ThenBy(p => p.CreatedAt)
                 .ToListAsync(cancellationToken);
 
-            return mapper.Map<List<PaymentContracts.Response.Line>>(rows).AsReadOnly();
+            return rows.Select(r => r.ToResponse()).ToList().AsReadOnly();
         }
     }
 }

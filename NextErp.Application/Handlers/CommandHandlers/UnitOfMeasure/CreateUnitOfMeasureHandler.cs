@@ -1,14 +1,14 @@
 using MediatR;
 using NextErp.Application.Commands.UnitOfMeasure;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.UnitOfMeasure;
 using NextErp.Application.Interfaces;
 
 namespace NextErp.Application.Handlers.CommandHandlers.UnitOfMeasure;
 
 public class CreateUnitOfMeasureHandler(IApplicationDbContext dbContext)
-    : IRequestHandler<CreateUnitOfMeasureCommand, DTOs.UnitOfMeasure.Response.Single>
+    : IRequestHandler<CreateUnitOfMeasureCommand, UnitOfMeasureResponse>
 {
-    public async Task<DTOs.UnitOfMeasure.Response.Single> Handle(
+    public async Task<UnitOfMeasureResponse> Handle(
         CreateUnitOfMeasureCommand request, CancellationToken cancellationToken = default)
     {
         var entity = new Domain.Entities.UnitOfMeasure
@@ -25,7 +25,7 @@ public class CreateUnitOfMeasureHandler(IApplicationDbContext dbContext)
         dbContext.UnitOfMeasures.Add(entity);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return new DTOs.UnitOfMeasure.Response.Single
+        return new UnitOfMeasureResponse
         {
             Id = entity.Id,
             Title = entity.Title,

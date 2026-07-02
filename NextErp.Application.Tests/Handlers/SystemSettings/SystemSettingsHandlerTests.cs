@@ -1,27 +1,19 @@
-using AutoMapper;
 using NextErp.Application.Commands.SystemSettings;
+using NextErp.Application.DTOs.SystemSettings;
 using NextErp.Application.Handlers.CommandHandlers.SystemSettings;
 using NextErp.Application.Handlers.QueryHandlers.SystemSettings;
 using NextErp.Application.Queries;
-using SystemSettingsDto = NextErp.Application.DTOs.SystemSettings;
 
 namespace NextErp.Application.Tests.Handlers.SystemSettings;
 
 public class SystemSettingsHandlerTests : HandlerTestBase
 {
-    private static IMapper BuildMapper()
-    {
-        var cfg = new MapperConfiguration(c =>
-            c.AddMaps(typeof(NextErp.Application.ApplicationAssemblyMarker).Assembly));
-        return cfg.CreateMapper();
-    }
-
     // ─── Get ───
 
     [Fact]
     public async Task Get_returns_defaults_when_no_row_exists()
     {
-        var sut = new GetSystemSettingsHandler(Db, BuildMapper());
+        var sut = new GetSystemSettingsHandler(Db);
 
         var dto = await sut.Handle(new GetSystemSettingsQuery(), CancellationToken.None);
 
@@ -51,7 +43,7 @@ public class SystemSettingsHandlerTests : HandlerTestBase
         });
         await Db.SaveChangesAsync();
 
-        var sut = new GetSystemSettingsHandler(Db, BuildMapper());
+        var sut = new GetSystemSettingsHandler(Db);
         var dto = await sut.Handle(new GetSystemSettingsQuery(), CancellationToken.None);
 
         dto.PresetAccentTheme.Should().Be("theme-blue");
@@ -65,9 +57,9 @@ public class SystemSettingsHandlerTests : HandlerTestBase
     [Fact]
     public async Task Update_creates_row_on_first_call()
     {
-        var sut = new UpdateSystemSettingsHandler(Db, Notifications, BuildMapper());
+        var sut = new UpdateSystemSettingsHandler(Db, Notifications);
 
-        var dto = new SystemSettingsDto.Request.Update
+        var dto = new UpdateSystemSettingsRequest
         {
             PresetAccentTheme = "theme-rose",
             NavigationPlacement = "topbar",
@@ -99,8 +91,8 @@ public class SystemSettingsHandlerTests : HandlerTestBase
         });
         await Db.SaveChangesAsync();
 
-        var sut = new UpdateSystemSettingsHandler(Db, Notifications, BuildMapper());
-        var dto = new SystemSettingsDto.Request.Update { Radius = "none" };
+        var sut = new UpdateSystemSettingsHandler(Db, Notifications);
+        var dto = new UpdateSystemSettingsRequest { Radius = "none" };
         var result = await sut.Handle(new UpdateSystemSettingsCommand(dto), CancellationToken.None);
 
         result.Radius.Should().Be("none");
@@ -124,8 +116,8 @@ public class SystemSettingsHandlerTests : HandlerTestBase
         });
         await Db.SaveChangesAsync();
 
-        var sut = new UpdateSystemSettingsHandler(Db, Notifications, BuildMapper());
-        var dto = new SystemSettingsDto.Request.Update { PresetAccentTheme = "theme-violet" };
+        var sut = new UpdateSystemSettingsHandler(Db, Notifications);
+        var dto = new UpdateSystemSettingsRequest { PresetAccentTheme = "theme-violet" };
         var result = await sut.Handle(new UpdateSystemSettingsCommand(dto), CancellationToken.None);
 
         result.PresetAccentTheme.Should().Be("theme-violet");
@@ -148,8 +140,8 @@ public class SystemSettingsHandlerTests : HandlerTestBase
         });
         await Db.SaveChangesAsync();
 
-        var sut = new UpdateSystemSettingsHandler(Db, Notifications, BuildMapper());
-        var dto = new SystemSettingsDto.Request.Update { CustomPrimary = "12 88% 50%" };
+        var sut = new UpdateSystemSettingsHandler(Db, Notifications);
+        var dto = new UpdateSystemSettingsRequest { CustomPrimary = "12 88% 50%" };
         var result = await sut.Handle(new UpdateSystemSettingsCommand(dto), CancellationToken.None);
 
         result.PresetAccentTheme.Should().BeNull();
@@ -159,8 +151,8 @@ public class SystemSettingsHandlerTests : HandlerTestBase
     [Fact]
     public async Task Update_sets_UpdatedAt()
     {
-        var sut = new UpdateSystemSettingsHandler(Db, Notifications, BuildMapper());
-        var dto = new SystemSettingsDto.Request.Update { PresetAccentTheme = "theme-green" };
+        var sut = new UpdateSystemSettingsHandler(Db, Notifications);
+        var dto = new UpdateSystemSettingsRequest { PresetAccentTheme = "theme-green" };
 
         await sut.Handle(new UpdateSystemSettingsCommand(dto), CancellationToken.None);
 
@@ -174,7 +166,7 @@ public class SystemSettingsHandlerTests : HandlerTestBase
     [Fact]
     public async Task Reset_creates_defaults_when_no_row_exists()
     {
-        var sut = new ResetSystemSettingsHandler(Db, BuildMapper());
+        var sut = new ResetSystemSettingsHandler(Db);
 
         var result = await sut.Handle(new ResetSystemSettingsCommand(), CancellationToken.None);
 
@@ -203,7 +195,7 @@ public class SystemSettingsHandlerTests : HandlerTestBase
         });
         await Db.SaveChangesAsync();
 
-        var sut = new ResetSystemSettingsHandler(Db, BuildMapper());
+        var sut = new ResetSystemSettingsHandler(Db);
         var result = await sut.Handle(new ResetSystemSettingsCommand(), CancellationToken.None);
 
         result.PresetAccentTheme.Should().Be("theme-slate");
@@ -218,4 +210,3 @@ public class SystemSettingsHandlerTests : HandlerTestBase
         (await Db.SystemSettings.AsNoTracking().CountAsync()).Should().Be(1);
     }
 }
-

@@ -2,8 +2,8 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands;
-using NextErp.Application.DTOs;
 using NextErp.Application.Queries;
+using PaymentDto = NextErp.Application.DTOs.Payment;
 
 namespace NextErp.API.Controllers;
 
@@ -20,7 +20,7 @@ public class PaymentController(IMediator mediator) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Record([FromBody] Payment.Request.Record dto)
+    public async Task<IActionResult> Record([FromBody] PaymentDto.RecordPaymentRequest dto)
     {
         var command = new RecordSalePaymentCommand(
             dto.SaleId,

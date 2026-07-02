@@ -15,7 +15,7 @@ namespace NextErp.Application.Services;
 public sealed class InvoicePdfService : IInvoicePdfService
 {
     public Task<byte[]> RenderSaleInvoiceAsync(
-        SaleDto.Response.Get.Single sale,
+        SaleDto.SaleResponse sale,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(sale);
@@ -29,7 +29,7 @@ public sealed class InvoicePdfService : IInvoicePdfService
         return Task.FromResult(bytes);
     }
 
-    private static void ComposeDocument(IDocumentContainer container, SaleDto.Response.Get.Single sale)
+    private static void ComposeDocument(IDocumentContainer container, SaleDto.SaleResponse sale)
     {
         container.Page(page =>
         {
@@ -44,7 +44,7 @@ public sealed class InvoicePdfService : IInvoicePdfService
         });
     }
 
-    private static void ComposeHeader(IContainer container, SaleDto.Response.Get.Single sale)
+    private static void ComposeHeader(IContainer container, SaleDto.SaleResponse sale)
     {
         container.Row(row =>
         {
@@ -65,7 +65,7 @@ public sealed class InvoicePdfService : IInvoicePdfService
         });
     }
 
-    private static void ComposeContent(IContainer container, SaleDto.Response.Get.Single sale)
+    private static void ComposeContent(IContainer container, SaleDto.SaleResponse sale)
     {
         container.Column(column =>
         {
@@ -82,7 +82,7 @@ public sealed class InvoicePdfService : IInvoicePdfService
         });
     }
 
-    private static void ComposeMetaBlock(IContainer container, SaleDto.Response.Get.Single sale)
+    private static void ComposeMetaBlock(IContainer container, SaleDto.SaleResponse sale)
     {
         container.Row(row =>
         {
@@ -109,7 +109,7 @@ public sealed class InvoicePdfService : IInvoicePdfService
         });
     }
 
-    private static void ComposeLineItems(IContainer container, SaleDto.Response.Get.Single sale)
+    private static void ComposeLineItems(IContainer container, SaleDto.SaleResponse sale)
     {
         container.Table(table =>
         {
@@ -165,7 +165,7 @@ public sealed class InvoicePdfService : IInvoicePdfService
         });
     }
 
-    private static void ComposeTotals(IContainer container, SaleDto.Response.Get.Single sale)
+    private static void ComposeTotals(IContainer container, SaleDto.SaleResponse sale)
     {
         container.AlignRight().Column(col =>
         {
@@ -214,7 +214,7 @@ public sealed class InvoicePdfService : IInvoicePdfService
         }
     }
 
-    private static void ComposePayments(IContainer container, SaleDto.Response.Get.Single sale)
+    private static void ComposePayments(IContainer container, SaleDto.SaleResponse sale)
     {
         container.Column(col =>
         {
@@ -286,7 +286,7 @@ public sealed class InvoicePdfService : IInvoicePdfService
         return q == decimal.Truncate(q) ? q.ToString("N0") : q.ToString("0.###");
     }
 
-    private static string ResolveStatus(SaleDto.Response.Get.Single sale)
+    private static string ResolveStatus(SaleDto.SaleResponse sale)
     {
         if (sale.BalanceDue <= 0.005m) return "Paid";
         if (sale.TotalPaid <= 0.005m) return "Due";

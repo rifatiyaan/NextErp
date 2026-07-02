@@ -1,4 +1,3 @@
-using AutoMapper;
 using NextErp.Application.Commands;
 using NextErp.Application.Handlers.CommandHandlers.Category;
 
@@ -6,16 +5,7 @@ namespace NextErp.Application.Tests.Handlers.Category;
 
 public class UpdateCategoryHandlerTests : HandlerTestBase
 {
-    private static readonly IMapper Mapper = BuildMapper();
-
-    private static IMapper BuildMapper()
-    {
-        var cfg = new MapperConfiguration(c =>
-            c.AddMaps(typeof(NextErp.Application.ApplicationAssemblyMarker).Assembly));
-        return cfg.CreateMapper();
-    }
-
-    private UpdateCategoryHandler BuildHandler() => new(Db, Mapper);
+    private UpdateCategoryHandler BuildHandler() => new(Db);
 
     private async Task<int> SeedCategoryAsync(string title = "Original")
     {
@@ -83,8 +73,8 @@ public class UpdateCategoryHandlerTests : HandlerTestBase
     [Fact]
     public async Task IsActive_false_in_command_is_persisted()
     {
-        // Confirms AutoMapper doesn't have a Condition clause silently swallowing the IsActive
-        // field in updates — the handler-level mapper.Map(request, existing) should overwrite.
+        // Confirms the mapper doesn't silently swallow the IsActive field in updates —
+        // the handler-level request.ApplyTo(existing) should overwrite it.
         var id = await SeedCategoryAsync();
         var sut = BuildHandler();
 

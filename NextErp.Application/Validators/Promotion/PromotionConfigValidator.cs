@@ -46,7 +46,7 @@ public sealed class CreatePromotionCommandValidator : AbstractValidator<CreatePr
 
     internal static void ValidateConfig(
         PromotionType type,
-        PromotionDto.Request.ConfigDto cfg,
+        PromotionConfigDto cfg,
         FluentValidation.ValidationContext<CreatePromotionCommand> ctx)
     {
         switch (type)
@@ -88,7 +88,7 @@ public sealed class CreatePromotionCommandValidator : AbstractValidator<CreatePr
     }
 
     private static void RequireDiscountValue(
-        PromotionDto.Request.ConfigDto cfg,
+        PromotionConfigDto cfg,
         FluentValidation.ValidationContext<CreatePromotionCommand> ctx)
     {
         var amount = cfg.DiscountAmount.GetValueOrDefault();
@@ -102,7 +102,7 @@ public sealed class CreatePromotionCommandValidator : AbstractValidator<CreatePr
     }
 
     private static void RequireScope(
-        PromotionDto.Request.ConfigDto cfg,
+        PromotionConfigDto cfg,
         FluentValidation.ValidationContext<CreatePromotionCommand> ctx)
     {
         var hasSingular = cfg.ScopeProductId != null || cfg.ScopeCategoryId != null || cfg.ScopeProductVariantId != null;
@@ -113,7 +113,7 @@ public sealed class CreatePromotionCommandValidator : AbstractValidator<CreatePr
     }
 
     private static void ForbidLineScope(
-        PromotionDto.Request.ConfigDto cfg,
+        PromotionConfigDto cfg,
         FluentValidation.ValidationContext<CreatePromotionCommand> ctx)
     {
         var hasSingular = cfg.ScopeProductId != null || cfg.ScopeCategoryId != null || cfg.ScopeProductVariantId != null;
@@ -124,7 +124,7 @@ public sealed class CreatePromotionCommandValidator : AbstractValidator<CreatePr
     }
 
     private static void RequireBogoMechanics(
-        PromotionDto.Request.ConfigDto cfg,
+        PromotionConfigDto cfg,
         FluentValidation.ValidationContext<CreatePromotionCommand> ctx)
     {
         if ((cfg.BuyQuantity ?? 0) <= 0)
@@ -136,7 +136,7 @@ public sealed class CreatePromotionCommandValidator : AbstractValidator<CreatePr
     }
 
     private static void ForbidBogo(
-        PromotionDto.Request.ConfigDto cfg,
+        PromotionConfigDto cfg,
         FluentValidation.ValidationContext<CreatePromotionCommand> ctx)
     {
         if (cfg.BuyQuantity != null || cfg.GetQuantity != null || cfg.GetDiscountPercent != null
@@ -148,7 +148,7 @@ public sealed class CreatePromotionCommandValidator : AbstractValidator<CreatePr
     }
 
     private static void ForbidPlainDiscountValue(
-        PromotionDto.Request.ConfigDto cfg,
+        PromotionConfigDto cfg,
         FluentValidation.ValidationContext<CreatePromotionCommand> ctx)
     {
         if (cfg.DiscountAmount != null || cfg.DiscountPercent != null || cfg.MinSubtotal != null)
@@ -156,7 +156,7 @@ public sealed class CreatePromotionCommandValidator : AbstractValidator<CreatePr
     }
 
     private static void ForbidMembership(
-        PromotionDto.Request.ConfigDto cfg,
+        PromotionConfigDto cfg,
         FluentValidation.ValidationContext<CreatePromotionCommand> ctx)
     {
         if (!string.IsNullOrWhiteSpace(cfg.MembershipTier))

@@ -37,7 +37,7 @@ public class JournalController(IMediator mediator) : ControllerBase
 
     // POST api/journal/transfer
     [HttpPost("transfer")]
-    public async Task<IActionResult> Transfer([FromBody] JournalDto.Request.Transfer dto, CancellationToken ct = default)
+    public async Task<IActionResult> Transfer([FromBody] TransferJournalRequest dto, CancellationToken ct = default)
     {
         var id = await mediator.Send(new CreateAccountTransferCommand(dto), ct);
         var created = await mediator.Send(new GetJournalEntryByIdQuery(id), ct);

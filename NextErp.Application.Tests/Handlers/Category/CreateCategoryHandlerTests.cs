@@ -1,4 +1,3 @@
-using AutoMapper;
 using NextErp.Application.Commands;
 using NextErp.Application.Handlers.CommandHandlers.Category;
 
@@ -6,16 +5,7 @@ namespace NextErp.Application.Tests.Handlers.Category;
 
 public class CreateCategoryHandlerTests : HandlerTestBase
 {
-    private static readonly IMapper Mapper = BuildMapper();
-
-    private static IMapper BuildMapper()
-    {
-        var cfg = new MapperConfiguration(c =>
-            c.AddMaps(typeof(NextErp.Application.ApplicationAssemblyMarker).Assembly));
-        return cfg.CreateMapper();
-    }
-
-    private CreateCategoryHandler BuildHandler() => new(Db, Mapper);
+    private CreateCategoryHandler BuildHandler() => new(Db);
 
     [Fact]
     public async Task Happy_path_creates_top_level_category_and_returns_id()

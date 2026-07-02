@@ -1,4 +1,3 @@
-using AutoMapper;
 using Hangfire;
 using MailKit.Net.Smtp;
 using MailKit.Security;
@@ -8,6 +7,7 @@ using Microsoft.Extensions.Options;
 using MimeKit;
 using NextErp.Application.DTOs;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Mapping;
 using NextErp.Application.Queries;
 using SaleDto = NextErp.Application.DTOs.Sale;
 
@@ -23,7 +23,6 @@ namespace NextErp.Infrastructure.Services;
 /// </summary>
 public sealed class SmtpInvoiceEmailService(
     IMediator mediator,
-    IMapper mapper,
     IInvoicePdfService invoicePdfService,
     IOptions<EmailOptions> options,
     ILogger<SmtpInvoiceEmailService> logger) : IInvoiceEmailService
@@ -44,7 +43,7 @@ public sealed class SmtpInvoiceEmailService(
         //    enqueue-time controller, so the job arg payload stays tiny.
         var sale = await mediator.Send(new GetSaleByIdQuery(saleId), cancellationToken)
             ?? throw new InvalidOperationException($"Sale {saleId} not found.");
-        var dto = mapper.Map<SaleDto.Response.Get.Single>(sale);
+        var dto = sale.ToResponse();
         var pdfBytes = await invoicePdfService.RenderSaleInvoiceAsync(dto, cancellationToken);
         var pdfFileName = $"invoice-{dto.SaleNumber}.pdf";
 
@@ -104,7 +103,7 @@ public sealed class SmtpInvoiceEmailService(
     }
 
     private MimeMessage BuildMessage(
-        SaleDto.Response.Get.Single sale,
+        SaleDto.SaleResponse sale,
         EmailMessageRequest req,
         byte[] pdfBytes,
         string pdfFileName)

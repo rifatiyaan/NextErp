@@ -34,7 +34,7 @@ public class PurchaseReturnController(IMediator mediator) : ControllerBase
 
     [HttpPost]
     public async Task<IActionResult> Create(
-        [FromBody] PurchaseReturnDto.Request.Create.Single dto,
+        [FromBody] CreatePurchaseReturnRequest dto,
         CancellationToken ct = default)
     {
         var id = await mediator.Send(new CreatePurchaseReturnCommand(dto), ct);

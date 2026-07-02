@@ -1,7 +1,9 @@
 using System.Reflection;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using NextErp.Application.Common.Attributes;
+using NextErp.Application.Common.Caching;
 using NextErp.Application.Common.Exceptions;
 using NextErp.Application.Interfaces;
 
@@ -10,7 +12,9 @@ namespace NextErp.Application.Common.Behaviors;
 public sealed class PermissionBehavior<TRequest, TResponse>(
     IUserContext userContext,
     IApplicationDbContext db,
-    IServiceProvider services)
+    IServiceProvider services,
+    IMemoryCache cache,
+    IPermissionCacheSignal cacheSignal)
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
@@ -33,22 +37,43 @@ public sealed class PermissionBehavior<TRequest, TResponse>(
         if (userContext.PrimaryRoleId is not Guid roleId)
             throw new ForbiddenAccessException("No role is assigned for permission checks.");
 
-        // One query for the whole required set (was one AnyAsync per
-        // permission — N+1 on a hot path that runs for every authorized
-        // request). Check membership in memory afterwards.
-        var granted = await db.RolePermissions
-            .AsNoTracking()
-            .Where(rp => rp.RoleId == roleId && required.Contains(rp.PermissionKey))
-            .Select(rp => rp.PermissionKey)
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-        var grantedSet = new HashSet<string>(granted, StringComparer.Ordinal);
+        var grantedSet = await GetGrantedPermissionsAsync(roleId, cancellationToken).ConfigureAwait(false);
 
         var missing = required.FirstOrDefault(p => !grantedSet.Contains(p));
         if (missing is not null)
             throw new ForbiddenAccessException($"Missing permission: {missing}");
 
         return await next(cancellationToken).ConfigureAwait(false);
+    }
+
+    // The whole granted set for a role is cached (small, reused by every
+    // guarded endpoint) instead of querying per required-permission subset.
+    // This runs for every authorized request — the hottest read in the app.
+    private async Task<HashSet<string>> GetGrantedPermissionsAsync(Guid roleId, CancellationToken cancellationToken)
+    {
+        var cacheKey = $"perms:role:{roleId}";
+        if (cache.TryGetValue(cacheKey, out HashSet<string>? cached) && cached is not null)
+            return cached;
+
+        var granted = await db.RolePermissions
+            .AsNoTracking()
+            .Where(rp => rp.RoleId == roleId)
+            .Select(rp => rp.PermissionKey)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        // Keys are lowercased on write (SetRolePermissionsHandler) while
+        // [RequiresPermission] values are mixed-case — compare case-insensitively,
+        // matching the MSSQL default collation the old SQL-side filter relied on.
+        var grantedSet = new HashSet<string>(granted, StringComparer.OrdinalIgnoreCase);
+
+        // Short TTL as a safety net; the signal evicts synchronously on role edits.
+        cache.Set(cacheKey, grantedSet, new MemoryCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5),
+        }.AddExpirationToken(cacheSignal.Token));
+
+        return grantedSet;
     }
 
     private Type ResolveHandlerType()

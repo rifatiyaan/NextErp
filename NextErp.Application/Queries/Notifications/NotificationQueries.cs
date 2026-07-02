@@ -1,5 +1,5 @@
 using MediatR;
-using NotificationDto = NextErp.Application.DTOs.Notification;
+using NextErp.Application.DTOs.Notification;
 
 namespace NextErp.Application.Queries.Notifications;
 
@@ -20,4 +20,4 @@ public record GetNotificationsQuery(
     int PageSize = 20,
     bool UnreadOnly = false,
     string? Type = null
-) : IRequest<NotificationDto.Response.List>;
+) : IRequest<NotificationListResponse>;

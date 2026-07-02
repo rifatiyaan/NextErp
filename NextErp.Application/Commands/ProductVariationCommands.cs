@@ -1,6 +1,7 @@
 using MediatR;
 using NextErp.Application.Common.Interfaces;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Product;
+using NextErp.Application.DTOs.ProductVariation;
 
 namespace NextErp.Application.Commands
 {
@@ -20,13 +21,13 @@ namespace NextErp.Application.Commands
         decimal InitialStock, // Seed quantity for default variant (variants override per-variant)
         bool IsActive,
         string? ImageUrl,
-        IReadOnlyList<Product.Request.GalleryResolvedSlot>? ImageGallery,
+        IReadOnlyList<GalleryResolvedSlot>? ImageGallery,
         string? Description,
         string? Color,
         string? Warranty,
         // Variation data
-        List<ProductVariation.Request.VariationOptionDto> VariationOptions,
-        List<ProductVariation.Request.ProductVariantDto> ProductVariants,
+        List<VariationOptionRequest> VariationOptions,
+        List<ProductVariantRequest> ProductVariants,
         int? UnitOfMeasureId = null
     ) : IRequest<int>, ITransactionalRequest; // Returns Id of created product
 

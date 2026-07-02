@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands.SystemSettings;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
-using SystemSettingsDto = NextErp.Application.DTOs.SystemSettings;
+using NextErp.Application.DTOs.SystemSettings;
 
 namespace NextErp.API.Controllers;
 
@@ -14,15 +14,15 @@ namespace NextErp.API.Controllers;
 public class SystemSettingsController(IMediator mediator, IImageService imageService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<SystemSettingsDto.Response.Single>> Get(CancellationToken ct = default)
+    public async Task<ActionResult<SystemSettingsResponse>> Get(CancellationToken ct = default)
     {
         var result = await mediator.Send(new GetSystemSettingsQuery(), ct);
         return Ok(result);
     }
 
     [HttpPut]
-    public async Task<ActionResult<SystemSettingsDto.Response.Single>> Update(
-        [FromBody] SystemSettingsDto.Request.Update dto,
+    public async Task<ActionResult<SystemSettingsResponse>> Update(
+        [FromBody] UpdateSystemSettingsRequest dto,
         CancellationToken ct = default)
     {
         var result = await mediator.Send(new UpdateSystemSettingsCommand(dto), ct);
@@ -30,7 +30,7 @@ public class SystemSettingsController(IMediator mediator, IImageService imageSer
     }
 
     [HttpPost("reset")]
-    public async Task<ActionResult<SystemSettingsDto.Response.Single>> Reset(CancellationToken ct = default)
+    public async Task<ActionResult<SystemSettingsResponse>> Reset(CancellationToken ct = default)
     {
         var result = await mediator.Send(new ResetSystemSettingsCommand(), ct);
         return Ok(result);

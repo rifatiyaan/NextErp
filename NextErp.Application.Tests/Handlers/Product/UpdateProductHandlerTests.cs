@@ -1,6 +1,5 @@
-using AutoMapper;
 using NextErp.Application.Commands;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Product;
 using NextErp.Application.Handlers.CommandHandlers.Product;
 using NextErp.Application.Services;
 
@@ -8,19 +7,10 @@ namespace NextErp.Application.Tests.Handlers.Product;
 
 public class UpdateProductHandlerTests : HandlerTestBase
 {
-    private static readonly IMapper Mapper = BuildMapper();
-
-    private static IMapper BuildMapper()
-    {
-        var cfg = new MapperConfiguration(c =>
-            c.AddMaps(typeof(NextErp.Application.ApplicationAssemblyMarker).Assembly));
-        return cfg.CreateMapper();
-    }
-
     private UpdateProductHandler BuildHandler()
     {
         var stockService = new StockService(Db, BranchProvider);
-        return new UpdateProductHandler(Db, stockService, Notifications, Mapper);
+        return new UpdateProductHandler(Db, stockService, Notifications);
     }
 
     private const int ProductId = 100;
@@ -51,7 +41,7 @@ public class UpdateProductHandlerTests : HandlerTestBase
         string title = "Updated Title",
         decimal price = 250m,
         int categoryId = CategoryIdB,
-        IReadOnlyList<DTOs.Product.Request.GalleryResolvedSlot>? gallery = null)
+        IReadOnlyList<GalleryResolvedSlot>? gallery = null)
         => new(
             Id: id,
             Title: title,
@@ -157,7 +147,7 @@ public class UpdateProductHandlerTests : HandlerTestBase
         });
         await Db.SaveChangesAsync();
 
-        var gallery = new List<DTOs.Product.Request.GalleryResolvedSlot>
+        var gallery = new List<GalleryResolvedSlot>
         {
             new("https://new/a.jpg", IsThumbnail: true),
             new("https://new/b.jpg", IsThumbnail: false),

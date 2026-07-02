@@ -1,7 +1,7 @@
 using MediatR;
 using NextErp.Application.Common.Attributes;
 using NextErp.Application.Common.Interfaces;
-using NextErp.Application.DTOs;
+using SaleDto = NextErp.Application.DTOs.Sale;
 
 namespace NextErp.Application.Commands
 {
@@ -11,6 +11,6 @@ namespace NextErp.Application.Commands
         decimal Discount,
         string? PaymentMethod,
         decimal? PaidAmount,
-        List<Sale.Request.Create.SaleItemRequest> Items
+        List<SaleDto.SaleItemRequest> Items
     ) : IRequest<Guid>, ITransactionalRequest; // Returns Id of created sale
 }

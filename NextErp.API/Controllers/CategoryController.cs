@@ -1,11 +1,11 @@
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Category;
 using NextErp.Application.DTOs.Common;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Mapping;
 using NextErp.Application.Queries;
 
 namespace NextErp.API.Controllers;
@@ -13,7 +13,7 @@ namespace NextErp.API.Controllers;
 [Authorize]
 [Route("api/[controller]")]
 [ApiController]
-public class CategoryController(IMediator mediator, IMapper mapper, IImageService imageService) : ControllerBase
+public class CategoryController(IMediator mediator, IImageService imageService) : ControllerBase
 {
     // GET api/category/{id}
     [HttpGet("{id}")]
@@ -24,7 +24,7 @@ public class CategoryController(IMediator mediator, IMapper mapper, IImageServic
 
         if (category == null) return NotFound();
 
-        var dto = mapper.Map<Category.Response.Get.Single>(category);
+        var dto = category.ToResponse();
         return Ok(dto);
     }
 
@@ -39,7 +39,7 @@ public class CategoryController(IMediator mediator, IMapper mapper, IImageServic
         var query = new GetPagedCategoriesQuery(pageIndex, pageSize, searchText, sortBy);
         var pagedResult = await mediator.Send(query);
 
-        var dtoList = mapper.Map<List<Category.Response.Get.Single>>(pagedResult.Records);
+        var dtoList = pagedResult.Records.Select(c => c.ToResponse()).ToList();
 
         return Ok(new
         {
@@ -51,16 +51,16 @@ public class CategoryController(IMediator mediator, IMapper mapper, IImageServic
 
     // POST api/category
     [HttpPost]
-    public async Task<IActionResult> Create([FromForm] Category.Request.Create.Single dto)
+    public async Task<IActionResult> Create([FromForm] CreateCategoryRequest dto)
     {
         // Upload images and create assets
         if (dto.Images != null && dto.Images.Length > 0)
         {
-            dto.Assets = new List<Category.Request.Asset>();
+            dto.Assets = new List<CategoryAssetRequest>();
             foreach (var image in dto.Images)
             {
                 var imageUrl = await imageService.UploadImageAsync(image);
-                dto.Assets.Add(new Category.Request.Asset
+                dto.Assets.Add(new CategoryAssetRequest
                 {
                     Filename = image.FileName,
                     Url = imageUrl,
@@ -71,11 +71,11 @@ public class CategoryController(IMediator mediator, IMapper mapper, IImageServic
             }
         }
 
-        var command = mapper.Map<CreateCategoryCommand>(dto);
+        var command = dto.ToCommand();
         var id = await mediator.Send(command);
 
         var category = await mediator.Send(new GetCategoryByIdQuery(id));
-        var response = mapper.Map<Category.Response.Get.Single>(category);
+        var response = category?.ToResponse();
 
         return CreatedAtAction(nameof(Get), new { id }, response);
     }
@@ -95,19 +95,19 @@ public class CategoryController(IMediator mediator, IMapper mapper, IImageServic
 
     // PUT api/category/{id}
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromForm] Category.Request.Update.Single dto)
+    public async Task<IActionResult> Update(int id, [FromForm] UpdateCategoryRequest dto)
     {
         // Upload new images and add to assets
         if (dto.Images != null && dto.Images.Length > 0)
         {
             if (dto.Assets == null)
             {
-                dto.Assets = new List<Category.Request.Asset>();
+                dto.Assets = new List<CategoryAssetRequest>();
             }
             foreach (var image in dto.Images)
             {
                 var imageUrl = await imageService.UploadImageAsync(image);
-                dto.Assets.Add(new Category.Request.Asset
+                dto.Assets.Add(new CategoryAssetRequest
                 {
                     Filename = image.FileName,
                     Url = imageUrl,
@@ -118,7 +118,8 @@ public class CategoryController(IMediator mediator, IMapper mapper, IImageServic
             }
         }
 
-        var command = mapper.Map<UpdateCategoryCommand>(dto, opts => opts.Items["Id"] = id);
+        dto.Id = id;
+        var command = dto.ToCommand();
         await mediator.Send(command);
         return NoContent();
     }

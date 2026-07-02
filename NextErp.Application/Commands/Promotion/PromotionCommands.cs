@@ -4,10 +4,10 @@ using NextErp.Application.DTOs.Promotion;
 
 namespace NextErp.Application.Commands.Promotion;
 
-public record CreatePromotionCommand(PromotionDto.Request.Create Request)
+public record CreatePromotionCommand(CreatePromotionRequest Request)
     : IRequest<Guid>, ITransactionalRequest;
 
-public record UpdatePromotionCommand(Guid Id, PromotionDto.Request.Update Request)
+public record UpdatePromotionCommand(Guid Id, UpdatePromotionRequest Request)
     : IRequest<bool>, ITransactionalRequest;
 
 public record DeactivatePromotionCommand(Guid Id)

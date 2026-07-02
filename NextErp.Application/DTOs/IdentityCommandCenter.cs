@@ -1,13 +1,13 @@
 namespace NextErp.Application.DTOs
 {
-    public class IdentityCommandCenterDto
+    public sealed record IdentityCommandCenterDto
     {
         public List<IdentityRoleEntry> Roles { get; set; } = new();
         public List<IdentityUserEntry> Users { get; set; } = new();
         public List<IdentityBranchEntry> Branches { get; set; } = new();
     }
 
-    public class IdentityRoleEntry
+    public sealed record IdentityRoleEntry
     {
         public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
@@ -19,7 +19,7 @@ namespace NextErp.Application.DTOs
         public List<string> Permissions { get; set; } = new();
     }
 
-    public class IdentityUserEntry
+    public sealed record IdentityUserEntry
     {
         public Guid Id { get; set; }
         public string UserName { get; set; } = string.Empty;
@@ -36,36 +36,36 @@ namespace NextErp.Application.DTOs
         public bool IsEmailConfirmed { get; set; }
     }
 
-    public class IdentityBranchEntry
+    public sealed record IdentityBranchEntry
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public bool IsActive { get; set; }
     }
 
-    public class PatchUserDto
+    public sealed record PatchUserDto
     {
         public Guid? BranchId { get; set; }
         public string? RoleName { get; set; }
     }
 
-    public class SetPermissionsDto
+    public sealed record SetPermissionsDto
     {
         public List<string> PermissionKeys { get; set; } = new();
     }
 
-    public class CreateRoleDto
+    public sealed record CreateRoleDto
     {
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
     }
 
-    public class RenameRoleDto
+    public sealed record RenameRoleDto
     {
         public string Name { get; set; } = string.Empty;
     }
 
-    public class CreateUserDto
+    public sealed record CreateUserDto
     {
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;

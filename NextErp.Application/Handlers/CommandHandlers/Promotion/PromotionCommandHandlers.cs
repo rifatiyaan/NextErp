@@ -1,19 +1,12 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Commands.Promotion;
-using NextErp.Application.DTOs.Promotion;
 using NextErp.Application.Interfaces;
-using DomainPromotion = NextErp.Domain.Entities.Promotion;
+using NextErp.Application.Mapping;
 using DomainPromotionConfig = NextErp.Domain.Entities.PromotionConfig;
 
 namespace NextErp.Application.Handlers.CommandHandlers.Promotion;
 
-/// <summary>
-/// Promotion CRUD. Promotions are tenant-wide so we always write
-/// TenantId = Guid.Empty (single-tenant pet project). FluentValidation
-/// runs ahead of these handlers via the validation pipeline behaviour
-/// and rejects invalid type/config combos at the API edge.
-/// </summary>
 public sealed class CreatePromotionHandler(
     IApplicationDbContext db,
     IUserContext userContext)
@@ -21,60 +14,35 @@ public sealed class CreatePromotionHandler(
 {
     public async Task<Guid> Handle(CreatePromotionCommand request, CancellationToken cancellationToken = default)
     {
-        var dto = request.Request;
-        var entity = new DomainPromotion
-        {
-            Id = Guid.NewGuid(),
-            Name = dto.Name.Trim(),
-            Description = string.IsNullOrWhiteSpace(dto.Description) ? null : dto.Description.Trim(),
-            Type = dto.Type,
-            Config = MapConfig(dto.Config),
-            IsActive = dto.IsActive,
-            StartDate = dto.StartDate,
-            EndDate = dto.EndDate,
-            Priority = dto.Priority,
-            Stackable = dto.Stackable,
-            TenantId = Guid.Empty,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = userContext.UserId,
-        };
+        var entity = request.Request.ToEntity();
+        entity.Id = Guid.NewGuid();
+        entity.Name = entity.Name.Trim();
+        entity.Description = string.IsNullOrWhiteSpace(entity.Description) ? null : entity.Description.Trim();
+        entity.TenantId = Guid.Empty;
+        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedBy = userContext.UserId;
+        NormalizeConfig(entity.Config);
 
         db.Promotions.Add(entity);
         await db.SaveChangesAsync(cancellationToken);
         return entity.Id;
     }
 
-    internal static DomainPromotionConfig MapConfig(PromotionDto.Request.ConfigDto c) => new()
+    // Mapperly copies config fields straight; business normalization stays
+    // here: dedupe multi-select lists, collapse empties to null, trim the tier.
+    internal static void NormalizeConfig(DomainPromotionConfig c)
     {
-        DiscountAmount = c.DiscountAmount,
-        DiscountPercent = c.DiscountPercent,
-        MinSubtotal = c.MinSubtotal,
-        ScopeProductId = c.ScopeProductId,
-        ScopeCategoryId = c.ScopeCategoryId,
-        ScopeProductVariantId = c.ScopeProductVariantId,
-        // Defensive copy + dedupe for the JSON-stored multi-select lists.
-        // Empty lists collapse to null so DB rows stay clean.
-        ScopeProductIds = (c.ScopeProductIds != null && c.ScopeProductIds.Count > 0)
-            ? c.ScopeProductIds.Distinct().ToList()
-            : null,
-        ScopeCategoryIds = (c.ScopeCategoryIds != null && c.ScopeCategoryIds.Count > 0)
-            ? c.ScopeCategoryIds.Distinct().ToList()
-            : null,
-        BuyQuantity = c.BuyQuantity,
-        GetQuantity = c.GetQuantity,
-        GetDiscountPercent = c.GetDiscountPercent,
-        BuyProductIds = (c.BuyProductIds != null && c.BuyProductIds.Count > 0)
-            ? c.BuyProductIds.Distinct().ToList()
-            : null,
-        BuyCategoryIds = (c.BuyCategoryIds != null && c.BuyCategoryIds.Count > 0)
-            ? c.BuyCategoryIds.Distinct().ToList()
-            : null,
-        GetProductIds = (c.GetProductIds != null && c.GetProductIds.Count > 0)
-            ? c.GetProductIds.Distinct().ToList()
-            : null,
-        MaxRewardQuantity = c.MaxRewardQuantity is > 0 ? c.MaxRewardQuantity : null,
-        MembershipTier = string.IsNullOrWhiteSpace(c.MembershipTier) ? null : c.MembershipTier.Trim(),
-    };
+        c.ScopeProductIds = NormalizeList(c.ScopeProductIds);
+        c.ScopeCategoryIds = NormalizeList(c.ScopeCategoryIds);
+        c.BuyProductIds = NormalizeList(c.BuyProductIds);
+        c.BuyCategoryIds = NormalizeList(c.BuyCategoryIds);
+        c.GetProductIds = NormalizeList(c.GetProductIds);
+        c.MaxRewardQuantity = c.MaxRewardQuantity is > 0 ? c.MaxRewardQuantity : null;
+        c.MembershipTier = string.IsNullOrWhiteSpace(c.MembershipTier) ? null : c.MembershipTier.Trim();
+    }
+
+    private static List<int>? NormalizeList(List<int>? source) =>
+        source is { Count: > 0 } ? source.Distinct().ToList() : null;
 }
 
 public sealed class UpdatePromotionHandler(IApplicationDbContext db)
@@ -85,17 +53,11 @@ public sealed class UpdatePromotionHandler(IApplicationDbContext db)
         var entity = await db.Promotions.FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
         if (entity == null) return false;
 
-        var dto = request.Request;
-        entity.Name = dto.Name.Trim();
-        entity.Description = string.IsNullOrWhiteSpace(dto.Description) ? null : dto.Description.Trim();
-        entity.Type = dto.Type;
-        entity.Config = CreatePromotionHandler.MapConfig(dto.Config);
-        entity.IsActive = dto.IsActive;
-        entity.StartDate = dto.StartDate;
-        entity.EndDate = dto.EndDate;
-        entity.Priority = dto.Priority;
-        entity.Stackable = dto.Stackable;
+        request.Request.ApplyTo(entity);
+        entity.Name = entity.Name.Trim();
+        entity.Description = string.IsNullOrWhiteSpace(entity.Description) ? null : entity.Description.Trim();
         entity.UpdatedAt = DateTime.UtcNow;
+        CreatePromotionHandler.NormalizeConfig(entity.Config);
 
         await db.SaveChangesAsync(cancellationToken);
         return true;
@@ -109,8 +71,7 @@ public sealed class DeactivatePromotionHandler(IApplicationDbContext db)
     {
         var entity = await db.Promotions.FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
         if (entity == null) return false;
-        // Soft-delete: keeps historical SaleItem.PromotionId links intact so
-        // past sales still report which promotion applied.
+        // Soft-delete keeps historical SaleItem.PromotionId links intact.
         entity.IsActive = false;
         entity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);

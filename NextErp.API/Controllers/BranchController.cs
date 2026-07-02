@@ -1,11 +1,9 @@
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Branch;
 using NextErp.Application.Interfaces;
-using NextErp.Domain.Entities;
-using BranchDto = NextErp.Application.DTOs.Branch;
+using NextErp.Application.Mapping;
 using DomainBranch = NextErp.Domain.Entities.Branch;
 
 namespace NextErp.API.Controllers;
@@ -15,7 +13,6 @@ namespace NextErp.API.Controllers;
 [ApiController]
 public class BranchController(
     IApplicationDbContext dbContext,
-    IMapper mapper,
     IBranchProvider branchProvider) : ControllerBase
 {
     [HttpGet]
@@ -29,7 +26,7 @@ public class BranchController(
         }
 
         var entities = await query.ToListAsync(cancellationToken);
-        var response = mapper.Map<List<BranchDto.Response.Get.Single>>(entities);
+        var response = entities.Select(e => e.ToResponse()).ToList();
         return Ok(response);
     }
 
@@ -44,17 +41,17 @@ public class BranchController(
         if (entity == null)
             return NotFound();
 
-        var response = mapper.Map<BranchDto.Response.Get.Single>(entity);
+        var response = entity.ToResponse();
         return Ok(response);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] BranchDto.Request.Create.Single dto, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Create([FromBody] CreateBranchRequest dto, CancellationToken cancellationToken = default)
     {
         if (!branchProvider.IsGlobal())
             return Forbid();
 
-        var entity = mapper.Map<DomainBranch>(dto);
+        var entity = dto.ToEntity();
         entity.Id = Guid.NewGuid();
         entity.TenantId = Guid.Empty;
         entity.CreatedAt = DateTime.UtcNow;
@@ -62,12 +59,12 @@ public class BranchController(
         await dbContext.Branches.AddAsync(entity, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var response = mapper.Map<BranchDto.Response.Create.Single>(entity);
+        var response = entity.ToCreateResponse();
         return CreatedAtAction(nameof(GetById), new { id = entity.Id }, response);
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] BranchDto.Request.Update.Single dto, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateBranchRequest dto, CancellationToken cancellationToken = default)
     {
         if (!branchProvider.IsGlobal())
             return Forbid();
@@ -76,7 +73,7 @@ public class BranchController(
         if (entity == null)
             return NotFound();
 
-        mapper.Map(dto, entity);
+        dto.ApplyTo(entity);
         entity.UpdatedAt = DateTime.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
         return NoContent();

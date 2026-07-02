@@ -1,6 +1,6 @@
 namespace NextErp.Application.DTOs.Common
 {
-    public class OperationResult<T>
+    public record OperationResult<T>
     {
         public bool Success { get; set; }
         public string Message { get; set; } = string.Empty;

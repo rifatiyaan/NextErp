@@ -9,6 +9,15 @@
     <RootNamespace>NextErp.API</RootNamespace>
   </PropertyGroup>
 
+  <!-- SpaProxy: in Development, `dotnet run` / F5 auto-starts the Next.js dev
+       server (npm run dev) and the browser lands on the UI. Does nothing in
+       Production. The frontend lives at the repo root (sibling of NextErp/). -->
+  <PropertyGroup>
+    <SpaRoot>..\..\NextErp_React\</SpaRoot>
+    <SpaProxyServerUrl>http://127.0.0.1:3000</SpaProxyServerUrl>
+    <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="wwwroot\**" />
     <Content Remove="wwwroot\**" />
@@ -17,8 +26,8 @@
   </ItemGroup>
 
   <ItemGroup>
-	  <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
 	  <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="10.0.1" />
+	  <PackageReference Include="Microsoft.AspNetCore.SpaProxy" Version="8.0.*" />
 	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.10" />
 	  <PackageReference Include="Swashbuckle.AspNetCore" Version="8.0.1" />
 	  <PackageReference Include="NSwag.AspNetCore" Version="8.0.1" />

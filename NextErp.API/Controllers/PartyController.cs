@@ -1,14 +1,14 @@
-using AutoMapper;
 using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands;
 using NextErp.Application.DTOs.Common;
+using NextErp.Application.DTOs.Party;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Mapping;
 using NextErp.Application.Queries;
 using NextErp.Domain.Entities;
-using PartyDto = NextErp.Application.DTOs.Party;
 
 namespace NextErp.API.Controllers;
 
@@ -17,7 +17,6 @@ namespace NextErp.API.Controllers;
 [ApiController]
 public class PartyController(
     IMediator mediator,
-    IMapper mapper,
     IBackgroundJobClient backgroundJobs) : ControllerBase
 {
     // GET api/party/{id}
@@ -27,7 +26,7 @@ public class PartyController(
         var party = await mediator.Send(new GetPartyByIdQuery(id));
         if (party == null) return NotFound();
 
-        var dto = mapper.Map<PartyDto.Response.Get.Single>(party);
+        var dto = party.ToResponse();
         return Ok(dto);
     }
 
@@ -42,7 +41,7 @@ public class PartyController(
     {
         var query = new GetPagedPartiesQuery(pageIndex, pageSize, searchText, sortBy, type);
         var result = await mediator.Send(query);
-        var dtoList = mapper.Map<List<PartyDto.Response.Get.Single>>(result.Records);
+        var dtoList = result.Records.Select(p => p.ToResponse()).ToList();
 
         return Ok(new
         {
@@ -54,23 +53,23 @@ public class PartyController(
 
     // POST api/party
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] PartyDto.Request.Create.Single dto)
+    public async Task<IActionResult> Create([FromBody] CreatePartyRequest dto)
     {
-        var command = mapper.Map<CreatePartyCommand>(dto);
+        var command = dto.ToCommand();
         var id = await mediator.Send(command);
 
         var party = await mediator.Send(new GetPartyByIdQuery(id));
-        var response = mapper.Map<PartyDto.Response.Create.Single>(party);
+        var response = party!.ToCreateResponse();
 
         return CreatedAtAction(nameof(Get), new { id }, response);
     }
 
     // PUT api/party/{id}
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] PartyDto.Request.Update.Single dto)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdatePartyRequest dto)
     {
         dto.Id = id;
-        var command = mapper.Map<UpdatePartyCommand>(dto);
+        var command = dto.ToCommand();
         await mediator.Send(command);
         return NoContent();
     }

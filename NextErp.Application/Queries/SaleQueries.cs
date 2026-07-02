@@ -14,17 +14,17 @@ namespace NextErp.Application.Queries
         int PageSize,
         string? SearchText,
         string? SortBy
-    ) : IRequest<PagedResult<SaleDto.Response.Get.ListRow>>;
+    ) : IRequest<PagedResult<SaleDto.SaleListRowResponse>>;
 
     // Get sales report
     public record GetSalesReportQuery(
         DateTime StartDate,
         DateTime EndDate,
         Guid? PartyId
-    ) : IRequest<SaleDto.Response.Get.Report>;
+    ) : IRequest<SaleDto.SaleReportResponse>;
 
     public record PreviewSalePricingQuery(
-        List<SaleDto.Request.Preview.PreviewLineRequest> Lines,
+        List<SaleDto.PreviewLineRequest> Lines,
         Guid? PartyId
-    ) : IRequest<SaleDto.Response.Preview.Single>;
+    ) : IRequest<SaleDto.PreviewSaleResponse>;
 }

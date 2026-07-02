@@ -1,16 +1,16 @@
 using NextErp.Application.Common.Extensions;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Purchase;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Purchase
 {
     public class GetPurchaseReportHandler(IApplicationDbContext dbContext)
-        : IRequestHandler<GetPurchaseReportQuery, DTOs.Purchase.Response.Get.Report>
+        : IRequestHandler<GetPurchaseReportQuery, PurchaseReportResponse>
     {
-        public async Task<DTOs.Purchase.Response.Get.Report> Handle(
+        public async Task<PurchaseReportResponse> Handle(
             GetPurchaseReportQuery request,
             CancellationToken cancellationToken = default)
         {
@@ -25,7 +25,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Purchase
                 .WhereIfHasValue(request.PartyId, p => p.PartyId == request.PartyId!.Value);
 
             var purchaseDtos = await query
-                .Select(p => new DTOs.Purchase.Response.Get.Single
+                .Select(p => new PurchaseResponse
                 {
                     Id = p.Id,
                     Title = p.Title,
@@ -36,7 +36,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Purchase
                     TotalAmount = p.TotalAmount,
                     Discount = p.Discount,
                     NetTotal = p.NetTotal,
-                    Items = p.Items.Select(i => new DTOs.Purchase.Response.Get.PurchaseItemResponse
+                    Items = p.Items.Select(i => new PurchaseItemResponse
                     {
                         Id = i.Id,
                         Title = i.Title,
@@ -50,7 +50,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Purchase
                         UnitCost = i.UnitCost,
                         Total = i.Total
                     }).ToList(),
-                    Metadata = new DTOs.Purchase.Request.Metadata
+                    Metadata = new PurchaseMetadataRequest
                     {
                         ReferenceNo = p.Metadata.ReferenceNo,
                         Notes = p.Metadata.Notes
@@ -63,7 +63,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Purchase
                 })
                 .ToListAsync(cancellationToken);
 
-            return new DTOs.Purchase.Response.Get.Report
+            return new PurchaseReportResponse
             {
                 Purchases = purchaseDtos,
                 TotalPurchaseAmount = purchaseDtos.Sum(p => p.TotalAmount),

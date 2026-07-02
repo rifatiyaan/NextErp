@@ -1,10 +1,10 @@
 using NextErp.Application.Commands;
-using NextErp.Application.DTOs;
 using NextErp.Application.Handlers.CommandHandlers.Sale;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Services;
 using NextErp.Domain.Entities;
 using NSubstitute;
+using SaleDto = NextErp.Application.DTOs.Sale;
 
 namespace NextErp.Application.Tests.Handlers.Sale;
 
@@ -60,7 +60,7 @@ public class CreateSaleHandlerTests : HandlerTestBase
             Discount: 0m,
             PaymentMethod: null,
             PaidAmount: null,
-            Items: new List<DTOs.Sale.Request.Create.SaleItemRequest>
+            Items: new List<SaleDto.SaleItemRequest>
             {
                 new() { ProductVariantId = VariantA, Quantity = 2m },
                 new() { ProductVariantId = VariantB, Quantity = 3m },
@@ -102,7 +102,7 @@ public class CreateSaleHandlerTests : HandlerTestBase
             Discount: 0m,
             PaymentMethod: null,
             PaidAmount: null,
-            Items: new List<DTOs.Sale.Request.Create.SaleItemRequest>
+            Items: new List<SaleDto.SaleItemRequest>
             {
                 new() { ProductVariantId = VariantA, Quantity = 10m },
             });
@@ -130,7 +130,7 @@ public class CreateSaleHandlerTests : HandlerTestBase
             Discount: 0m,
             PaymentMethod: null,
             PaidAmount: null,
-            Items: new List<DTOs.Sale.Request.Create.SaleItemRequest>
+            Items: new List<SaleDto.SaleItemRequest>
             {
                 new() { ProductVariantId = VariantA, Quantity = 2m },
                 new() { ProductVariantId = VariantB, Quantity = 5m },

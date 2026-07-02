@@ -1,15 +1,15 @@
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Stock;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Stock
 {
     public class GetLowStockReportHandler(IApplicationDbContext dbContext)
-        : IRequestHandler<GetLowStockReportQuery, DTOs.Stock.Response.LowStockReport>
+        : IRequestHandler<GetLowStockReportQuery, LowStockReport>
     {
-        public async Task<DTOs.Stock.Response.LowStockReport> Handle(
+        public async Task<LowStockReport> Handle(
             GetLowStockReportQuery request,
             CancellationToken cancellationToken = default)
         {
@@ -19,7 +19,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Stock
                     .ThenInclude(pv => pv.Product)
                         .ThenInclude(p => p!.UnitOfMeasure)
                 .Where(s => s.AvailableQuantity <= (s.ReorderLevel ?? 10))
-                .Select(s => new DTOs.Stock.Response.LowStockItem
+                .Select(s => new LowStockItem
                 {
                     ProductVariantId = s.ProductVariantId,
                     ProductId = s.ProductVariant != null ? s.ProductVariant.ProductId : 0,
@@ -41,7 +41,7 @@ namespace NextErp.Application.Handlers.QueryHandlers.Stock
                 })
                 .ToListAsync(cancellationToken);
 
-            return new DTOs.Stock.Response.LowStockReport
+            return new LowStockReport
             {
                 Items = lowStockItems,
                 TotalLowStockVariants = lowStockItems.Count

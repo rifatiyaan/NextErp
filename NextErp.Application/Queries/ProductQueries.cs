@@ -1,11 +1,11 @@
 using NextErp.Application.Common;
 using MediatR;
-using DTOs = NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Product;
 
 namespace NextErp.Application.Queries
 {
     // Get Product by Id
-    public record GetProductByIdQuery(int Id) : IRequest<DTOs.Product.Response.Get.Single?>;
+    public record GetProductByIdQuery(int Id) : IRequest<ProductResponse?>;
 
     // Next auto-generated product code (preview for the create form, e.g. "P000001")
     public record GetNextProductCodeQuery() : IRequest<string>;
@@ -19,5 +19,5 @@ namespace NextErp.Application.Queries
         int? CategoryId = null,
         string? Status = null,
         bool IncludeStock = false
-    ) : IRequest<PagedResult<DTOs.Product.Response.Get.Single>>;
+    ) : IRequest<PagedResult<ProductResponse>>;
 }

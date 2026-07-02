@@ -1,11 +1,11 @@
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands;
-using NextErp.Application.DTOs;
 using NextErp.Application.DTOs.Common;
+using NextErp.Application.DTOs.Product;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Mapping;
 using NextErp.Application.Queries;
 
 namespace NextErp.API.Controllers;
@@ -13,7 +13,7 @@ namespace NextErp.API.Controllers;
 [Authorize]
 [Route("api/[controller]")]
 [ApiController]
-public class ProductController(IMediator mediator, IMapper mapper, IImageService imageService) : ControllerBase
+public class ProductController(IMediator mediator, IImageService imageService) : ControllerBase
 {
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(int id)
@@ -70,7 +70,7 @@ public class ProductController(IMediator mediator, IMapper mapper, IImageService
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromForm] Product.Request.Create.Single dto)
+    public async Task<IActionResult> Create([FromForm] CreateProductRequest dto)
     {
         await ResolveProductGalleryAsync(dto, HttpContext.RequestAborted);
 
@@ -103,7 +103,7 @@ public class ProductController(IMediator mediator, IMapper mapper, IImageService
         }
         else
         {
-            var command = mapper.Map<CreateProductCommand>(dto);
+            var command = dto.ToCommand();
             id = await mediator.Send(command);
         }
 
@@ -127,7 +127,7 @@ public class ProductController(IMediator mediator, IMapper mapper, IImageService
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromForm] Product.Request.Update.Single dto)
+    public async Task<IActionResult> Update(int id, [FromForm] UpdateProductRequest dto)
     {
         dto.Id = id;
         await ResolveProductGalleryAsync(dto, HttpContext.RequestAborted);
@@ -162,36 +162,37 @@ public class ProductController(IMediator mediator, IMapper mapper, IImageService
         }
         else
         {
-            var command = mapper.Map<UpdateProductCommand>(dto, opts => opts.Items["Id"] = id);
+            dto.Id = id;
+            var command = dto.ToCommand();
             await mediator.Send(command);
         }
 
         return NoContent();
     }
 
-    private static IReadOnlyList<Product.Request.GalleryResolvedSlot> NormalizeCreateGallery(Product.Request.Create.Single dto)
+    private static IReadOnlyList<GalleryResolvedSlot> NormalizeCreateGallery(CreateProductRequest dto)
     {
         if (dto.ResolvedGallery is { Count: > 0 })
             return dto.ResolvedGallery;
         if (!string.IsNullOrWhiteSpace(dto.ImageUrl))
-            return new List<Product.Request.GalleryResolvedSlot> { new(dto.ImageUrl.Trim(), true) };
-        return Array.Empty<Product.Request.GalleryResolvedSlot>();
+            return new List<GalleryResolvedSlot> { new(dto.ImageUrl.Trim(), true) };
+        return Array.Empty<GalleryResolvedSlot>();
     }
 
-    private async Task ResolveProductGalleryAsync(Product.Request.Base dto, CancellationToken cancellationToken = default)
+    private async Task ResolveProductGalleryAsync(ProductRequestBase dto, CancellationToken cancellationToken = default)
     {
-        var isUpdate = dto is Product.Request.Update.Single;
+        var isUpdate = dto is UpdateProductRequest;
 
         if (dto.ClearGallery)
         {
-            dto.ResolvedGallery = new List<Product.Request.GalleryResolvedSlot>();
+            dto.ResolvedGallery = new List<GalleryResolvedSlot>();
             dto.ImageUrl = null;
             return;
         }
 
         if (dto.ImageSlots is { Count: > 0 })
         {
-            var list = new List<Product.Request.GalleryResolvedSlot>();
+            var list = new List<GalleryResolvedSlot>();
             foreach (var slot in dto.ImageSlots)
             {
                 string? url = null;
@@ -200,11 +201,11 @@ public class ProductController(IMediator mediator, IMapper mapper, IImageService
                 else if (slot.File != null)
                     url = await imageService.UploadImageAsync(slot.File);
                 if (url != null)
-                    list.Add(new Product.Request.GalleryResolvedSlot(url, slot.IsThumbnail));
+                    list.Add(new GalleryResolvedSlot(url, slot.IsThumbnail));
             }
 
             if (list.Count > 0 && !list.Any(x => x.IsThumbnail))
-                list[0] = new Product.Request.GalleryResolvedSlot(list[0].Url, true);
+                list[0] = new GalleryResolvedSlot(list[0].Url, true);
 
             dto.ResolvedGallery = list;
             dto.ImageUrl = list.FirstOrDefault(x => x.IsThumbnail)?.Url ?? list[0].Url;
@@ -214,7 +215,7 @@ public class ProductController(IMediator mediator, IMapper mapper, IImageService
         if (dto.Image != null)
         {
             var url = await imageService.UploadImageAsync(dto.Image);
-            dto.ResolvedGallery = new List<Product.Request.GalleryResolvedSlot> { new(url, true) };
+            dto.ResolvedGallery = new List<GalleryResolvedSlot> { new(url, true) };
             dto.ImageUrl = url;
             return;
         }
@@ -223,7 +224,7 @@ public class ProductController(IMediator mediator, IMapper mapper, IImageService
         if (!isUpdate && !string.IsNullOrWhiteSpace(dto.ImageUrl))
         {
             var url = dto.ImageUrl.Trim();
-            dto.ResolvedGallery = new List<Product.Request.GalleryResolvedSlot> { new(url, true) };
+            dto.ResolvedGallery = new List<GalleryResolvedSlot> { new(url, true) };
             return;
         }
 

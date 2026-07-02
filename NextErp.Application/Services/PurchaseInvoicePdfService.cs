@@ -2,7 +2,7 @@ using NextErp.Application.Interfaces;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-using PurchaseDto = NextErp.Application.DTOs.Purchase;
+using NextErp.Application.DTOs.Purchase;
 
 namespace NextErp.Application.Services;
 
@@ -15,7 +15,7 @@ namespace NextErp.Application.Services;
 public sealed class PurchaseInvoicePdfService : IPurchaseInvoicePdfService
 {
     public Task<byte[]> RenderPurchaseInvoiceAsync(
-        PurchaseDto.Response.Get.Single purchase,
+        PurchaseResponse purchase,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(purchase);
@@ -26,7 +26,7 @@ public sealed class PurchaseInvoicePdfService : IPurchaseInvoicePdfService
         return Task.FromResult(bytes);
     }
 
-    private static void ComposeDocument(IDocumentContainer container, PurchaseDto.Response.Get.Single purchase)
+    private static void ComposeDocument(IDocumentContainer container, PurchaseResponse purchase)
     {
         container.Page(page =>
         {
@@ -41,7 +41,7 @@ public sealed class PurchaseInvoicePdfService : IPurchaseInvoicePdfService
         });
     }
 
-    private static void ComposeHeader(IContainer container, PurchaseDto.Response.Get.Single purchase)
+    private static void ComposeHeader(IContainer container, PurchaseResponse purchase)
     {
         container.Row(row =>
         {
@@ -59,7 +59,7 @@ public sealed class PurchaseInvoicePdfService : IPurchaseInvoicePdfService
         });
     }
 
-    private static void ComposeContent(IContainer container, PurchaseDto.Response.Get.Single purchase)
+    private static void ComposeContent(IContainer container, PurchaseResponse purchase)
     {
         container.Column(column =>
         {
@@ -77,7 +77,7 @@ public sealed class PurchaseInvoicePdfService : IPurchaseInvoicePdfService
         });
     }
 
-    private static void ComposeMetaBlock(IContainer container, PurchaseDto.Response.Get.Single purchase)
+    private static void ComposeMetaBlock(IContainer container, PurchaseResponse purchase)
     {
         container.Row(row =>
         {
@@ -107,7 +107,7 @@ public sealed class PurchaseInvoicePdfService : IPurchaseInvoicePdfService
         });
     }
 
-    private static void ComposeLineItems(IContainer container, PurchaseDto.Response.Get.Single purchase)
+    private static void ComposeLineItems(IContainer container, PurchaseResponse purchase)
     {
         container.Table(table =>
         {
@@ -163,7 +163,7 @@ public sealed class PurchaseInvoicePdfService : IPurchaseInvoicePdfService
         });
     }
 
-    private static void ComposeTotals(IContainer container, PurchaseDto.Response.Get.Single purchase)
+    private static void ComposeTotals(IContainer container, PurchaseResponse purchase)
     {
         container.AlignRight().Column(col =>
         {
@@ -197,7 +197,7 @@ public sealed class PurchaseInvoicePdfService : IPurchaseInvoicePdfService
         }
     }
 
-    private static void ComposeReferences(IContainer container, PurchaseDto.Response.Get.Single purchase)
+    private static void ComposeReferences(IContainer container, PurchaseResponse purchase)
     {
         var meta = purchase.Metadata;
         // Skip the section entirely if no reference field is populated — keeps

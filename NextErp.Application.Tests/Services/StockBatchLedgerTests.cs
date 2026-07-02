@@ -13,7 +13,7 @@ using NextErp.Application.Tests.Infrastructure;
 using NextErp.Domain.Entities;
 using NextErp.Infrastructure.Services;
 using NSubstitute;
-using PurchaseDto = NextErp.Application.DTOs.Purchase;
+using NextErp.Application.DTOs.Purchase;
 using SaleDto = NextErp.Application.DTOs.Sale;
 
 namespace NextErp.Application.Tests.Services;
@@ -71,7 +71,7 @@ public class StockBatchLedgerTests : HandlerTestBase
             PurchaseDate: DateTime.UtcNow,
             Discount: 0m,
             Metadata: null,
-            Items: new List<PurchaseDto.Request.Create.PurchaseItemRequest>
+            Items: new List<PurchaseItemRequest>
             {
                 new() { ProductVariantId = variantId, Quantity = qty, UnitCost = unitCost },
             });
@@ -86,7 +86,7 @@ public class StockBatchLedgerTests : HandlerTestBase
             Discount: 0m,
             PaymentMethod: null,
             PaidAmount: null,
-            Items: new List<SaleDto.Request.Create.SaleItemRequest>
+            Items: new List<SaleDto.SaleItemRequest>
             {
                 new() { ProductVariantId = variantId, Quantity = qty },
             });
@@ -217,12 +217,12 @@ public class StockBatchLedgerTests : HandlerTestBase
     private async Task<Guid> RunSaleReturnAsync(Guid saleId, decimal qty)
     {
         var saleItem = await Db.SaleItems.AsNoTracking().FirstAsync(i => i.SaleId == saleId);
-        var dto = new SaleReturnDto.Request.Create.Single
+        var dto = new CreateSaleReturnRequest
         {
             SaleId = saleId,
             ReturnDate = DateTime.UtcNow,
             Reason = "test",
-            Items = new List<SaleReturnDto.Request.Create.Line>
+            Items = new List<SaleReturnLineRequest>
             {
                 new()
                 {

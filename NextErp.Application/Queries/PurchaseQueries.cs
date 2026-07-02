@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using MediatR;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Purchase;
 using Entities = NextErp.Domain.Entities;
 
 namespace NextErp.Application.Queries
@@ -23,5 +23,5 @@ namespace NextErp.Application.Queries
         DateTime StartDate,
         DateTime EndDate,
         Guid? PartyId
-    ) : IRequest<Purchase.Response.Get.Report>;
+    ) : IRequest<PurchaseReportResponse>;
 }

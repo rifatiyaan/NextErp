@@ -10,5 +10,5 @@ namespace NextErp.Application.Commands.PurchaseReturn;
 /// transactional pipeline so a failure rolls back both the PurchaseReturn
 /// rows and the negative StockMovement deltas.
 /// </summary>
-public record CreatePurchaseReturnCommand(PurchaseReturnDto.Request.Create.Single Request)
+public record CreatePurchaseReturnCommand(CreatePurchaseReturnRequest Request)
     : IRequest<Guid>, ITransactionalRequest;

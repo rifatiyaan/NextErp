@@ -1,7 +1,7 @@
-using AutoMapper;
 using NextErp.Application.Commands;
 using MediatR;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Mapping;
 using NextErp.Application.Products;
 using Entities = NextErp.Domain.Entities;
 
@@ -11,13 +11,12 @@ namespace NextErp.Application.Handlers.CommandHandlers.Product
         IApplicationDbContext dbContext,
         IStockService stockService,
         IBranchProvider branchProvider,
-        INotificationService notifications,
-        IMapper mapper)
+        INotificationService notifications)
         : IRequestHandler<CreateProductCommand, int>
     {
         public async Task<int> Handle(CreateProductCommand request, CancellationToken cancellationToken = default)
         {
-            var product = mapper.Map<Entities.Product>(request);
+            var product = request.ToEntity();
             await ProductBranchScope.ApplyToProductAsync(product, dbContext, branchProvider, cancellationToken);
             product.Code = await ProductCodeFactory.EnsureCodeAsync(product.Code, product.TenantId, dbContext, cancellationToken);
             product.IsActive = true;

@@ -10,5 +10,5 @@ namespace NextErp.Application.Commands.SaleReturn;
 /// existing transactional behavior so a partial failure rolls back both
 /// the SaleReturn rows and the StockMovement deltas.
 /// </summary>
-public record CreateSaleReturnCommand(SaleReturnDto.Request.Create.Single Request)
+public record CreateSaleReturnCommand(CreateSaleReturnRequest Request)
     : IRequest<Guid>, ITransactionalRequest;

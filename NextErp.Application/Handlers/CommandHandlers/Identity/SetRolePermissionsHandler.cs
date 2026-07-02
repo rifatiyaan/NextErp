@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Commands.Identity;
+using NextErp.Application.Common.Caching;
 using NextErp.Application.Interfaces;
 using NextErp.Domain.Entities;
 
@@ -9,7 +10,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Identity
 {
     public class SetRolePermissionsHandler(
             IApplicationDbContext dbContext,
-            RoleManager<IdentityRole<Guid>> roleManager)
+            RoleManager<IdentityRole<Guid>> roleManager,
+            IPermissionCacheSignal? cacheSignal = null)
             : IRequestHandler<SetRolePermissionsCommand, bool>
     {
         public async Task<bool> Handle(
@@ -53,6 +55,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Identity
 
             await dbContext.RolePermissions.AddRangeAsync(newRows, cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
+            cacheSignal?.Invalidate();
 
             return true;
         }

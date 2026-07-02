@@ -1,15 +1,15 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.UnitOfMeasure;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 
 namespace NextErp.Application.Handlers.QueryHandlers.UnitOfMeasure;
 
 public class GetUnitOfMeasureByIdHandler(IApplicationDbContext dbContext)
-    : IRequestHandler<GetUnitOfMeasureByIdQuery, DTOs.UnitOfMeasure.Response.Single?>
+    : IRequestHandler<GetUnitOfMeasureByIdQuery, UnitOfMeasureResponse?>
 {
-    public async Task<DTOs.UnitOfMeasure.Response.Single?> Handle(
+    public async Task<UnitOfMeasureResponse?> Handle(
         GetUnitOfMeasureByIdQuery request, CancellationToken cancellationToken = default)
     {
         var entity = await dbContext.UnitOfMeasures
@@ -18,7 +18,7 @@ public class GetUnitOfMeasureByIdHandler(IApplicationDbContext dbContext)
 
         if (entity == null) return null;
 
-        return new DTOs.UnitOfMeasure.Response.Single
+        return new UnitOfMeasureResponse
         {
             Id = entity.Id,
             Title = entity.Title,

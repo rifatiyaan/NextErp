@@ -1,17 +1,17 @@
-using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Commands.SystemSettings;
+using NextErp.Application.DTOs.SystemSettings;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Mapping;
 using DomainSystemSettings = NextErp.Domain.Entities.SystemSettings;
-using SystemSettingsDto = NextErp.Application.DTOs.SystemSettings;
 
 namespace NextErp.Application.Handlers.CommandHandlers.SystemSettings;
 
-public class ResetSystemSettingsHandler(IApplicationDbContext dbContext, IMapper mapper)
-    : IRequestHandler<ResetSystemSettingsCommand, SystemSettingsDto.Response.Single>
+public class ResetSystemSettingsHandler(IApplicationDbContext dbContext)
+    : IRequestHandler<ResetSystemSettingsCommand, SystemSettingsResponse>
 {
-    public async Task<SystemSettingsDto.Response.Single> Handle(
+    public async Task<SystemSettingsResponse> Handle(
         ResetSystemSettingsCommand request,
         CancellationToken cancellationToken = default)
     {
@@ -26,7 +26,7 @@ public class ResetSystemSettingsHandler(IApplicationDbContext dbContext, IMapper
         {
             dbContext.SystemSettings.Add(defaults);
             await dbContext.SaveChangesAsync(cancellationToken);
-            return mapper.Map<SystemSettingsDto.Response.Single>(defaults);
+            return defaults.ToResponse();
         }
 
         entity.PresetAccentTheme = defaults.PresetAccentTheme;
@@ -41,7 +41,6 @@ public class ResetSystemSettingsHandler(IApplicationDbContext dbContext, IMapper
         entity.UpdatedAt = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        return mapper.Map<SystemSettingsDto.Response.Single>(entity);
+        return entity.ToResponse();
     }
 }
-

@@ -37,7 +37,7 @@ public class AccountController(IMediator mediator) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] AccountDto.Request.Create dto, CancellationToken ct = default)
+    public async Task<IActionResult> Create([FromBody] CreateAccountRequest dto, CancellationToken ct = default)
     {
         var id = await mediator.Send(new CreateAccountCommand(dto), ct);
         var created = await mediator.Send(new GetAccountByIdQuery(id), ct);
@@ -45,7 +45,7 @@ public class AccountController(IMediator mediator) : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] AccountDto.Request.Update dto, CancellationToken ct = default)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAccountRequest dto, CancellationToken ct = default)
     {
         var ok = await mediator.Send(new UpdateAccountCommand(id, dto), ct);
         if (!ok) return NotFound();

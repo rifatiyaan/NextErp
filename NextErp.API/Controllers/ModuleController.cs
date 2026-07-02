@@ -1,10 +1,9 @@
 using System.Security.Claims;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands.Module;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Module;
 using NextErp.Application.Queries.Module;
 
 namespace NextErp.API.Controllers;
@@ -12,7 +11,7 @@ namespace NextErp.API.Controllers;
 [Authorize]
 [Route("api/[controller]")]
 [ApiController]
-public class ModuleController(IMediator mediator, IMapper mapper) : ControllerBase
+public class ModuleController(IMediator mediator) : ControllerBase
 {
     [HttpGet("user-menu")]
     public async Task<IActionResult> GetUserMenu()
@@ -72,7 +71,7 @@ public class ModuleController(IMediator mediator, IMapper mapper) : ControllerBa
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] Module.Request.Create.Single dto)
+    public async Task<IActionResult> Create([FromBody] CreateModuleRequest dto)
     {
         var command = new CreateModuleCommand(dto);
         var id = await mediator.Send(command);
@@ -82,7 +81,7 @@ public class ModuleController(IMediator mediator, IMapper mapper) : ControllerBa
     }
 
     [HttpPost("bulk")]
-    public async Task<IActionResult> CreateBulk([FromBody] Module.Request.Create.Bulk dto)
+    public async Task<IActionResult> CreateBulk([FromBody] CreateBulkModulesRequest dto)
     {
         var command = new CreateBulkModulesCommand(dto);
         var result = await mediator.Send(command);
@@ -90,7 +89,7 @@ public class ModuleController(IMediator mediator, IMapper mapper) : ControllerBa
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] Module.Request.Update.Single dto)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateModuleRequest dto)
     {
         var command = new UpdateModuleCommand(id, dto);
         await mediator.Send(command);

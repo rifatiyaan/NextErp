@@ -2,7 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands.UnitOfMeasure;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.UnitOfMeasure;
 using NextErp.Application.Queries;
 
 namespace NextErp.API.Controllers;
@@ -27,14 +27,14 @@ public class UnitOfMeasureController(IMediator mediator) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] UnitOfMeasure.Request.Create request)
+    public async Task<IActionResult> Create([FromBody] CreateUnitOfMeasureRequest request)
     {
         var result = await mediator.Send(new CreateUnitOfMeasureCommand(request.Name, request.Abbreviation, request.Category, false));
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, [FromBody] UnitOfMeasure.Request.Update request)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateUnitOfMeasureRequest request)
     {
         await mediator.Send(new UpdateUnitOfMeasureCommand(id, request.Name, request.Abbreviation, request.Category, request.IsActive));
         return NoContent();

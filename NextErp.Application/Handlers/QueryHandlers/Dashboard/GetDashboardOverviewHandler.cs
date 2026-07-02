@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries.Dashboard;
 using NextErp.Domain.Entities;
-using DashboardDto = NextErp.Application.DTOs.Dashboard;
+using NextErp.Application.DTOs.Dashboard;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Dashboard;
 
@@ -16,9 +16,9 @@ namespace NextErp.Application.Handlers.QueryHandlers.Dashboard;
 /// that we don't yet need to push this onto Hangfire or cache it.
 /// </summary>
 public sealed class GetDashboardOverviewHandler(IApplicationDbContext db)
-    : IRequestHandler<GetDashboardOverviewQuery, DashboardDto.Response.Overview>
+    : IRequestHandler<GetDashboardOverviewQuery, DashboardOverviewResponse>
 {
-    public async Task<DashboardDto.Response.Overview> Handle(
+    public async Task<DashboardOverviewResponse> Handle(
         GetDashboardOverviewQuery request,
         CancellationToken cancellationToken = default)
     {
@@ -74,7 +74,7 @@ public sealed class GetDashboardOverviewHandler(IApplicationDbContext db)
             .Where(s => s.IsActive && s.ReorderLevel != null && s.AvailableQuantity < s.ReorderLevel)
             .CountAsync(cancellationToken);
 
-        var totals = new DashboardDto.Response.Overview.Totals
+        var totals = new DashboardTotalsResponse
         {
             TotalRevenue = totalRevenue,
             TotalOrders = totalOrders,
@@ -104,13 +104,13 @@ public sealed class GetDashboardOverviewHandler(IApplicationDbContext db)
                 g => $"{g.Key.Year:0000}-{g.Key.Month:00}",
                 g => new { Revenue = g.Sum(x => x.FinalAmount), Orders = g.Count() });
 
-        var revenueTrend = new List<DashboardDto.Response.Overview.RevenuePoint>(months);
+        var revenueTrend = new List<DashboardRevenuePointResponse>(months);
         for (int i = 0; i < months; i++)
         {
             var d = trendStart.AddMonths(i);
             var key = $"{d.Year:0000}-{d.Month:00}";
             trendByYm.TryGetValue(key, out var bucket);
-            revenueTrend.Add(new DashboardDto.Response.Overview.RevenuePoint
+            revenueTrend.Add(new DashboardRevenuePointResponse
             {
                 Month = d.ToString("MMM"),
                 YearMonth = key,
@@ -130,7 +130,7 @@ public sealed class GetDashboardOverviewHandler(IApplicationDbContext db)
                 Title = i.ProductVariant.Product.Title,
                 Sku = i.ProductVariant.Sku,
             })
-            .Select(g => new DashboardDto.Response.Overview.ProductRow
+            .Select(g => new DashboardProductRowResponse
             {
                 ProductId = g.Key.ProductId,
                 Title = g.Key.Title,
@@ -148,7 +148,7 @@ public sealed class GetDashboardOverviewHandler(IApplicationDbContext db)
         var topCustomers = await salesAll
             .Where(s => s.PartyId != null && s.Party!.PartyType == PartyType.Customer)
             .GroupBy(s => new { Id = s.PartyId!.Value, Name = s.Party!.Title })
-            .Select(g => new DashboardDto.Response.Overview.CustomerRow
+            .Select(g => new DashboardCustomerRowResponse
             {
                 CustomerId = g.Key.Id,
                 Name = g.Key.Name,
@@ -165,7 +165,7 @@ public sealed class GetDashboardOverviewHandler(IApplicationDbContext db)
             .OrderByDescending(s => s.SaleDate)
             .ThenByDescending(s => s.CreatedAt)
             .Take(recentLimit)
-            .Select(s => new DashboardDto.Response.Overview.TransactionRow
+            .Select(s => new DashboardTransactionRowResponse
             {
                 SaleId = s.Id,
                 SaleNumber = s.SaleNumber,
@@ -186,7 +186,7 @@ public sealed class GetDashboardOverviewHandler(IApplicationDbContext db)
                     ? i.ProductVariant.Product.Category.Title
                     : "Uncategorised",
             })
-            .Select(g => new DashboardDto.Response.Overview.CategorySlice
+            .Select(g => new DashboardCategorySliceResponse
             {
                 CategoryId = g.Key.CategoryId,
                 CategoryName = g.Key.CategoryName,
@@ -206,7 +206,7 @@ public sealed class GetDashboardOverviewHandler(IApplicationDbContext db)
             .Where(s => s.IsActive)
             .OrderByDescending(s => s.CreatedAt)
             .Take(activityLimit)
-            .Select(s => new DashboardDto.Response.Overview.ActivityRow
+            .Select(s => new DashboardActivityRowResponse
             {
                 Kind = "sale",
                 Title = $"Sale {s.SaleNumber}",
@@ -221,7 +221,7 @@ public sealed class GetDashboardOverviewHandler(IApplicationDbContext db)
             .Where(p => p.IsActive)
             .OrderByDescending(p => p.CreatedAt)
             .Take(activityLimit)
-            .Select(p => new DashboardDto.Response.Overview.ActivityRow
+            .Select(p => new DashboardActivityRowResponse
             {
                 Kind = "purchase",
                 Title = $"Purchase {p.PurchaseNumber}",
@@ -237,7 +237,7 @@ public sealed class GetDashboardOverviewHandler(IApplicationDbContext db)
             .Take(activityLimit)
             .ToList();
 
-        return new DashboardDto.Response.Overview
+        return new DashboardOverviewResponse
         {
             AsOf = now,
             TotalsBlock = totals,

@@ -2,7 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries.Reports;
-using ReportDto = NextErp.Application.DTOs.Report;
+using NextErp.Application.DTOs.Report;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Reports;
 
@@ -13,9 +13,9 @@ namespace NextErp.Application.Handlers.QueryHandlers.Reports;
 /// see which SKUs need backfill.
 /// </summary>
 public sealed class StockValuationReportHandler(IApplicationDbContext db)
-    : IRequestHandler<StockValuationReportQuery, ReportDto.Response.StockValuation>
+    : IRequestHandler<StockValuationReportQuery, StockValuationResponse>
 {
-    public async Task<ReportDto.Response.StockValuation> Handle(
+    public async Task<StockValuationResponse> Handle(
         StockValuationReportQuery request,
         CancellationToken cancellationToken = default)
     {
@@ -42,7 +42,7 @@ public sealed class StockValuationReportHandler(IApplicationDbContext db)
             .ToListAsync(cancellationToken);
 
         var lines = rows
-            .Select(r => new ReportDto.Response.StockValuation.Line
+            .Select(r => new StockValuationLineResponse
             {
                 ProductId = r.ProductId,
                 ProductTitle = r.ProductTitle,
@@ -56,7 +56,7 @@ public sealed class StockValuationReportHandler(IApplicationDbContext db)
             .ThenBy(l => l.ProductTitle)
             .ToList();
 
-        return new ReportDto.Response.StockValuation
+        return new StockValuationResponse
         {
             AsOf = request.AsOf,
             ProductCount = lines.Count,

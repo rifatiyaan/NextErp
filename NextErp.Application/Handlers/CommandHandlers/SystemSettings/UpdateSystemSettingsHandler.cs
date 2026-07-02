@@ -1,20 +1,19 @@
-using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Commands.SystemSettings;
+using NextErp.Application.DTOs.SystemSettings;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Mapping;
 using DomainSystemSettings = NextErp.Domain.Entities.SystemSettings;
-using SystemSettingsDto = NextErp.Application.DTOs.SystemSettings;
 
 namespace NextErp.Application.Handlers.CommandHandlers.SystemSettings;
 
 public class UpdateSystemSettingsHandler(
     IApplicationDbContext dbContext,
-    INotificationService notifications,
-    IMapper mapper)
-    : IRequestHandler<UpdateSystemSettingsCommand, SystemSettingsDto.Response.Single>
+    INotificationService notifications)
+    : IRequestHandler<UpdateSystemSettingsCommand, SystemSettingsResponse>
 {
-    public async Task<SystemSettingsDto.Response.Single> Handle(
+    public async Task<SystemSettingsResponse> Handle(
         UpdateSystemSettingsCommand request,
         CancellationToken cancellationToken = default)
     {
@@ -29,7 +28,7 @@ public class UpdateSystemSettingsHandler(
             dbContext.SystemSettings.Add(entity);
         }
 
-        mapper.Map(request.Dto, entity);
+        request.Dto.ApplyTo(entity);
 
         // If the caller explicitly switched to a preset, clear stale custom values
         // (and vice versa). The validator rejects mixed payloads up-front; this is
@@ -58,13 +57,12 @@ public class UpdateSystemSettingsHandler(
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return mapper.Map<SystemSettingsDto.Response.Single>(entity);
+        return entity.ToResponse();
     }
 
-    private static bool HasAnyCustomColor(SystemSettingsDto.Request.Update dto) =>
+    private static bool HasAnyCustomColor(UpdateSystemSettingsRequest dto) =>
         !string.IsNullOrWhiteSpace(dto.CustomPrimary) ||
         !string.IsNullOrWhiteSpace(dto.CustomSecondary) ||
         !string.IsNullOrWhiteSpace(dto.CustomSidebarBackground) ||
         !string.IsNullOrWhiteSpace(dto.CustomSidebarForeground);
 }
-

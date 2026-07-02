@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Purchase;
+using NextErp.Application.Mapping;
 using NextErp.Application.Queries;
 
 namespace NextErp.API.Controllers;
@@ -12,7 +12,7 @@ namespace NextErp.API.Controllers;
 [Authorize]
 [Route("api/[controller]")]
 [ApiController]
-public class PurchaseController(IMediator mediator, IMapper mapper) : ControllerBase
+public class PurchaseController(IMediator mediator) : ControllerBase
 {
     // GET api/purchase/{id}
     [HttpGet("{id}")]
@@ -23,7 +23,7 @@ public class PurchaseController(IMediator mediator, IMapper mapper) : Controller
 
         if (purchase == null) return NotFound();
 
-        var dto = mapper.Map<Purchase.Response.Get.Single>(purchase);
+        var dto = purchase.ToResponse();
         return Ok(dto);
     }
 
@@ -45,7 +45,7 @@ public class PurchaseController(IMediator mediator, IMapper mapper) : Controller
             ParsePurchaseStatusFilter(status));
         var pagedResult = await mediator.Send(query);
 
-        var dtoList = mapper.Map<List<Purchase.Response.Get.Single>>(pagedResult.Records);
+        var dtoList = pagedResult.Records.Select(p => p.ToResponse()).ToList();
 
         return Ok(new
         {
@@ -57,7 +57,7 @@ public class PurchaseController(IMediator mediator, IMapper mapper) : Controller
 
     // POST api/purchase
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] Purchase.Request.Create.Single dto)
+    public async Task<IActionResult> Create([FromBody] CreatePurchaseRequest dto)
     {
         var command = new CreatePurchaseCommand(
             dto.Title,
@@ -72,7 +72,7 @@ public class PurchaseController(IMediator mediator, IMapper mapper) : Controller
         var id = await mediator.Send(command);
 
         var purchase = await mediator.Send(new GetPurchaseByIdQuery(id));
-        var response = mapper.Map<Purchase.Response.Create.Single>(purchase);
+        var response = purchase!.ToCreateResponse();
 
         return CreatedAtAction(nameof(Get), new { id }, response);
     }

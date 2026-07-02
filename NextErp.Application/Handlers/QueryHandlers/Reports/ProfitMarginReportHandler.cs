@@ -2,7 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries.Reports;
-using ReportDto = NextErp.Application.DTOs.Report;
+using NextErp.Application.DTOs.Report;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Reports;
 
@@ -13,9 +13,9 @@ namespace NextErp.Application.Handlers.QueryHandlers.Reports;
 /// data" signal in the report.
 /// </summary>
 public sealed class ProfitMarginReportHandler(IApplicationDbContext db)
-    : IRequestHandler<ProfitMarginReportQuery, ReportDto.Response.ProfitMargin>
+    : IRequestHandler<ProfitMarginReportQuery, ProfitMarginResponse>
 {
-    public async Task<ReportDto.Response.ProfitMargin> Handle(
+    public async Task<ProfitMarginResponse> Handle(
         ProfitMarginReportQuery request,
         CancellationToken cancellationToken = default)
     {
@@ -50,7 +50,7 @@ public sealed class ProfitMarginReportHandler(IApplicationDbContext db)
             {
                 var profit = s.Revenue - s.Cost;
                 var marginPct = s.Revenue > 0 ? profit / s.Revenue * 100m : 0m;
-                return new ReportDto.Response.ProfitMargin.Line
+                return new ProfitMarginLineResponse
                 {
                     SaleId = s.Id,
                     SaleNumber = s.SaleNumber,
@@ -72,7 +72,7 @@ public sealed class ProfitMarginReportHandler(IApplicationDbContext db)
             ? Math.Round(totalProfit / totalRevenue * 100m, 2)
             : 0m;
 
-        return new ReportDto.Response.ProfitMargin
+        return new ProfitMarginResponse
         {
             StartDate = request.StartDate,
             EndDate = request.EndDate,

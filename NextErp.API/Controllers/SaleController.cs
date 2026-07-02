@@ -1,17 +1,17 @@
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands;
-using NextErp.Application.DTOs;
+using NextErp.Application.Mapping;
 using NextErp.Application.Queries;
+using SaleDto = NextErp.Application.DTOs.Sale;
 
 namespace NextErp.API.Controllers;
 
 [Authorize]
 [Route("api/[controller]")]
 [ApiController]
-public class SaleController(IMediator mediator, IMapper mapper) : ControllerBase
+public class SaleController(IMediator mediator) : ControllerBase
 {
     // GET api/sale/{id}
     [HttpGet("{id}")]
@@ -23,7 +23,7 @@ public class SaleController(IMediator mediator, IMapper mapper) : ControllerBase
         if (sale == null)
             return Problem(statusCode: StatusCodes.Status404NotFound, title: "Not found", detail: "Sale was not found.");
 
-        var dto = mapper.Map<Sale.Response.Get.Single>(sale);
+        var dto = sale.ToResponse();
         return Ok(dto);
     }
 
@@ -55,7 +55,7 @@ public class SaleController(IMediator mediator, IMapper mapper) : ControllerBase
 
     // POST api/sale
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] Sale.Request.Create.Single dto)
+    public async Task<IActionResult> Create([FromBody] SaleDto.CreateSaleRequest dto)
     {
         var command = new CreateSaleCommand(
             dto.PartyId,
@@ -68,7 +68,7 @@ public class SaleController(IMediator mediator, IMapper mapper) : ControllerBase
         var id = await mediator.Send(command);
 
         var sale = await mediator.Send(new GetSaleByIdQuery(id));
-        var response = mapper.Map<Sale.Response.Get.Single>(sale);
+        var response = sale!.ToResponse();
 
         return CreatedAtAction(nameof(Get), new { id }, response);
     }
@@ -88,7 +88,7 @@ public class SaleController(IMediator mediator, IMapper mapper) : ControllerBase
 
     // POST api/sale/preview-pricing — dry-run pricing, writes nothing.
     [HttpPost("preview-pricing")]
-    public async Task<IActionResult> PreviewPricing([FromBody] Sale.Request.Preview.Single dto)
+    public async Task<IActionResult> PreviewPricing([FromBody] SaleDto.PreviewSaleRequest dto)
     {
         var query = new PreviewSalePricingQuery(dto.Lines, dto.PartyId);
         var result = await mediator.Send(query);

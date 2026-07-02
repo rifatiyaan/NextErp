@@ -1,5 +1,5 @@
 using MediatR;
-using ReportDto = NextErp.Application.DTOs.Report;
+using NextErp.Application.DTOs.Report;
 
 namespace NextErp.Application.Queries.Reports;
 
@@ -9,4 +9,4 @@ namespace NextErp.Application.Queries.Reports;
 /// don't have to re-derive it.
 /// </summary>
 public record ProfitMarginReportQuery(DateTime StartDate, DateTime EndDate)
-    : IRequest<ReportDto.Response.ProfitMargin>;
+    : IRequest<ProfitMarginResponse>;

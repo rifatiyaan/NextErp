@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.ProductVariation;
 using NextErp.Application.Interfaces;
 using Entities = NextErp.Domain.Entities;
 
@@ -22,7 +22,7 @@ namespace NextErp.Application.Products
         }
 
         public static async Task SyncVariationValuesFromRequestAsync(
-                    IReadOnlyList<ProductVariation.Request.VariationOptionDto> optionsInRequestOrder,
+                    IReadOnlyList<VariationOptionRequest> optionsInRequestOrder,
                     IReadOnlyDictionary<string, Entities.VariationOption> optionByName,
                     IApplicationDbContext dbContext,
                     CancellationToken cancellationToken = default)
@@ -44,7 +44,7 @@ namespace NextErp.Application.Products
         }
 
         public static Dictionary<string, Entities.VariationValue> BuildValueKeyMap(
-                    IReadOnlyList<ProductVariation.Request.VariationOptionDto> optionsInRequestOrder,
+                    IReadOnlyList<VariationOptionRequest> optionsInRequestOrder,
                     IReadOnlyDictionary<string, Entities.VariationOption> optionByName) =>
                     optionsInRequestOrder
                         .Select((dto, optIdx) => (dto, optIdx, Global: RequireGlobalOption(optionByName, dto.Name)))
@@ -140,7 +140,7 @@ namespace NextErp.Application.Products
             string optionName,
             Entities.VariationOption globalOption,
             int valIdx,
-            ProductVariation.Request.VariationValueDto valDto,
+            VariationValueRequest valDto,
             IApplicationDbContext dbContext,
             CancellationToken cancellationToken = default)
         {

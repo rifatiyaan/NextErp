@@ -2,8 +2,8 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands.Notifications;
+using NextErp.Application.DTOs.Notification;
 using NextErp.Application.Queries.Notifications;
-using NotificationDto = NextErp.Application.DTOs.Notification;
 
 namespace NextErp.API.Controllers;
 
@@ -13,7 +13,7 @@ namespace NextErp.API.Controllers;
 public class NotificationsController(ISender sender) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<NotificationDto.Response.List>> Get(
+    public async Task<ActionResult<NotificationListResponse>> Get(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] bool unreadOnly = false,

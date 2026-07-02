@@ -2,8 +2,8 @@ using NextErp.Application.Interfaces;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using NextErp.Application.DTOs.Report;
 using SaleDto = NextErp.Application.DTOs.Sale;
-using ReportDto = NextErp.Application.DTOs.Report;
 
 namespace NextErp.Application.Services;
 
@@ -17,7 +17,7 @@ namespace NextErp.Application.Services;
 public sealed class ReportPdfService : IReportPdfService
 {
     public Task<byte[]> RenderSalesReportAsync(
-        SaleDto.Response.Get.Report report,
+        SaleDto.SaleReportResponse report,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(report);
@@ -29,7 +29,7 @@ public sealed class ReportPdfService : IReportPdfService
     }
 
     public Task<byte[]> RenderStockValuationReportAsync(
-        ReportDto.Response.StockValuation report,
+        StockValuationResponse report,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(report);
@@ -41,7 +41,7 @@ public sealed class ReportPdfService : IReportPdfService
     }
 
     public Task<byte[]> RenderProfitMarginReportAsync(
-        ReportDto.Response.ProfitMargin report,
+        ProfitMarginResponse report,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(report);
@@ -115,7 +115,7 @@ public sealed class ReportPdfService : IReportPdfService
 
     // ----- Sales report body -------------------------------------------------
 
-    private static void ComposeSalesBody(IContainer container, SaleDto.Response.Get.Report report)
+    private static void ComposeSalesBody(IContainer container, SaleDto.SaleReportResponse report)
     {
         container.Column(col =>
         {
@@ -169,7 +169,7 @@ public sealed class ReportPdfService : IReportPdfService
 
     // ----- Stock valuation body ---------------------------------------------
 
-    private static void ComposeStockValuationBody(IContainer container, ReportDto.Response.StockValuation report)
+    private static void ComposeStockValuationBody(IContainer container, StockValuationResponse report)
     {
         container.Column(col =>
         {
@@ -223,7 +223,7 @@ public sealed class ReportPdfService : IReportPdfService
 
     // ----- Profit margin body -----------------------------------------------
 
-    private static void ComposeProfitMarginBody(IContainer container, ReportDto.Response.ProfitMargin report)
+    private static void ComposeProfitMarginBody(IContainer container, ProfitMarginResponse report)
     {
         container.Column(col =>
         {

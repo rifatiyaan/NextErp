@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Product;
 using NextErp.Application.Interfaces;
 using DomainEntities = NextErp.Domain.Entities;
 using DomainProduct = NextErp.Domain.Entities.Product;
@@ -10,7 +10,7 @@ public static class ProductGallerySync
 {
     public static async Task ApplyFullGalleryAsync(
             DomainProduct product,
-            IReadOnlyList<Product.Request.GalleryResolvedSlot>? gallery,
+            IReadOnlyList<GalleryResolvedSlot>? gallery,
             IApplicationDbContext db,
             CancellationToken cancellationToken = default)
     {
@@ -19,7 +19,7 @@ public static class ProductGallerySync
 
         var items = gallery
             .Where(s => !string.IsNullOrWhiteSpace(s.Url))
-            .Select(s => new Product.Request.GalleryResolvedSlot(s.Url.Trim(), s.IsThumbnail))
+            .Select(s => new GalleryResolvedSlot(s.Url.Trim(), s.IsThumbnail))
             .ToList();
 
         var existing = await db.ProductImages
@@ -57,7 +57,7 @@ public static class ProductGallerySync
 
     public static async Task ApplyThumbnailUpdatesAsync(
             int productId,
-            IReadOnlyList<Product.Request.ProductImageThumbnailUpdate> updates,
+            IReadOnlyList<ProductImageThumbnailUpdateRequest> updates,
             DomainProduct product,
             IApplicationDbContext db,
             CancellationToken cancellationToken = default)

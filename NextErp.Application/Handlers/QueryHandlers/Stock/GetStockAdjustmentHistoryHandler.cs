@@ -4,14 +4,14 @@ using NextErp.Application.Common.Extensions;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries;
 using NextErp.Domain.Entities;
-using StockDto = NextErp.Application.DTOs.Stock;
+using NextErp.Application.DTOs.Stock;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Stock;
 
 public class GetStockAdjustmentHistoryHandler(IApplicationDbContext dbContext)
-    : IRequestHandler<GetStockAdjustmentHistoryQuery, StockDto.Response.PagedAdjustments>
+    : IRequestHandler<GetStockAdjustmentHistoryQuery, PagedAdjustments>
 {
-    public async Task<StockDto.Response.PagedAdjustments> Handle(
+    public async Task<PagedAdjustments> Handle(
         GetStockAdjustmentHistoryQuery request,
         CancellationToken cancellationToken = default)
     {
@@ -31,7 +31,7 @@ public class GetStockAdjustmentHistoryHandler(IApplicationDbContext dbContext)
             .OrderByDescending(m => m.CreatedAt)
             .Skip((pageIndex - 1) * pageSize)
             .Take(pageSize)
-            .Select(m => new StockDto.Response.AdjustmentLine
+            .Select(m => new AdjustmentLine
             {
                 Id = m.Id,
                 ProductVariantId = m.ProductVariantId,
@@ -46,7 +46,7 @@ public class GetStockAdjustmentHistoryHandler(IApplicationDbContext dbContext)
             })
             .ToListAsync(cancellationToken);
 
-        return new StockDto.Response.PagedAdjustments
+        return new PagedAdjustments
         {
             Items = items,
             Total = total,

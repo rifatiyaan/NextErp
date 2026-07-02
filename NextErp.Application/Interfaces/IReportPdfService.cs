@@ -1,5 +1,5 @@
+using NextErp.Application.DTOs.Report;
 using SaleDto = NextErp.Application.DTOs.Sale;
-using ReportDto = NextErp.Application.DTOs.Report;
 
 namespace NextErp.Application.Interfaces;
 
@@ -13,16 +13,16 @@ public interface IReportPdfService
 {
     /// <summary>Sales report PDF over a date range. Uses the existing GetSalesReport DTO.</summary>
     Task<byte[]> RenderSalesReportAsync(
-        SaleDto.Response.Get.Report report,
+        SaleDto.SaleReportResponse report,
         CancellationToken cancellationToken = default);
 
     /// <summary>Inventory valuation snapshot — quantity × cost across the catalog.</summary>
     Task<byte[]> RenderStockValuationReportAsync(
-        ReportDto.Response.StockValuation report,
+        StockValuationResponse report,
         CancellationToken cancellationToken = default);
 
     /// <summary>Profit margin per sale across a date range.</summary>
     Task<byte[]> RenderProfitMarginReportAsync(
-        ReportDto.Response.ProfitMargin report,
+        ProfitMarginResponse report,
         CancellationToken cancellationToken = default);
 }

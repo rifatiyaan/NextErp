@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using NextErp.API;
 using NextErp.Application;
 using NextErp.Application.Common.Behaviors;
+using NextErp.Application.Common.Caching;
 using NextErp.Application.Interfaces;
 using NextErp.Domain.Entities;
 using NextErp.Infrastructure;
@@ -95,6 +96,13 @@ builder.Services.AddScoped<IUserContext, HttpContextUserContext>();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // =======================================================
+// 🔹 CACHING (in-memory; single instance today — move to Redis/HybridCache before scale-out)
+// =======================================================
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IModuleCacheSignal, ModuleCacheSignal>();
+builder.Services.AddSingleton<IPermissionCacheSignal, PermissionCacheSignal>();
+
+// =======================================================
 // 🔹 HANGFIRE (background jobs — e.g. customer bulk-email)
 // Registers IBackgroundJobClient (consumed by PartyController) and a
 // worker server. SQL Server storage reuses DefaultConnection and creates
@@ -176,13 +184,8 @@ builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(opt =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
-// =======================================================
-// 🔹 AUTOMAPPER
-// =======================================================
-builder.Services.AddAutoMapper(cfg =>
-{
-    cfg.AllowNullDestinationValues = true;
-}, typeof(ApplicationAssemblyMarker).Assembly);
+// Object mapping uses Mapperly (compile-time source-generated extension
+// methods in NextErp.Application/Mapping) — no DI registration needed.
 
 // =======================================================
 // 🔹 MEDIATR
@@ -272,27 +275,6 @@ var app = builder.Build();
 // Logs HTTP request/response timings + status codes (very helpful for "loading forever" issues)
 app.UseSerilogRequestLogging();
 
-// =======================================================
-// 🔹 AUTOMAPPER VALIDATION (DEBUG ONLY)
-// =======================================================
-#if DEBUG
-try
-{
-    using (var scope = app.Services.CreateScope())
-    {
-        var mapper = scope.ServiceProvider.GetRequiredService<AutoMapper.IMapper>();
-        mapper.ConfigurationProvider.AssertConfigurationIsValid();
-    }
-}
-catch (AutoMapper.AutoMapperConfigurationException ex)
-{
-    // Log the error but don't crash the app
-    var logger = app.Services.GetRequiredService<Serilog.ILogger>();
-    logger.Warning(ex, "AutoMapper configuration validation failed. This may be due to unmapped properties.");
-    // Uncomment the line below to see the full error details
-    // throw;
-}
-#endif
 
 // =======================================================
 // 🔹 MIDDLEWARE PIPELINE
@@ -307,7 +289,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "NextERP API V1");
-        c.RoutePrefix = string.Empty;
+        // Swagger at /swagger so the site root stays free for the SPA — in
+        // Development SpaProxy redirects "/" to the Next.js dev server.
+        c.RoutePrefix = "swagger";
     });
 }
 else
@@ -315,8 +299,10 @@ else
     app.UseHsts();
 }
 
-// 🔹 IMPORTANT: Disable HTTPS redirect in production (Render)
-if (!app.Environment.IsProduction())
+// HTTPS redirect only in Staging-like envs. Off in Production (TLS is
+// terminated at the host/proxy, e.g. Render) and off in Development (the
+// local frontend talks plain http://localhost:5039 — no dev-cert trust needed).
+if (!app.Environment.IsProduction() && !app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }

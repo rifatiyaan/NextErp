@@ -1,10 +1,11 @@
 using MediatR;
 using NextErp.Application.Common.Interfaces;
 
-// Note: kept under top-level Commands (no .Product subnamespace) so the global
-// `Product.Request.*` references inside ProductCommands.cs / ProductVariationCommands.cs
-// (which resolve to the DTOs.Product type via their using imports) don't get hijacked
-// by a fresh sibling namespace named `Product`.
+// Note: kept under top-level Commands (no .Product subnamespace) so that a sibling
+// namespace named `Product` is not introduced. ProductCommands.cs / ProductVariationCommands.cs
+// import `NextErp.Application.DTOs.Product` and reference its types (GalleryResolvedSlot,
+// ProductImageThumbnailUpdateRequest, ...) unqualified; a `Commands.Product` namespace
+// would shadow that import.
 namespace NextErp.Application.Commands
 {
     /// <summary>

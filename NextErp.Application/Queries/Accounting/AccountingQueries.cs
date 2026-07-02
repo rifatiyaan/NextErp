@@ -5,7 +5,7 @@ using NextErp.Domain.Entities;
 namespace NextErp.Application.Queries.Accounting;
 
 public record GetAccountByIdQuery(Guid Id)
-    : IRequest<AccountDto.Response.Single?>;
+    : IRequest<AccountResponse?>;
 
 public record GetPagedAccountsQuery(
     int PageIndex = 1,
@@ -13,14 +13,14 @@ public record GetPagedAccountsQuery(
     string? SearchText = null,
     AccountType? Type = null,
     bool? OnlyPostable = null)
-    : IRequest<AccountDto.Response.Paged>;
+    : IRequest<PagedAccountResponse>;
 
 public record GetJournalEntryByIdQuery(Guid Id)
-    : IRequest<JournalDto.Response.Single?>;
+    : IRequest<JournalResponse?>;
 
 public record GetPagedJournalEntriesQuery(
     int PageIndex = 1,
     int PageSize = 10,
     string? SearchText = null,
     JournalEntryReferenceType? ReferenceType = null)
-    : IRequest<JournalDto.Response.Paged>;
+    : IRequest<PagedJournalResponse>;

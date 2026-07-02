@@ -1,10 +1,10 @@
-using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NextErp.Application.Commands;
 using NextErp.Application.Commands.Stock;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Stock;
+using NextErp.Application.Mapping;
 using NextErp.Application.Queries;
 using StockAdjustmentReason = NextErp.Domain.Entities.StockAdjustmentReason;
 
@@ -13,7 +13,7 @@ namespace NextErp.API.Controllers;
 [Authorize]
 [Route("api/[controller]")]
 [ApiController]
-public class StockController(IMediator mediator, IMapper mapper) : ControllerBase
+public class StockController(IMediator mediator) : ControllerBase
 {
     [HttpGet("variant/{productVariantId:int}")]
     public async Task<IActionResult> GetByProductVariantId(int productVariantId)
@@ -23,14 +23,14 @@ public class StockController(IMediator mediator, IMapper mapper) : ControllerBas
         if (stock == null)
             return NotFound();
 
-        return Ok(mapper.Map<Stock.Response.Single>(stock));
+        return Ok(stock.ToResponse());
     }
 
     [HttpGet("product/{productId:int}")]
     public async Task<IActionResult> GetByProductId(int productId)
     {
         var stocks = await mediator.Send(new GetStocksByProductIdQuery(productId));
-        return Ok(mapper.Map<List<Stock.Response.Single>>(stocks));
+        return Ok(stocks.Select(s => s.ToResponse()).ToList());
     }
 
     [HttpGet("report/current")]

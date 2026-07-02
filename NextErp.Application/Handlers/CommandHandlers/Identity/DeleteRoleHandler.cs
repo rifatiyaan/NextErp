@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Commands.Identity;
+using NextErp.Application.Common.Caching;
 using NextErp.Application.Interfaces;
 using NextErp.Domain.Entities;
 
@@ -10,7 +11,8 @@ namespace NextErp.Application.Handlers.CommandHandlers.Identity
     public class DeleteRoleHandler(
             IApplicationDbContext dbContext,
             UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole<Guid>> roleManager)
+            RoleManager<IdentityRole<Guid>> roleManager,
+            IPermissionCacheSignal? cacheSignal = null)
             : IRequestHandler<DeleteRoleCommand, bool>
     {
         private static readonly HashSet<string> ProtectedRoles = new(StringComparer.OrdinalIgnoreCase)
@@ -54,6 +56,7 @@ namespace NextErp.Application.Handlers.CommandHandlers.Identity
                 throw new InvalidOperationException($"Could not delete role: {detail}");
             }
 
+            cacheSignal?.Invalidate();
             return true;
         }
     }

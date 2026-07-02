@@ -1,17 +1,17 @@
-using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using NextErp.Application.DTOs.SystemSettings;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Mapping;
 using NextErp.Application.Queries;
 using DomainSystemSettings = NextErp.Domain.Entities.SystemSettings;
-using SystemSettingsDto = NextErp.Application.DTOs.SystemSettings;
 
 namespace NextErp.Application.Handlers.QueryHandlers.SystemSettings;
 
-public class GetSystemSettingsHandler(IApplicationDbContext dbContext, IMapper mapper)
-    : IRequestHandler<GetSystemSettingsQuery, SystemSettingsDto.Response.Single>
+public class GetSystemSettingsHandler(IApplicationDbContext dbContext)
+    : IRequestHandler<GetSystemSettingsQuery, SystemSettingsResponse>
 {
-    public async Task<SystemSettingsDto.Response.Single> Handle(
+    public async Task<SystemSettingsResponse> Handle(
         GetSystemSettingsQuery request,
         CancellationToken cancellationToken = default)
     {
@@ -22,7 +22,6 @@ public class GetSystemSettingsHandler(IApplicationDbContext dbContext, IMapper m
             .FirstOrDefaultAsync(s => s.TenantId == tenantId, cancellationToken);
 
         var entity = existing ?? DomainSystemSettings.CreateDefaults(tenantId);
-        return mapper.Map<SystemSettingsDto.Response.Single>(entity);
+        return entity.ToResponse();
     }
 }
-

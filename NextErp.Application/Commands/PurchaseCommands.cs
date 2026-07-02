@@ -1,6 +1,6 @@
 using MediatR;
 using NextErp.Application.Common.Interfaces;
-using NextErp.Application.DTOs;
+using NextErp.Application.DTOs.Purchase;
 
 namespace NextErp.Application.Commands
 {
@@ -10,7 +10,7 @@ namespace NextErp.Application.Commands
         Guid? PartyId,
         DateTime PurchaseDate,
         decimal Discount,
-        List<Purchase.Request.Create.PurchaseItemRequest> Items,
-        Purchase.Request.Metadata? Metadata
+        List<PurchaseItemRequest> Items,
+        PurchaseMetadataRequest? Metadata
     ) : IRequest<Guid>, ITransactionalRequest; // Returns Id of created purchase
 }

@@ -9,14 +9,14 @@ namespace NextErp.Application.Handlers.QueryHandlers.Sale;
 public class PreviewSalePricingHandler(
     IApplicationDbContext db,
     IPricingService pricingService)
-    : IRequestHandler<PreviewSalePricingQuery, SaleDto.Response.Preview.Single>
+    : IRequestHandler<PreviewSalePricingQuery, SaleDto.PreviewSaleResponse>
 {
-    public async Task<SaleDto.Response.Preview.Single> Handle(
+    public async Task<SaleDto.PreviewSaleResponse> Handle(
         PreviewSalePricingQuery request,
         CancellationToken cancellationToken = default)
     {
         if (request.Lines.Count == 0)
-            return new SaleDto.Response.Preview.Single();
+            return new SaleDto.PreviewSaleResponse();
 
         var variantIds = request.Lines.Select(l => l.ProductVariantId).Distinct().ToList();
         var variants = await db.ProductVariants
@@ -83,10 +83,10 @@ public class PreviewSalePricingHandler(
             - l.ManualDiscount);
         var finalAmount = Math.Max(0m, subtotal - resolution.InvoiceDiscount);
 
-        return new SaleDto.Response.Preview.Single
+        return new SaleDto.PreviewSaleResponse
         {
             Subtotal = decimal.Round(subtotal, 2, MidpointRounding.AwayFromZero),
-            LineDiscounts = resolution.LineDiscounts.Select(d => new SaleDto.Response.Preview.LineDiscount
+            LineDiscounts = resolution.LineDiscounts.Select(d => new SaleDto.PreviewLineDiscountResponse
             {
                 ProductVariantId = d.ProductVariantId,
                 Discount = d.RuleDiscount,
@@ -103,7 +103,7 @@ public class PreviewSalePricingHandler(
                 var title = product == null
                     ? $"#{b.ProductVariantId}"
                     : product.HasVariations ? $"{product.Title} ({variant!.Title})" : product.Title;
-                return new SaleDto.Response.Preview.BonusItem
+                return new SaleDto.PreviewBonusItemResponse
                 {
                     ProductVariantId = b.ProductVariantId,
                     Title = title,

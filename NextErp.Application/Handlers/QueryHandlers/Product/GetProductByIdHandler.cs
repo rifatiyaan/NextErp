@@ -1,20 +1,19 @@
-using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using NextErp.Application.DTOs.Product;
 using NextErp.Application.Interfaces;
+using NextErp.Application.Mapping;
 using NextErp.Application.Products;
 using NextErp.Application.Queries;
-using ProductGetDto = NextErp.Application.DTOs.Product.Response.Get;
 
 namespace NextErp.Application.Handlers.QueryHandlers.Product;
 
 public class GetProductByIdHandler(
     IApplicationDbContext dbContext,
-    IBranchProvider branchProvider,
-    IMapper mapper)
-    : IRequestHandler<GetProductByIdQuery, ProductGetDto.Single?>
+    IBranchProvider branchProvider)
+    : IRequestHandler<GetProductByIdQuery, ProductResponse?>
 {
-    public async Task<ProductGetDto.Single?> Handle(
+    public async Task<ProductResponse?> Handle(
         GetProductByIdQuery request,
         CancellationToken cancellationToken = default)
     {
@@ -36,7 +35,7 @@ public class GetProductByIdHandler(
         if (product == null)
             return null;
 
-        var dto = mapper.Map<ProductGetDto.Single>(product);
+        var dto = product.ToResponse();
         await ProductVariantStockLookup.EnrichProductVariantStocksAsync(dto, dbContext, branchProvider, cancellationToken)
             .ConfigureAwait(false);
 
