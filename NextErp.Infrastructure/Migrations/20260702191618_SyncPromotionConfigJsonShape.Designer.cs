@@ -12,8 +12,8 @@ using NextErp.Infrastructure;
 namespace NextErp.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260702190810_AddOnlinePublicationFlags")]
-    partial class AddOnlinePublicationFlags
+    [Migration("20260702191618_SyncPromotionConfigJsonShape")]
+    partial class SyncPromotionConfigJsonShape
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -423,9 +423,6 @@ namespace NextErp.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsPublishedOnline")
                         .HasColumnType("bit");
 
                     b.Property<int?>("ParentId")
@@ -890,9 +887,6 @@ namespace NextErp.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsPublishedOnline")
                         .HasColumnType("bit");
 
                     b.Property<int?>("ParentId")
