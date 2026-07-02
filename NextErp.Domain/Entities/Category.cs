@@ -19,6 +19,8 @@ namespace NextErp.Domain.Entities
 
         public bool IsActive { get; set; } = true;
 
+        public bool IsPublishedOnline { get; set; } = false;
+
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 

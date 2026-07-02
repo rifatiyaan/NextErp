@@ -30,6 +30,10 @@ namespace NextErp.Domain.Entities
 
         public bool IsActive { get; set; } = true;
 
+        // Storefront curation: only products explicitly published (and whose
+        // category is published) appear on the public store.
+        public bool IsPublishedOnline { get; set; } = false;
+
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 
