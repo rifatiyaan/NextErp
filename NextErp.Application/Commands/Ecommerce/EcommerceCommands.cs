@@ -11,4 +11,13 @@ namespace NextErp.Application.Commands.Ecommerce
         List<int> PublishProductIds,
         List<int> UnpublishProductIds
     ) : IRequest<Unit>, ITransactionalRequest;
+
+    // Anonymous guest checkout — deliberately has NO [RequiresPermission].
+    public record CreateOnlineOrderCommand(
+        string CustomerName,
+        string Phone,
+        string Address,
+        string? Note,
+        List<NextErp.Application.DTOs.Ecommerce.StoreOrderItemRequest> Items
+    ) : IRequest<string>, ITransactionalRequest;
 }
