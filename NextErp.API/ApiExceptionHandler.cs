@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Common.Exceptions;
+using FluentValidationException = FluentValidation.ValidationException;
 using ValidationException = NextErp.Application.Common.Exceptions.ValidationException;
 
 namespace NextErp.API;
@@ -42,6 +43,17 @@ public sealed class ApiExceptionHandler(IHostEnvironment environment, ILogger<Ap
         {
             problem.Extensions["errors"] = vex.Errors;
         }
+        else if (exception is FluentValidationException fvex)
+        {
+            // Handlers occasionally throw FluentValidation's exception directly for
+            // catalog-level failures discovered mid-handler (outside the
+            // ValidationBehavior pipeline, e.g. CreateOnlineOrderHandler). Normalize
+            // to the same field -> messages shape as the pipeline's ValidationException
+            // so API consumers see one consistent error contract.
+            problem.Extensions["errors"] = fvex.Errors
+                .GroupBy(f => f.PropertyName, f => f.ErrorMessage)
+                .ToDictionary(g => g.Key, g => g.ToArray());
+        }
 
         httpContext.Response.ContentType = "application/problem+json; charset=utf-8";
         httpContext.Response.StatusCode = status;
@@ -55,6 +67,10 @@ public sealed class ApiExceptionHandler(IHostEnvironment environment, ILogger<Ap
         return exception switch
         {
             ValidationException => (
+                StatusCodes.Status422UnprocessableEntity,
+                "Validation failed",
+                "One or more validation failures have occurred."),
+            FluentValidationException => (
                 StatusCodes.Status422UnprocessableEntity,
                 "Validation failed",
                 "One or more validation failures have occurred."),

@@ -103,6 +103,32 @@ builder.Services.AddSingleton<IModuleCacheSignal, ModuleCacheSignal>();
 builder.Services.AddSingleton<IPermissionCacheSignal, PermissionCacheSignal>();
 
 // =======================================================
+// 🔹 STOREFRONT GUARD + RATE LIMITING (public api/store/* endpoints)
+// =======================================================
+builder.Services.AddScoped<NextErp.API.Filters.StorefrontEnabledFilter>();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("store", httpContext =>
+        System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "anon",
+            _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 120,
+                Window = TimeSpan.FromMinutes(1),
+            }));
+    options.AddPolicy("store-orders", httpContext =>
+        System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "anon",
+            _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+            }));
+});
+
+// =======================================================
 // 🔹 HANGFIRE (background jobs — e.g. customer bulk-email)
 // Registers IBackgroundJobClient (consumed by PartyController) and a
 // worker server. SQL Server storage reuses DefaultConnection and creates
@@ -309,6 +335,7 @@ if (!app.Environment.IsProduction() && !app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 app.UseRouting();
+app.UseRateLimiter();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
