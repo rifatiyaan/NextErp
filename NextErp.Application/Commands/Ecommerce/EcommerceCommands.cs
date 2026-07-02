@@ -20,4 +20,10 @@ namespace NextErp.Application.Commands.Ecommerce
         string? Note,
         List<NextErp.Application.DTOs.Ecommerce.StoreOrderItemRequest> Items
     ) : IRequest<string>, ITransactionalRequest;
+
+    [RequiresPermission("Sale.Create")]
+    public record ConfirmOnlineOrderCommand(int Id) : IRequest<Guid>, ITransactionalRequest;
+
+    [RequiresPermission("Sale.Create")]
+    public record CancelOnlineOrderCommand(int Id, string Reason) : IRequest<Unit>, ITransactionalRequest;
 }
