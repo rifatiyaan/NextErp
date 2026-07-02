@@ -28,6 +28,8 @@ namespace NextErp.Application.Interfaces
         DbSet<SalePayment> SalePayments { get; set; }
         DbSet<SaleReturn> SaleReturns { get; set; }
         DbSet<SaleReturnItem> SaleReturnItems { get; set; }
+        DbSet<OnlineOrder> OnlineOrders { get; set; }
+        DbSet<OnlineOrderItem> OnlineOrderItems { get; set; }
         DbSet<StockMovement> StockMovements { get; set; }
         DbSet<StockBatch> StockBatches { get; set; }
         DbSet<UnitOfMeasure> UnitOfMeasures { get; set; }
