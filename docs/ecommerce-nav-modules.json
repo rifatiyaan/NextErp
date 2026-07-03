@@ -1,0 +1,39 @@
+{
+  "_documentation": {
+    "purpose": "Reference payload for the DB-driven sidebar navigation of the ecommerce storefront admin. The sidebar is seeded from Module rows, NOT frontend code. Create these at runtime via the /settings/modules admin UI or POST /api/Module/bulk.",
+    "type_legend": { "1": "top-level module", "2": "child (needs a parentId)" },
+    "manual_step": "The Settings -> Ecommerce entry (below, in `settingsChild`) is a type:2 child of the EXISTING Settings module. Its parentId differs per database, so it cannot be pre-seeded with a static id. Resolve the Settings module id first (GET /api/Module or the /settings/modules list), set it as parentId, then create the child.",
+    "routes_covered": ["/ecommerce", "/ecommerce/online-orders", "/settings/ecommerce"],
+    "related": "Store-config settings (name/hero/delivery fee) are NOT nav rows; they auto-render under Settings -> Features -> Ecommerce via the [SettingsModule(\"Ecommerce\")] declaration."
+  },
+  "modules": [
+    {
+      "title": "Ecommerce",
+      "icon": "ShoppingCart",
+      "url": "/ecommerce",
+      "type": 1,
+      "order": 55,
+      "isActive": true,
+      "children": [
+        {
+          "title": "Online Orders",
+          "icon": "ClipboardList",
+          "url": "/ecommerce/online-orders",
+          "type": 2,
+          "order": 1,
+          "isActive": true
+        }
+      ]
+    }
+  ],
+  "settingsChild": {
+    "_note": "Create separately once the Settings module id is known; set parentId to it.",
+    "title": "Ecommerce",
+    "icon": "ShoppingCart",
+    "url": "/settings/ecommerce",
+    "type": 2,
+    "order": 90,
+    "isActive": true,
+    "parentId": "<resolve the existing Settings module id at runtime>"
+  }
+}
