@@ -81,6 +81,13 @@ public sealed class ApiExceptionHandler(IHostEnvironment environment, ILogger<Ap
                 StatusCodes.Status409Conflict,
                 "Concurrency conflict",
                 "The record was modified by another request. Please retry."),
+            // Backstop for unique-index / constraint violations that exhaust the
+            // caller's own retry (e.g. OnlineOrderNumberFactory collisions).
+            // Sanitized: no inner exception/SQL details reach the client.
+            DbUpdateException => (
+                StatusCodes.Status409Conflict,
+                "Conflict",
+                "The request conflicted with existing data. Please retry."),
             ArgumentException ax => (StatusCodes.Status400BadRequest, "Bad request", ax.Message),
             _ => (
                 StatusCodes.Status500InternalServerError,

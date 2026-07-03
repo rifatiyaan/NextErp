@@ -95,4 +95,28 @@ public class CreateOnlineOrderHandlerTests : HandlerTestBase
         (await Db.Notifications.AsNoTracking().ToListAsync())
             .Should().ContainSingle(n => n.Type == "OnlineOrderPlaced");
     }
+
+    [Fact]
+    public async Task Notification_carries_the_final_order_number()
+    {
+        // Guards the ordering fix: the notification must be staged with the
+        // order number that actually got persisted, not a candidate that a
+        // concurrent checkout could have invalidated. The race itself isn't
+        // reproducible single-threaded (see OnlineOrderNumberFactory retry
+        // in CreateOnlineOrderHandler) — this asserts the normal path keeps
+        // the notification and order number in sync.
+        await SeedPublishedProductAsync();
+        var sut = BuildHandler();
+
+        var orderNumber = await sut.Handle(new CreateOnlineOrderCommand(
+            "Test Customer", "01700000000", "12 Example Road", null,
+            new() { new StoreOrderItemRequest(_variantId, 1m) }), CancellationToken.None);
+
+        var order = await Db.OnlineOrders.AsNoTracking().FirstAsync();
+        order.OrderNumber.Should().Be(orderNumber);
+
+        var notification = (await Db.Notifications.AsNoTracking().ToListAsync())
+            .Should().ContainSingle(n => n.Type == "OnlineOrderPlaced").Subject;
+        notification.Message.Should().Contain(order.OrderNumber);
+    }
 }

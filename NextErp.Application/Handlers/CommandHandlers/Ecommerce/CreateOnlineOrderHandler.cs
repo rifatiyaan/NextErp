@@ -74,6 +74,25 @@ public class CreateOnlineOrderHandler(
 
         dbContext.OnlineOrders.Add(order);
 
+        // Read-max-then-increment can race under concurrent checkouts; the
+        // (TenantId, OrderNumber) unique index rejects the loser. Regenerate
+        // and retry instead of surfacing a 500 to a customer.
+        const int maxAttempts = 3;
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                await dbContext.SaveChangesAsync(cancellationToken);
+                break;
+            }
+            catch (DbUpdateException) when (attempt < maxAttempts)
+            {
+                order.OrderNumber = await OnlineOrderNumberFactory.NextNumberAsync(tenantId, dbContext, cancellationToken);
+            }
+        }
+
+        // Staged after the save succeeds so the message always carries the
+        // final, persisted order number (never a number that lost the race).
         await notifications.RecordAsync(
             type: "OnlineOrderPlaced",
             title: "New online order",
