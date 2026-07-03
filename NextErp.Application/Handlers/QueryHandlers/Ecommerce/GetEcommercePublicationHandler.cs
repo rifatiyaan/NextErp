@@ -25,14 +25,20 @@ public class GetEcommercePublicationHandler(IApplicationDbContext dbContext)
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(p => p.IsActive)
-            .Select(p => new { p.Id, p.Title, p.Code, p.Price, p.IsPublishedOnline, p.CategoryId })
+            .Select(p => new
+            {
+                p.Id, p.Title, p.Code, p.Price, p.IsPublishedOnline, p.CategoryId,
+                // First product image (by display order), falling back to the
+                // legacy single ImageUrl — mirrors the storefront handler.
+                ImageUrl = p.ProductImages.OrderBy(i => i.DisplayOrder).Select(i => i.Url).FirstOrDefault() ?? p.ImageUrl,
+            })
             .ToListAsync(cancellationToken);
         var byCategory = products.GroupBy(p => p.CategoryId).ToDictionary(g => g.Key, g => g.ToList());
 
         return categories.Select(c => new PublicationCategoryResponse(
             c.Id, c.Title, c.ParentId, c.IsPublishedOnline,
             (byCategory.GetValueOrDefault(c.Id) ?? new())
-                .Select(p => new PublicationProductRow(p.Id, p.Title, p.Code, p.Price, p.IsPublishedOnline))
+                .Select(p => new PublicationProductRow(p.Id, p.Title, p.Code, p.Price, p.ImageUrl, p.IsPublishedOnline))
                 .ToList()))
             .ToList();
     }
