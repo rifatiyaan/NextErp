@@ -39,7 +39,7 @@ Query param names are exactly `categoryId`, `searchText`, `pageIndex`, `pageSize
 
 ## File structure
 
-Everything new lives under `NextErp_React/app/(store)/` unless noted. Route groups do not affect URLs. **`/` is currently owned by `app/(dashboard)/page.tsx`; Task 0 relocates that authenticated home to `/dashboard` so the storefront can own `/`** (owner-approved). Admin module routes (`/sales`, `/inventory`, `/settings`, …) are unchanged. Task 0 also touches `app/(dashboard)/dashboard/page.tsx` (new), `components/layout/currency-locale-sync.tsx`, and `lib/api/client.ts` (anonymous-auth fixes).
+Everything new lives under `NextErp_React/app/(store)/` unless noted. Route groups do not affect URLs. **`/` is currently owned by `app/(dashboard)/page.tsx`; Task 0 relocates that authenticated home to `/dashboard` so the storefront can own `/`** (owner-approved). Admin module routes (`/sales`, `/inventory`, `/settings`, …) and the existing `/dashboard` analytics page are unchanged. Task 0 deletes the `/` shim `app/(dashboard)/page.tsx` and edits `contexts/auth-context.tsx`, `components/layout/dashboard-vertical-menu.tsx`, `components/layout/currency-locale-sync.tsx`, and `lib/api/client.ts` (anonymous-auth fixes).
 
 ```
 app/(store)/
@@ -83,23 +83,28 @@ app/(store)/store-tokens.css     # store CSS vars + scope class (Task 2)
 ### Task 0: Reconcile the app shell for a public storefront
 
 **Files:**
-- Create: `app/(dashboard)/dashboard/page.tsx`
-- Delete: `app/(dashboard)/page.tsx`
-- Modify: the login-success redirect + any dashboard "home" links (grep in Step 2)
-- Modify: `components/layout/currency-locale-sync.tsx` (gate the fetch on auth)
+- Delete: `app/(dashboard)/page.tsx` (the `/` redirect-to-first-module shim)
+- **Leave untouched:** `app/(dashboard)/dashboard/page.tsx` — this path ALREADY holds the real ERP analytics dashboard (KPIs/charts, linked in `data/navigations.ts`); it becomes the authenticated home. Do **NOT** create or overwrite it.
+- Modify: `contexts/auth-context.tsx` (login/register/setSession success redirects `/` → `/dashboard`)
+- Modify: `components/layout/dashboard-vertical-menu.tsx` (sidebar brand/home link `/` → `/dashboard`)
+- Modify: `components/layout/currency-locale-sync.tsx` (gate the fetch on auth); thread an `enabled?` param through `hooks/use-feature-settings.ts` only if needed
 - Modify: `lib/api/client.ts` (`handleUnauthorized` — don't bounce anonymous store routes)
 
-**Why:** `app/(dashboard)/page.tsx` currently resolves to `/` (a `"use client"` redirect to the user's first module). The storefront home (Task 6) also resolves to `/`; two `page.tsx` files at one path is a **fatal `next build` error** (`typescript.ignoreBuildErrors:true` hides it from `tsc`, so it would only surface at Task 11). Owner decision: the storefront owns `/`; the authenticated home moves to `/dashboard`. Separately, the root layout (`app/layout.tsx`) mounts `CurrencyLocaleSync`, which fetches the `[Authorize]` `/api/feature-settings` endpoint **unconditionally**; for an anonymous visitor that returns 401 and `fetchAPI.handleUnauthorized` does `window.location.replace('/login…')`, so **every store page would bounce to login** (and raise a "Session expired" toast). Both must be fixed before any store route is testable. These edits are the ONLY admin-shell changes in this plan.
+**Why:** `app/(dashboard)/page.tsx` currently resolves to `/` (a `"use client"` shim that redirects to the user's first module via `useUserMenu()`). The storefront home (Task 6) also resolves to `/`; two `page.tsx` files at one path is a **fatal `next build` error** (`typescript.ignoreBuildErrors:true` hides it from `tsc`, so it would only surface at Task 11). Owner decision: the storefront owns `/`; the authenticated home is `/dashboard` — which **already exists** as the analytics dashboard, so nothing new is created; the `/` shim is simply deleted and entry points are pointed at `/dashboard`. Separately, the root layout (`app/layout.tsx`) mounts `CurrencyLocaleSync`, which fetches the `[Authorize]` `/api/feature-settings` endpoint **unconditionally**; for an anonymous visitor that returns 401 and `fetchAPI.handleUnauthorized` does `window.location.replace('/login…')`, so **every store page would bounce to login** (and raise a "Session expired" toast). Both must be fixed before any store route is testable. These edits are the ONLY admin-shell changes in this plan.
 
-- [ ] **Step 1: Relocate the authenticated home to `/dashboard`**
+- [ ] **Step 1: Free `/` — delete the root redirector (do NOT touch `/dashboard`)**
 
-Read `app/(dashboard)/page.tsx` first (it is a `"use client"` component that redirects to the first module, e.g. via `useUserMenu()` + `router.replace`). Create `app/(dashboard)/dashboard/page.tsx` with the SAME logic (copy it verbatim), then delete `app/(dashboard)/page.tsx`. Now `/dashboard` serves the authenticated home and `/` is free for the storefront.
+`app/(dashboard)/dashboard/page.tsx` ALREADY EXISTS and is the real ERP analytics dashboard (linked in the sidebar). **Do NOT create or overwrite it.** The page at `/` — `app/(dashboard)/page.tsx` — is only a redirect-to-first-module shim. **Delete `app/(dashboard)/page.tsx`** to free `/` for the storefront. Authenticated users will land on the existing `/dashboard` analytics page (Step 2 points entry there). The first-module auto-redirect is intentionally dropped in favor of the analytics dashboard as the authenticated home (owner-approved: "dashboard → /dashboard").
 
-- [ ] **Step 2: Point authenticated redirects at `/dashboard`**
+- [ ] **Step 2: Point authenticated entry at `/dashboard`**
 
-Grep for redirects/links that send authenticated users to the root and change the ones that mean "the authenticated home" to `/dashboard`:
-Run (PowerShell): `Get-ChildItem -Recurse -Include *.ts,*.tsx app,components,contexts,lib | Select-String -Pattern 'push\("/"\)|replace\("/"\)|redirectTo.*=.*"/"|href="/"'`
-At minimum update: the login-success navigation (after a successful sign-in) and any sidebar/brand "home" link in the dashboard chrome. Change `/` → `/dashboard`. There are no store-facing `/` links yet, so every current hit means the admin home. Verify the login flow lands on `/dashboard`.
+Change these specific "authenticated home" references from `/` to `/dashboard`:
+- `contexts/auth-context.tsx` — the three success redirects: after `login()`, after `register()`, and in `setSession()` (`router.push("/")` → `router.push("/dashboard")`).
+- `components/layout/dashboard-vertical-menu.tsx` — the sidebar brand/logo link (`href="/"` → `href="/dashboard"`).
+LEAVE these alone (they are correct once the storefront owns `/`):
+- `app/not-found.tsx` "Go back home" link (global; serves anonymous visitors too).
+- `components/auth/AuthLayout.tsx` brand link (shown to pre-login/anonymous users).
+Re-run the grep to confirm nothing else was missed: `Get-ChildItem -Recurse -Include *.ts,*.tsx app,components,contexts,lib | Select-String -Pattern 'push\("/"\)|replace\("/"\)|href="/"'`. Verify the login flow lands on `/dashboard`.
 
 - [ ] **Step 3: Stop anonymous visitors bouncing to `/login`**
 
@@ -120,10 +125,10 @@ if (onStoreRoute) return // anonymous storefront: never bounce; let the caller h
 - [ ] **Step 5: Commit**
 
 ```bash
-git add "app/(dashboard)/dashboard/page.tsx" components/layout/currency-locale-sync.tsx lib/api/client.ts
 git rm "app/(dashboard)/page.tsx"
-# plus any files touched in Step 2
-git commit -m "refactor(app): move authenticated home to /dashboard, free / for the storefront
+git add contexts/auth-context.tsx components/layout/dashboard-vertical-menu.tsx components/layout/currency-locale-sync.tsx lib/api/client.ts
+# plus hooks/use-feature-settings.ts if you threaded an `enabled` param
+git commit -m "refactor(app): free / for the storefront, land authenticated users on /dashboard
 
 Also gate the root-layout locale sync and handleUnauthorized so anonymous
 storefront routes are not redirected to /login.
