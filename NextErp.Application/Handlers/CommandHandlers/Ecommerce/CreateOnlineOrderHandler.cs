@@ -77,6 +77,13 @@ public class CreateOnlineOrderHandler(
         // Read-max-then-increment can race under concurrent checkouts; the
         // (TenantId, OrderNumber) unique index rejects the loser. Regenerate
         // and retry instead of surfacing a 500 to a customer.
+        //
+        // Retry ONLY the order-number unique violation: a duplicate-key error
+        // is statement-scoped on SQL Server (default XACT_ABORT OFF) and on
+        // SQLite, so the ambient TransactionBehavior transaction stays usable.
+        // Anything else (e.g. a deadlock, which dooms the transaction and
+        // must not be retried on the same connection) falls straight through
+        // to the DbUpdateException -> 409 mapping in ApiExceptionHandler.
         const int maxAttempts = 3;
         for (var attempt = 1; ; attempt++)
         {
@@ -85,7 +92,9 @@ public class CreateOnlineOrderHandler(
                 await dbContext.SaveChangesAsync(cancellationToken);
                 break;
             }
-            catch (DbUpdateException) when (attempt < maxAttempts)
+            catch (DbUpdateException ex) when (
+                attempt < maxAttempts
+                && ex.InnerException?.Message?.Contains("OrderNumber") == true)
             {
                 order.OrderNumber = await OnlineOrderNumberFactory.NextNumberAsync(tenantId, dbContext, cancellationToken);
             }
