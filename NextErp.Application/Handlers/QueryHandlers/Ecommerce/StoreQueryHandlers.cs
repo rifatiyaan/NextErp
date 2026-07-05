@@ -12,11 +12,31 @@ internal static class StoreQueryShared
 {
     // Anonymous requests carry no branch claim, so the [BranchScoped] global
     // filter cannot apply — every store query bypasses it and pins the branch
-    // to the configured selling branch explicitly.
-    public static async Task<Guid> SellingBranchAsync(ISettingsProvider settings)
+    // explicitly. Branch selling is an advanced, off-by-default option: only when
+    // it is enabled AND a valid, existing branch is configured do we honour it.
+    // Otherwise the store auto-targets the default (single / first active) branch,
+    // so a single-branch shop needs zero configuration and a stale/garbage
+    // SellingBranchId can never break the storefront.
+    public static async Task<Guid> SellingBranchAsync(
+        ISettingsProvider settings, IApplicationDbContext dbContext, CancellationToken cancellationToken = default)
     {
         var s = await settings.GetAsync<EcommerceSettings>();
-        return Guid.TryParse(s.SellingBranchId, out var id) ? id : Guid.Empty;
+
+        if (s.EnableBranchSelling
+            && Guid.TryParse(s.SellingBranchId, out var configured)
+            && await dbContext.Branches.IgnoreQueryFilters()
+                .AnyAsync(b => b.Id == configured && b.IsActive, cancellationToken))
+        {
+            return configured;
+        }
+
+        return await dbContext.Branches
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(b => b.IsActive)
+            .OrderBy(b => b.CreatedAt)
+            .Select(b => b.Id)
+            .FirstOrDefaultAsync(cancellationToken); // Guid.Empty if no branches exist
     }
 
     public static decimal? LowStock(decimal available) =>
@@ -58,7 +78,7 @@ public class GetStoreCategoriesHandler(IApplicationDbContext dbContext, ISetting
 {
     public async Task<List<StoreCategoryResponse>> Handle(GetStoreCategoriesQuery request, CancellationToken cancellationToken = default)
     {
-        var branchId = await StoreQueryShared.SellingBranchAsync(settings);
+        var branchId = await StoreQueryShared.SellingBranchAsync(settings, dbContext, cancellationToken);
 
         var categories = await dbContext.Categories
             .AsNoTracking()
@@ -86,7 +106,7 @@ public class GetStorePagedProductsHandler(IApplicationDbContext dbContext, ISett
 {
     public async Task<StorePagedProductsResponse> Handle(GetStorePagedProductsQuery request, CancellationToken cancellationToken = default)
     {
-        var branchId = await StoreQueryShared.SellingBranchAsync(settings);
+        var branchId = await StoreQueryShared.SellingBranchAsync(settings, dbContext, cancellationToken);
         var pageIndex = Math.Max(1, request.PageIndex);
         var pageSize = Math.Clamp(request.PageSize, 1, 60);
 
@@ -147,7 +167,7 @@ public class GetStoreProductByIdHandler(IApplicationDbContext dbContext, ISettin
 {
     public async Task<StoreProductDetailResponse?> Handle(GetStoreProductByIdQuery request, CancellationToken cancellationToken = default)
     {
-        var branchId = await StoreQueryShared.SellingBranchAsync(settings);
+        var branchId = await StoreQueryShared.SellingBranchAsync(settings, dbContext, cancellationToken);
 
         var product = await dbContext.Products
             .IgnoreQueryFilters()
@@ -203,7 +223,7 @@ public class GetStorePriceRangeHandler(IApplicationDbContext dbContext, ISetting
 {
     public async Task<StorePriceRangeResponse> Handle(GetStorePriceRangeQuery request, CancellationToken cancellationToken = default)
     {
-        var branchId = await StoreQueryShared.SellingBranchAsync(settings);
+        var branchId = await StoreQueryShared.SellingBranchAsync(settings, dbContext, cancellationToken);
         var query = StoreQueryShared.PublishedProducts(dbContext, branchId, request.CategoryId);
 
         // One round-trip, empty-safe: an empty catalog produces no group, so

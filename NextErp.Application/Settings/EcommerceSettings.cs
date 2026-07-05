@@ -32,6 +32,13 @@ public sealed class EcommerceSettings
     [SettingRange(0, 100000)]
     public decimal DeliveryFee { get; set; } = 0m;
 
-    [Setting(description: "Branch whose stock and orders the storefront uses.", displayName: "Selling branch id")]
+    [Setting(
+        description: "Advanced: sell from one specific branch (below). Off = the store auto-uses your default branch, so a single-branch shop needs no setup.",
+        displayName: "Enable branch selling")]
+    public bool EnableBranchSelling { get; set; } = false;
+
+    [Setting(
+        description: "Only used when 'Enable branch selling' is on: the branch whose stock and orders the storefront uses. Leave blank to auto-use the default branch.",
+        displayName: "Selling branch id")]
     public string SellingBranchId { get; set; } = "";
 }

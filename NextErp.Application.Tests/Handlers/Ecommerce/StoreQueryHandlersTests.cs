@@ -15,10 +15,11 @@ public class StoreQueryHandlersTests : HandlerTestBase
     private const int UnpublishedCat = 701;
     private const int PricedCat = 720;
 
-    private ISettingsProvider SettingsWith(Guid sellingBranchId) =>
+    private ISettingsProvider SettingsWith(Guid sellingBranchId, bool enableBranchSelling = false) =>
         SettingsProviderReturning(new EcommerceSettings
         {
             StorefrontEnabled = true,
+            EnableBranchSelling = enableBranchSelling,
             SellingBranchId = sellingBranchId.ToString(),
             DeliveryFee = 60m,
         });
@@ -69,15 +70,51 @@ public class StoreQueryHandlersTests : HandlerTestBase
     }
 
     [Fact]
-    public async Task Products_in_another_branch_are_excluded()
+    public async Task Products_in_another_branch_are_excluded_when_branch_selling_is_on()
     {
         await SeedCatalogAsync();
         var otherBranch = Guid.NewGuid();
-        var sut = new GetStorePagedProductsHandler(Db, SettingsWith(otherBranch));
+        Db.Branches.Add(new BranchBuilder().WithId(otherBranch).WithTenant(TenantId).Build());
+        await Db.SaveChangesAsync();
+        var sut = new GetStorePagedProductsHandler(Db, SettingsWith(otherBranch, enableBranchSelling: true));
 
         var page = await sut.Handle(new GetStorePagedProductsQuery(null, null), CancellationToken.None);
 
         page.Total.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Products_auto_resolve_to_the_default_branch_when_branch_selling_is_off()
+    {
+        await SeedCatalogAsync();
+        // Branch selling OFF + a garbage SellingBranchId ("1") must not matter:
+        // the store auto-targets the only active branch (the fragile Guid.Empty
+        // luck is gone). This is the single-branch, zero-config path.
+        var settings = SettingsProviderReturning(new EcommerceSettings
+        {
+            StorefrontEnabled = true,
+            EnableBranchSelling = false,
+            SellingBranchId = "1",
+        });
+        var sut = new GetStorePagedProductsHandler(Db, settings);
+
+        var page = await sut.Handle(new GetStorePagedProductsQuery(null, null), CancellationToken.None);
+
+        page.Total.Should().Be(1);
+        page.Data.Should().ContainSingle(p => p.Title == "Visible");
+    }
+
+    [Fact]
+    public async Task Products_fall_back_to_default_branch_when_configured_branch_is_missing()
+    {
+        await SeedCatalogAsync();
+        // Flag ON but SellingBranchId points to a branch that does not exist ->
+        // fall back to the default branch so a misconfig can't break the store.
+        var sut = new GetStorePagedProductsHandler(Db, SettingsWith(Guid.NewGuid(), enableBranchSelling: true));
+
+        var page = await sut.Handle(new GetStorePagedProductsQuery(null, null), CancellationToken.None);
+
+        page.Total.Should().Be(1);
     }
 
     [Fact]
