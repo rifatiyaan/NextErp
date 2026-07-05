@@ -1,6 +1,7 @@
 using MediatR;
 using NextErp.Application.Common.Attributes;
 using NextErp.Application.Common.Interfaces;
+using NextErp.Application.DTOs.Ecommerce;
 
 namespace NextErp.Application.Commands.Ecommerce
 {
@@ -29,4 +30,8 @@ namespace NextErp.Application.Commands.Ecommerce
 
     // Anonymous public product review — deliberately has NO [RequiresPermission].
     public record CreateReviewCommand(int ProductId, string AuthorName, int Rating, string Text) : IRequest<int>;
+
+    // Admin: replace the home hero slides. Returns the number of slides saved.
+    [RequiresPermission("Settings.System.Manage")]
+    public record UpdateEcommerceHeroSlidesCommand(List<StoreHeroSlide> Slides) : IRequest<int>;
 }

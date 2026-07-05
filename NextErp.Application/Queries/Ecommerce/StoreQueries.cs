@@ -12,4 +12,7 @@ namespace NextErp.Application.Queries.Ecommerce
     public record GetStoreProductByIdQuery(int Id) : IRequest<StoreProductDetailResponse?>;
     public record GetStorePriceRangeQuery(int? CategoryId = null) : IRequest<StorePriceRangeResponse>;
     public record GetProductReviewsQuery(int ProductId) : IRequest<StoreReviewsResponse>;
+
+    // Admin: current home hero slides (authorized via the controller).
+    public record GetEcommerceHeroSlidesQuery() : IRequest<List<StoreHeroSlide>>;
 }

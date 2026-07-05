@@ -59,28 +59,15 @@ internal static class StoreQueryShared
 
         return query;
     }
-}
 
-public class GetStoreConfigHandler(ISettingsProvider settings)
-    : IRequestHandler<GetStoreConfigQuery, StoreConfigResponse>
-{
     private static readonly System.Text.Json.JsonSerializerOptions SlideJsonOpts = new()
     {
         PropertyNameCaseInsensitive = true,
     };
 
-    public async Task<StoreConfigResponse> Handle(GetStoreConfigQuery request, CancellationToken cancellationToken = default)
-    {
-        var s = await settings.GetAsync<EcommerceSettings>();
-        return new StoreConfigResponse(
-            s.StorefrontEnabled, s.StoreName, s.Tagline, s.HeroHeadline,
-            s.HeroImageUrl, s.MarqueeText, s.CodNote, s.DeliveryFee,
-            ParseSlides(s.HeroSlidesJson));
-    }
-
-    // Hero slides are stored as a JSON string; a malformed/empty value degrades
-    // to no slides (the home page then falls back to the single hero image).
-    private static List<StoreHeroSlide> ParseSlides(string? json)
+    // Hero slides are persisted as a JSON string in EcommerceSettings. A
+    // malformed/empty value yields no slides; blank-image entries are dropped.
+    public static List<StoreHeroSlide> ParseSlides(string? json)
     {
         if (string.IsNullOrWhiteSpace(json)) return new List<StoreHeroSlide>();
         try
@@ -92,6 +79,37 @@ public class GetStoreConfigHandler(ISettingsProvider settings)
         {
             return new List<StoreHeroSlide>();
         }
+    }
+
+    public static string SerializeSlides(List<StoreHeroSlide>? slides)
+    {
+        var clean = (slides ?? new List<StoreHeroSlide>())
+            .Where(x => !string.IsNullOrWhiteSpace(x.ImageUrl))
+            .ToList();
+        return System.Text.Json.JsonSerializer.Serialize(clean, SlideJsonOpts);
+    }
+}
+
+public class GetStoreConfigHandler(ISettingsProvider settings)
+    : IRequestHandler<GetStoreConfigQuery, StoreConfigResponse>
+{
+    public async Task<StoreConfigResponse> Handle(GetStoreConfigQuery request, CancellationToken cancellationToken = default)
+    {
+        var s = await settings.GetAsync<EcommerceSettings>();
+        return new StoreConfigResponse(
+            s.StorefrontEnabled, s.StoreName, s.Tagline, s.HeroHeadline,
+            s.HeroImageUrl, s.MarqueeText, s.CodNote, s.DeliveryFee,
+            StoreQueryShared.ParseSlides(s.HeroSlidesJson));
+    }
+}
+
+public class GetEcommerceHeroSlidesHandler(ISettingsProvider settings)
+    : IRequestHandler<GetEcommerceHeroSlidesQuery, List<StoreHeroSlide>>
+{
+    public async Task<List<StoreHeroSlide>> Handle(GetEcommerceHeroSlidesQuery request, CancellationToken cancellationToken = default)
+    {
+        var s = await settings.GetAsync<EcommerceSettings>();
+        return StoreQueryShared.ParseSlides(s.HeroSlidesJson);
     }
 }
 

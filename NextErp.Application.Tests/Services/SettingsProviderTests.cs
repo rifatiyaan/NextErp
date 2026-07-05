@@ -1,5 +1,10 @@
+using NextErp.Application.Commands.Ecommerce;
+using NextErp.Application.DTOs.Ecommerce;
+using NextErp.Application.Handlers.CommandHandlers.Ecommerce;
+using NextErp.Application.Handlers.QueryHandlers.Ecommerce;
 using NextErp.Application.Handlers.QueryHandlers.Settings;
 using NextErp.Application.Queries;
+using NextErp.Application.Queries.Ecommerce;
 using NextErp.Application.Settings;
 using NextErp.Application.Tests.Builders;
 using NextErp.Application.Tests.Infrastructure;
@@ -220,5 +225,28 @@ public class SettingsProviderTests : HandlerTestBase
         sellingBranch.Choices.Should().NotBeNull();
         sellingBranch.Choices!.Should().Contain(c => c.Value == BranchId.ToString() && c.Label == "Main Branch");
         sellingBranch.Choices!.Should().Contain(c => c.Label == "Warehouse");
+    }
+
+    [Fact]
+    public async Task Hero_slides_round_trip_and_drop_blank_images()
+    {
+        var provider = BuildSut();
+        var update = new UpdateEcommerceHeroSlidesHandler(provider);
+        var get = new GetEcommerceHeroSlidesHandler(provider);
+
+        var saved = await update.Handle(
+            new UpdateEcommerceHeroSlidesCommand(new List<StoreHeroSlide>
+            {
+                new("https://cdn.example/x.jpg", "Hello", "sub", "/shop"),
+                new("", "blank", null, null), // no image -> dropped
+            }),
+            CancellationToken.None);
+
+        saved.Should().Be(1);
+
+        var slides = await get.Handle(new GetEcommerceHeroSlidesQuery(), CancellationToken.None);
+        slides.Should().ContainSingle();
+        slides[0].ImageUrl.Should().Be("https://cdn.example/x.jpg");
+        slides[0].Headline.Should().Be("Hello");
     }
 }
