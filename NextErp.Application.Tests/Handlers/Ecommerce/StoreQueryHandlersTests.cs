@@ -13,6 +13,7 @@ public class StoreQueryHandlersTests : HandlerTestBase
 {
     private const int PublishedCat = 700;
     private const int UnpublishedCat = 701;
+    private const int PricedCat = 720;
 
     private ISettingsProvider SettingsWith(Guid sellingBranchId) =>
         SettingsProviderReturning(new EcommerceSettings
@@ -109,5 +110,75 @@ public class StoreQueryHandlersTests : HandlerTestBase
 
         (await sut.Handle(new GetStoreProductByIdQuery(7001), CancellationToken.None)).Should().BeNull();
         (await sut.Handle(new GetStoreProductByIdQuery(7000), CancellationToken.None)).Should().NotBeNull();
+    }
+
+    // V2-3: three published products at 50/100/200 in one published category.
+    private async Task SeedPricedAsync()
+    {
+        if (!Db.Branches.Local.Any(b => b.Id == BranchId) && !Db.Branches.Any(b => b.Id == BranchId))
+            Db.Branches.Add(new BranchBuilder().WithId(BranchId).WithTenant(TenantId).Build());
+
+        var cat = new CategoryBuilder().WithId(PricedCat).WithTitle("Priced").WithTenant(TenantId).WithBranch(BranchId).Build();
+        cat.IsPublishedOnline = true;
+        Db.Categories.Add(cat);
+
+        foreach (var (id, price) in new[] { (7200, 50m), (7201, 100m), (7202, 200m) })
+        {
+            var p = new ProductBuilder().WithId(id).WithTitle($"P{id}").WithCode($"C{id}").WithPrice(price)
+                .WithCategory(PricedCat).WithTenant(TenantId).WithBranch(BranchId).Build();
+            p.IsPublishedOnline = true;
+            Db.Products.Add(p);
+        }
+
+        await Db.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task Products_filters_by_inclusive_price_range()
+    {
+        await SeedPricedAsync();
+        var sut = new GetStorePagedProductsHandler(Db, SettingsWith(BranchId));
+
+        var page = await sut.Handle(
+            new GetStorePagedProductsQuery(PricedCat, null, MinPrice: 75m, MaxPrice: 150m), CancellationToken.None);
+
+        page.Total.Should().Be(1);
+        page.Data.Should().ContainSingle(p => p.Price == 100m);
+    }
+
+    [Fact]
+    public async Task Products_min_price_bound_is_inclusive()
+    {
+        await SeedPricedAsync();
+        var sut = new GetStorePagedProductsHandler(Db, SettingsWith(BranchId));
+
+        var page = await sut.Handle(
+            new GetStorePagedProductsQuery(PricedCat, null, MinPrice: 100m), CancellationToken.None);
+
+        page.Total.Should().Be(2);
+        page.Data.Select(p => p.Price).Should().BeEquivalentTo(new[] { 100m, 200m });
+    }
+
+    [Fact]
+    public async Task PriceRange_returns_min_and_max_for_a_category()
+    {
+        await SeedPricedAsync();
+        var sut = new GetStorePriceRangeHandler(Db, SettingsWith(BranchId));
+
+        var range = await sut.Handle(new GetStorePriceRangeQuery(PricedCat), CancellationToken.None);
+
+        range.Min.Should().Be(50m);
+        range.Max.Should().Be(200m);
+    }
+
+    [Fact]
+    public async Task PriceRange_is_zero_when_no_products_are_visible()
+    {
+        var sut = new GetStorePriceRangeHandler(Db, SettingsWith(BranchId));
+
+        var range = await sut.Handle(new GetStorePriceRangeQuery(), CancellationToken.None);
+
+        range.Min.Should().Be(0m);
+        range.Max.Should().Be(0m);
     }
 }

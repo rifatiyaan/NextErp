@@ -29,11 +29,18 @@ public class StoreController(IMediator mediator) : ControllerBase
         [FromQuery] int? categoryId = null,
         [FromQuery] string? searchText = null,
         [FromQuery] int pageIndex = 1,
-        [FromQuery] int pageSize = 24)
+        [FromQuery] int pageSize = 24,
+        [FromQuery] decimal? minPrice = null,
+        [FromQuery] decimal? maxPrice = null)
     {
-        var page = await mediator.Send(new GetStorePagedProductsQuery(categoryId, searchText, pageIndex, pageSize));
+        var page = await mediator.Send(new GetStorePagedProductsQuery(
+            categoryId, searchText, pageIndex, pageSize, minPrice, maxPrice));
         return Ok(new { total = page.Total, data = page.Data });
     }
+
+    [HttpGet("price-range")]
+    public async Task<IActionResult> PriceRange([FromQuery] int? categoryId = null) =>
+        Ok(await mediator.Send(new GetStorePriceRangeQuery(categoryId)));
 
     [HttpGet("products/{id:int}")]
     public async Task<IActionResult> Product(int id)

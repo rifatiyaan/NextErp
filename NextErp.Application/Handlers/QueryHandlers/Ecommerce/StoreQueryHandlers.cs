@@ -21,6 +21,24 @@ internal static class StoreQueryShared
 
     public static decimal? LowStock(decimal available) =>
         available > 0 && available <= 5 ? available : null;
+
+    // Storefront-visible products: active + published, in a published category,
+    // pinned to the selling branch. Optionally narrowed to one category. Shared
+    // by the paged listing and the price-range facet so both see the same set.
+    public static IQueryable<Domain.Entities.Product> PublishedProducts(
+        IApplicationDbContext dbContext, Guid branchId, int? categoryId)
+    {
+        var query = dbContext.Products
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(p => p.IsActive && p.IsPublishedOnline && p.BranchId == branchId
+                        && p.Category.IsActive && p.Category.IsPublishedOnline);
+
+        if (categoryId is int id)
+            query = query.Where(p => p.CategoryId == id);
+
+        return query;
+    }
 }
 
 public class GetStoreConfigHandler(ISettingsProvider settings)
@@ -72,16 +90,14 @@ public class GetStorePagedProductsHandler(IApplicationDbContext dbContext, ISett
         var pageIndex = Math.Max(1, request.PageIndex);
         var pageSize = Math.Clamp(request.PageSize, 1, 60);
 
-        var query = dbContext.Products
-            .IgnoreQueryFilters()
-            .AsNoTracking()
-            .Where(p => p.IsActive && p.IsPublishedOnline && p.BranchId == branchId
-                        && p.Category.IsActive && p.Category.IsPublishedOnline);
+        var query = StoreQueryShared.PublishedProducts(dbContext, branchId, request.CategoryId);
 
-        if (request.CategoryId is int categoryId)
-            query = query.Where(p => p.CategoryId == categoryId);
         if (!string.IsNullOrWhiteSpace(request.SearchText))
             query = query.Where(p => p.Title.Contains(request.SearchText));
+        if (request.MinPrice is decimal min)
+            query = query.Where(p => p.Price >= min);
+        if (request.MaxPrice is decimal max)
+            query = query.Where(p => p.Price <= max);
 
         var total = await query.CountAsync(cancellationToken);
 
@@ -179,5 +195,23 @@ public class GetStoreProductByIdHandler(IApplicationDbContext dbContext, ISettin
         return new StoreProductDetailResponse(
             product.Id, product.Title, product.Price, product.Description,
             product.CategoryTitle, product.CategoryId, images, variants);
+    }
+}
+
+public class GetStorePriceRangeHandler(IApplicationDbContext dbContext, ISettingsProvider settings)
+    : IRequestHandler<GetStorePriceRangeQuery, StorePriceRangeResponse>
+{
+    public async Task<StorePriceRangeResponse> Handle(GetStorePriceRangeQuery request, CancellationToken cancellationToken = default)
+    {
+        var branchId = await StoreQueryShared.SellingBranchAsync(settings);
+        var query = StoreQueryShared.PublishedProducts(dbContext, branchId, request.CategoryId);
+
+        // No visible products -> a neutral 0..0 range the slider can render as empty.
+        if (!await query.AnyAsync(cancellationToken))
+            return new StorePriceRangeResponse(0m, 0m);
+
+        var min = await query.MinAsync(p => p.Price, cancellationToken);
+        var max = await query.MaxAsync(p => p.Price, cancellationToken);
+        return new StorePriceRangeResponse(min, max);
     }
 }
