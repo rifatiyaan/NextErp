@@ -249,4 +249,25 @@ public class SettingsProviderTests : HandlerTestBase
         slides[0].ImageUrl.Should().Be("https://cdn.example/x.jpg");
         slides[0].Headline.Should().Be("Hello");
     }
+
+    [Fact]
+    public async Task Hero_slides_reject_unsafe_urls()
+    {
+        var provider = BuildSut();
+        var update = new UpdateEcommerceHeroSlidesHandler(provider);
+        var get = new GetEcommerceHeroSlidesHandler(provider);
+
+        await update.Handle(
+            new UpdateEcommerceHeroSlidesCommand(new List<StoreHeroSlide>
+            {
+                new("https://cdn.example/ok.jpg", "ok", null, "javascript:alert(1)"), // href stripped
+                new("javascript:alert(2)", "bad-img", null, "/shop"), // unsafe image -> dropped
+            }),
+            CancellationToken.None);
+
+        var slides = await get.Handle(new GetEcommerceHeroSlidesQuery(), CancellationToken.None);
+        slides.Should().ContainSingle();
+        slides[0].ImageUrl.Should().Be("https://cdn.example/ok.jpg");
+        slides[0].Href.Should().BeNull(); // javascript: scheme rejected
+    }
 }

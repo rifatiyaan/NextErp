@@ -65,15 +65,35 @@ internal static class StoreQueryShared
         PropertyNameCaseInsensitive = true,
     };
 
+    // Only http(s) URLs or site-relative paths are allowed for slide urls.
+    // Everything else (javascript:, data:, vbscript:, …) is rejected so a
+    // stored value can never execute in a storefront visitor's browser.
+    private static string? SafeUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return null;
+        var u = url.Trim();
+        if (u.StartsWith("/", StringComparison.Ordinal)) return u;
+        if (u.StartsWith("http://", StringComparison.OrdinalIgnoreCase)) return u;
+        if (u.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) return u;
+        return null;
+    }
+
+    private static StoreHeroSlide Sanitize(StoreHeroSlide s) =>
+        new(SafeUrl(s.ImageUrl) ?? string.Empty, s.Headline, s.Subtext, SafeUrl(s.Href));
+
     // Hero slides are persisted as a JSON string in EcommerceSettings. A
-    // malformed/empty value yields no slides; blank-image entries are dropped.
+    // malformed/empty value yields no slides; blank-image entries are dropped;
+    // unsafe urls are stripped (defense-in-depth on both read and write).
     public static List<StoreHeroSlide> ParseSlides(string? json)
     {
         if (string.IsNullOrWhiteSpace(json)) return new List<StoreHeroSlide>();
         try
         {
             var slides = System.Text.Json.JsonSerializer.Deserialize<List<StoreHeroSlide>>(json, SlideJsonOpts);
-            return slides?.Where(x => !string.IsNullOrWhiteSpace(x.ImageUrl)).ToList() ?? new List<StoreHeroSlide>();
+            return (slides ?? new List<StoreHeroSlide>())
+                .Select(Sanitize)
+                .Where(x => !string.IsNullOrWhiteSpace(x.ImageUrl))
+                .ToList();
         }
         catch (System.Text.Json.JsonException)
         {
@@ -84,6 +104,7 @@ internal static class StoreQueryShared
     public static string SerializeSlides(List<StoreHeroSlide>? slides)
     {
         var clean = (slides ?? new List<StoreHeroSlide>())
+            .Select(Sanitize)
             .Where(x => !string.IsNullOrWhiteSpace(x.ImageUrl))
             .ToList();
         return System.Text.Json.JsonSerializer.Serialize(clean, SlideJsonOpts);
