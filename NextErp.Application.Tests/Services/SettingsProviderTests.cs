@@ -1,4 +1,7 @@
+using NextErp.Application.Handlers.QueryHandlers.Settings;
+using NextErp.Application.Queries;
 using NextErp.Application.Settings;
+using NextErp.Application.Tests.Builders;
 using NextErp.Application.Tests.Infrastructure;
 using NextErp.Infrastructure.Services;
 
@@ -186,5 +189,36 @@ public class SettingsProviderTests : HandlerTestBase
         var roundTrip = await sut.GetAsync<EcommerceSettings>();
         roundTrip.StorefrontEnabled.Should().BeTrue();
         roundTrip.DeliveryFee.Should().Be(60m);
+    }
+
+    [Fact]
+    public void Schema_marks_branch_backed_setting_as_a_select_with_source()
+    {
+        var sut = BuildSut();
+        var ecommerce = sut.GetSchema().Modules.Single(m => m.Name == "ecommerce");
+
+        var sellingBranch = ecommerce.Settings.Single(s => s.Key == "sellingBranchId");
+        sellingBranch.Type.Should().Be("select");
+        sellingBranch.OptionsSource.Should().Be("branches");
+        // Provider only tags the source; the schema handler fills the choices.
+        sellingBranch.Choices.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Schema_handler_fills_branch_choices_for_select_settings()
+    {
+        Db.Branches.Add(new BranchBuilder().WithId(BranchId).WithTitle("Main Branch").WithTenant(TenantId).Build());
+        var warehouse = Guid.NewGuid();
+        Db.Branches.Add(new BranchBuilder().WithId(warehouse).WithTitle("Warehouse").WithTenant(TenantId).Build());
+        await Db.SaveChangesAsync();
+
+        var handler = new GetFeatureSettingsSchemaHandler(new SettingsProvider(Db), Db);
+        var schema = await handler.Handle(new GetFeatureSettingsSchemaQuery(), CancellationToken.None);
+
+        var sellingBranch = schema.Modules.Single(m => m.Name == "ecommerce").Settings.Single(s => s.Key == "sellingBranchId");
+        sellingBranch.Type.Should().Be("select");
+        sellingBranch.Choices.Should().NotBeNull();
+        sellingBranch.Choices!.Should().Contain(c => c.Value == BranchId.ToString() && c.Label == "Main Branch");
+        sellingBranch.Choices!.Should().Contain(c => c.Label == "Warehouse");
     }
 }

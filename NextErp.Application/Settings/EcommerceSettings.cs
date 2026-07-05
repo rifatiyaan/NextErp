@@ -38,7 +38,8 @@ public sealed class EcommerceSettings
     public bool EnableBranchSelling { get; set; } = false;
 
     [Setting(
-        description: "Only used when 'Enable branch selling' is on: the branch whose stock and orders the storefront uses. Leave blank to auto-use the default branch.",
-        displayName: "Selling branch id")]
+        description: "Only used when 'Enable branch selling' is on: the branch whose stock and orders the storefront uses. Leave on Auto to use the default branch.",
+        displayName: "Selling branch")]
+    [SettingOptions("branches")]
     public string SellingBranchId { get; set; } = "";
 }

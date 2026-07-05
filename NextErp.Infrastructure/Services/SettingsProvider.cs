@@ -58,7 +58,22 @@ public sealed class SettingsProvider : ISettingsProvider
         {
             var attr = p.GetCustomAttribute<SettingAttribute>()!;
             var range = p.GetCustomAttribute<SettingRangeAttribute>();
-            var (kind, options) = ClassifyType(p.PropertyType);
+            var optionsAttr = p.GetCustomAttribute<SettingOptionsAttribute>();
+
+            string kind;
+            List<string>? options = null;
+            string? optionsSource = null;
+            if (optionsAttr != null)
+            {
+                // Dynamic dropdown; choices are filled at schema time from the DB.
+                kind = "select";
+                optionsSource = optionsAttr.SourceKey;
+            }
+            else
+            {
+                (kind, options) = ClassifyType(p.PropertyType);
+            }
+
             defs.Add(new SettingDefinition
             {
                 // camelCase so the schema key lines up with the API's
@@ -68,6 +83,7 @@ public sealed class SettingsProvider : ISettingsProvider
                 Description = attr.Description,
                 Type = kind,
                 Options = options,
+                OptionsSource = optionsSource,
                 Min = range?.Min,
                 Max = range?.Max,
                 Default = p.GetValue(defaultInstance),
