@@ -64,12 +64,34 @@ internal static class StoreQueryShared
 public class GetStoreConfigHandler(ISettingsProvider settings)
     : IRequestHandler<GetStoreConfigQuery, StoreConfigResponse>
 {
+    private static readonly System.Text.Json.JsonSerializerOptions SlideJsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true,
+    };
+
     public async Task<StoreConfigResponse> Handle(GetStoreConfigQuery request, CancellationToken cancellationToken = default)
     {
         var s = await settings.GetAsync<EcommerceSettings>();
         return new StoreConfigResponse(
             s.StorefrontEnabled, s.StoreName, s.Tagline, s.HeroHeadline,
-            s.HeroImageUrl, s.MarqueeText, s.CodNote, s.DeliveryFee);
+            s.HeroImageUrl, s.MarqueeText, s.CodNote, s.DeliveryFee,
+            ParseSlides(s.HeroSlidesJson));
+    }
+
+    // Hero slides are stored as a JSON string; a malformed/empty value degrades
+    // to no slides (the home page then falls back to the single hero image).
+    private static List<StoreHeroSlide> ParseSlides(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return new List<StoreHeroSlide>();
+        try
+        {
+            var slides = System.Text.Json.JsonSerializer.Deserialize<List<StoreHeroSlide>>(json, SlideJsonOpts);
+            return slides?.Where(x => !string.IsNullOrWhiteSpace(x.ImageUrl)).ToList() ?? new List<StoreHeroSlide>();
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return new List<StoreHeroSlide>();
+        }
     }
 }
 

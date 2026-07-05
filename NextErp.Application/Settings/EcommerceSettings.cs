@@ -42,4 +42,10 @@ public sealed class EcommerceSettings
         displayName: "Selling branch")]
     [SettingOptions("branches")]
     public string SellingBranchId { get; set; } = "";
+
+    // Home hero carousel slides. Managed by the ecommerce settings banner
+    // manager (image upload + reorder), not the generic settings grid, so this
+    // is storage-only (no [Setting]). Holds a JSON array of
+    // { imageUrl, headline?, subtext?, href? }.
+    public string HeroSlidesJson { get; set; } = "";
 }

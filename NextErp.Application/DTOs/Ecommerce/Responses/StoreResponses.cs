@@ -1,6 +1,7 @@
 namespace NextErp.Application.DTOs.Ecommerce;
 
-public sealed record StoreConfigResponse(bool StorefrontEnabled, string StoreName, string Tagline, string HeroHeadline, string HeroImageUrl, string MarqueeText, string CodNote, decimal DeliveryFee);
+public sealed record StoreHeroSlide(string ImageUrl, string? Headline, string? Subtext, string? Href);
+public sealed record StoreConfigResponse(bool StorefrontEnabled, string StoreName, string Tagline, string HeroHeadline, string HeroImageUrl, string MarqueeText, string CodNote, decimal DeliveryFee, List<StoreHeroSlide> HeroSlides);
 public sealed record StoreCategoryResponse(int Id, string Title, int? ParentId, int ProductCount, string? ImageUrl);
 public sealed record StoreProductRow(int Id, string Title, decimal Price, string? ImageUrl, string? SecondImageUrl, bool InStock, decimal? LowStockQuantity, bool HasVariations);
 public sealed record StorePagedProductsResponse(int Total, List<StoreProductRow> Data);
