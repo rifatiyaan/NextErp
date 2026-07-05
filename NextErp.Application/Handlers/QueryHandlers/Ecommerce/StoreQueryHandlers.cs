@@ -206,12 +206,18 @@ public class GetStorePriceRangeHandler(IApplicationDbContext dbContext, ISetting
         var branchId = await StoreQueryShared.SellingBranchAsync(settings);
         var query = StoreQueryShared.PublishedProducts(dbContext, branchId, request.CategoryId);
 
-        // No visible products -> a neutral 0..0 range the slider can render as empty.
-        if (!await query.AnyAsync(cancellationToken))
-            return new StorePriceRangeResponse(0m, 0m);
+        // One round-trip, empty-safe: an empty catalog produces no group, so
+        // FirstOrDefaultAsync returns null (surfaced as a neutral 0..0 range).
+        // This avoids both the throw-on-empty of MinAsync/MaxAsync over a
+        // non-nullable decimal and the check-then-act race of a separate
+        // AnyAsync followed by the aggregates.
+        var bounds = await query
+            .GroupBy(_ => 1)
+            .Select(g => new { Min = g.Min(p => p.Price), Max = g.Max(p => p.Price) })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        var min = await query.MinAsync(p => p.Price, cancellationToken);
-        var max = await query.MaxAsync(p => p.Price, cancellationToken);
-        return new StorePriceRangeResponse(min, max);
+        return bounds is null
+            ? new StorePriceRangeResponse(0m, 0m)
+            : new StorePriceRangeResponse(bounds.Min, bounds.Max);
     }
 }
