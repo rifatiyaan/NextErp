@@ -26,4 +26,7 @@ namespace NextErp.Application.Commands.Ecommerce
 
     [RequiresPermission("Sale.Create")]
     public record CancelOnlineOrderCommand(int Id, string Reason) : IRequest<Unit>, ITransactionalRequest;
+
+    // Anonymous public product review — deliberately has NO [RequiresPermission].
+    public record CreateReviewCommand(int ProductId, string AuthorName, int Rating, string Text) : IRequest<int>;
 }

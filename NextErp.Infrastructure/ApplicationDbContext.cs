@@ -49,6 +49,7 @@ namespace NextErp.Infrastructure
         public DbSet<SaleReturnItem> SaleReturnItems { get; set; }
         public DbSet<OnlineOrder> OnlineOrders { get; set; }
         public DbSet<OnlineOrderItem> OnlineOrderItems { get; set; }
+        public DbSet<Review> Reviews { get; set; }
         public DbSet<StockMovement> StockMovements { get; set; }
         public DbSet<StockBatch> StockBatches { get; set; }
         public DbSet<UnitOfMeasure> UnitOfMeasures { get; set; }

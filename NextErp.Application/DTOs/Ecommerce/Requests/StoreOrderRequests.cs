@@ -13,3 +13,13 @@ public sealed class StoreOrderCreateRequest
     // Honeypot: humans never see it, bots fill it. Checked in the controller.
     public string? Website { get; set; }
 }
+
+public sealed class StoreReviewCreateRequest
+{
+    public string AuthorName { get; set; } = null!;
+    public int Rating { get; set; }
+    public string Text { get; set; } = null!;
+
+    // Honeypot: checked in the controller.
+    public string? Website { get; set; }
+}

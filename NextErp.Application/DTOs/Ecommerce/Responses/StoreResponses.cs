@@ -6,3 +6,6 @@ public sealed record StoreProductRow(int Id, string Title, decimal Price, string
 public sealed record StorePagedProductsResponse(int Total, List<StoreProductRow> Data);
 public sealed record StoreVariantRow(int Id, string Sku, string Title, decimal Price, bool InStock, decimal? LowStockQuantity);
 public sealed record StoreProductDetailResponse(int Id, string Title, decimal Price, string? Description, string? CategoryTitle, int CategoryId, List<string> Images, List<StoreVariantRow> Variants);
+
+public sealed record StoreReviewRow(int Id, string AuthorName, int Rating, string Text, DateTime CreatedAt);
+public sealed record StoreReviewsResponse(double Average, int Count, List<StoreReviewRow> Items);

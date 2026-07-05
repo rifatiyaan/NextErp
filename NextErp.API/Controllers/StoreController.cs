@@ -54,4 +54,20 @@ public class StoreController(IMediator mediator) : ControllerBase
             request.CustomerName, request.Phone, request.Address, request.Note, request.Items));
         return Ok(new { orderNumber });
     }
+
+    [HttpGet("products/{id:int}/reviews")]
+    public async Task<IActionResult> Reviews(int id) =>
+        Ok(await mediator.Send(new GetProductReviewsQuery(id)));
+
+    [HttpPost("products/{id:int}/reviews")]
+    [EnableRateLimiting("store-orders")]
+    public async Task<IActionResult> CreateReview(int id, [FromBody] StoreReviewCreateRequest request)
+    {
+        // Honeypot tripped: pretend success, store nothing.
+        if (!string.IsNullOrEmpty(request.Website))
+            return Ok(new { id = 0 });
+
+        var reviewId = await mediator.Send(new CreateReviewCommand(id, request.AuthorName, request.Rating, request.Text));
+        return Ok(new { id = reviewId });
+    }
 }
