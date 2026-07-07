@@ -117,11 +117,25 @@ public class GetStoreConfigHandler(ISettingsProvider settings)
     public async Task<StoreConfigResponse> Handle(GetStoreConfigQuery request, CancellationToken cancellationToken = default)
     {
         var s = await settings.GetAsync<EcommerceSettings>();
+        var (code, locale) = MoneyOf(s.Currency);
         return new StoreConfigResponse(
             s.StorefrontEnabled, s.StoreName, s.Tagline, s.HeroHeadline,
             s.HeroImageUrl, s.MarqueeText, s.CodNote, s.DeliveryFee,
-            StoreQueryShared.ParseSlides(s.HeroSlidesJson));
+            StoreQueryShared.ParseSlides(s.HeroSlidesJson), code, locale);
     }
+
+    // ISO 4217 code + a formatting locale per store currency.
+    private static (string Code, string Locale) MoneyOf(StoreCurrency c) => c switch
+    {
+        StoreCurrency.USD => ("USD", "en-US"),
+        StoreCurrency.EUR => ("EUR", "de-DE"),
+        StoreCurrency.GBP => ("GBP", "en-GB"),
+        StoreCurrency.BDT => ("BDT", "en-BD"),
+        StoreCurrency.INR => ("INR", "en-IN"),
+        StoreCurrency.AED => ("AED", "en-AE"),
+        StoreCurrency.SAR => ("SAR", "en-SA"),
+        _ => ("NOK", "nb-NO"),
+    };
 }
 
 public class GetEcommerceHeroSlidesHandler(ISettingsProvider settings)

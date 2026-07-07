@@ -2,6 +2,20 @@ using NextErp.Application.Common.Settings;
 
 namespace NextErp.Application.Settings;
 
+// Store display currency. Each maps to an ISO 4217 code + a formatting locale
+// in GetStoreConfigHandler; the storefront renders every price in this currency.
+public enum StoreCurrency
+{
+    NOK,
+    USD,
+    EUR,
+    GBP,
+    BDT,
+    INR,
+    AED,
+    SAR,
+}
+
 [SettingsModule("Ecommerce", "Ecommerce / Storefront")]
 public sealed class EcommerceSettings
 {
@@ -31,6 +45,9 @@ public sealed class EcommerceSettings
     [Setting(description: "Flat delivery fee added to every online order.", displayName: "Delivery fee")]
     [SettingRange(0, 100000)]
     public decimal DeliveryFee { get; set; } = 0m;
+
+    [Setting(description: "Currency all storefront prices are shown in.", displayName: "Store currency")]
+    public StoreCurrency Currency { get; set; } = StoreCurrency.NOK;
 
     [Setting(
         description: "Advanced: sell from one specific branch (below). Off = the store auto-uses your default branch, so a single-branch shop needs no setup.",
