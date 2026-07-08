@@ -1,7 +1,7 @@
 # Storefront v2 — "Systems Integrated" — Design
 
 **Date:** 2026-07-05
-**Status:** Approved by owner (direction + Theme B + build sequence)
+**Status:** Shipped + owner-revised. The original "airy editorial" direction below is superseded by the **As-built revisions** section at the bottom (density pivot, commercn look, config currency, banner, settings IA). Read that section for current truth.
 **Repos:** `NextErp` (backend) · `NextErp_React` (frontend) — a redesign + feature upgrade of the shipped v1 "Warehouse Editorial" storefront (`app/(store)/`). Same COD, guest-checkout, `SellingBranchId` model as v1.
 
 ## Decision
@@ -37,3 +37,18 @@ Backend TDD (xUnit) for the Review model + endpoints; frontend `tsc --noEmit` (b
 
 ## Out of scope (v2)
 Online payment, accounts/login, order tracking beyond success page, multi-branch selling, dark-mode storefront, storefront localization.
+
+## As-built revisions (2026-07-05, post-owner review)
+The v2 plan (V2-1…V2-5) shipped, then the owner steered several changes. Current truth:
+
+- **Density pivot (supersedes "airy editorial").** Owner referenced BD commerce sites (rokomari, twelvebd, lerevecraze, startech) + commercn.com (shadcn commerce registry): "I want my site like this." Kept the Theme B palette/fonts but went **dense** — square (1:1) product cards, 2/3/4-col tight grids (editorial 2×2 tiles removed), **no add-to-cart on card** (click-through), shorter hero, compact catalog header, PDP spec **table** (SpecSheet). commercn look **reimplemented with our own Theme B tokens** (NOT the external registry, to avoid supply-chain + token clash): `QuantityStepper`, buy box (big price, availability pill, COD trust row), `CartTable` (cart-item-01 line items + sticky summary), split-screen COD checkout, polished order-confirmation.
+- **Home banner/carousel (config-driven).** `EcommerceSettings.HeroSlidesJson` → `HeroCarousel`; managed by a **banner manager** (`/settings/ecommerce`, image upload via `POST /api/SystemSettings/image`, GET/PUT `ecommerce/hero-slides`). Slide urls sanitized (http(s)//-relative only) to block stored XSS.
+- **Search + zoom overlays** render via `createPortal` (the `backdrop-blur` header established a containing block that broke `position:fixed`).
+- **Configurable store currency.** `EcommerceSettings.Currency` (StoreCurrency enum → ISO code + locale in config); storefront formats every price via `formatMoney` (server `Price` uses `getStoreCurrency`, client uses `useStoreMoney`/`StoreConfigProvider`). No hardcoded NOK. (Shopper-switchable multi-currency + FX is a future step.)
+- **Selling branch is zero-config.** `EnableBranchSelling` flag (off by default); `SellingBranchAsync` auto-targets the default branch otherwise. `SellingBranchId` is a dynamic branch **dropdown** (`[SettingOptions("branches")]`).
+- **Settings IA.** `/settings/ecommerce` is now a user-control-style page with tabs — **Catalog & publication** (left category rail → right product panel, "All products" grouped view), **Home banner**, **Store settings** (the ecommerce module, moved out of Settings → Features). App shell bounded to `100dvh` so `<main>` scrolls (panes scroll independently). List data-tables no longer pad empty filler rows.
+- **Reviews** (V2-2) shipped: `Review` aggregate + GET/POST endpoints; PDP summary/list/form.
+- **Dev data:** DB seeded with ~100 real products (dummyjson) across ~11 categories, images uploaded to the tenant's Cloudinary, category-appropriate variations (shirts→size×color, shoes→shoe-size×color, laptops→storage×ram×color, watches→dial color, fragrances/beauty→volume; furniture/groceries→none), stock + purchase chains. Seed rows marked `Code LIKE 'SEED-%'`.
+
+## Remaining / next candidates
+AI feature for the module (org AI-first mandate — none yet); online-order fulfillment flow polish; shopper-switchable multi-currency + FX; further commercn polish. See [[project_nexterp-storefront-v2]] memory.
