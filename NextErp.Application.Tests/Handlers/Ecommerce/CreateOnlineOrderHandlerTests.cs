@@ -70,6 +70,32 @@ public class CreateOnlineOrderHandlerTests : HandlerTestBase
     }
 
     [Fact]
+    public async Task Creates_order_when_selling_branch_id_is_garbage()
+    {
+        // Regression: checkout must not depend on a valid SellingBranchId. With
+        // branch selling off (default) a blank/garbage value auto-resolves to the
+        // default branch instead of throwing "storefront not available".
+        await SeedPublishedProductAsync();
+        var provider = Substitute.For<ISettingsProvider>();
+        provider.GetAsync<EcommerceSettings>().Returns(Task.FromResult(new EcommerceSettings
+        {
+            StorefrontEnabled = true,
+            EnableBranchSelling = false,
+            SellingBranchId = "1", // not a GUID
+            DeliveryFee = 60m,
+        }));
+        var sut = new CreateOnlineOrderHandler(Db, provider, Notifications);
+
+        var orderNumber = await sut.Handle(new CreateOnlineOrderCommand(
+            "Test Customer", "01700000000", "12 Example Road", null,
+            new() { new StoreOrderItemRequest(_variantId, 1m) }), CancellationToken.None);
+
+        orderNumber.Should().Be("W000001");
+        var order = await Db.OnlineOrders.AsNoTracking().FirstAsync();
+        order.BranchId.Should().Be(BranchId); // auto-resolved default branch
+    }
+
+    [Fact]
     public async Task Rejects_unpublished_product()
     {
         await SeedPublishedProductAsync(published: false);

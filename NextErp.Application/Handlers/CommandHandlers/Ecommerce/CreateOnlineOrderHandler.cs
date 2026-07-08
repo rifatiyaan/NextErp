@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Commands.Ecommerce;
 using NextErp.Application.Common.Settings;
 using NextErp.Application.Ecommerce;
+using NextErp.Application.Handlers.QueryHandlers.Ecommerce;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Settings;
 using Entities = NextErp.Domain.Entities;
@@ -20,8 +21,13 @@ public class CreateOnlineOrderHandler(
     public async Task<string> Handle(CreateOnlineOrderCommand request, CancellationToken cancellationToken = default)
     {
         var settings = await settingsProvider.GetAsync<EcommerceSettings>();
-        if (!settings.StorefrontEnabled || !Guid.TryParse(settings.SellingBranchId, out var branchId))
+        if (!settings.StorefrontEnabled)
             throw new InvalidOperationException("The storefront is not available.");
+
+        // Resolve the selling branch the same way the storefront read path does
+        // (zero-config: auto-uses the default branch unless branch selling is on),
+        // so a blank/garbage SellingBranchId can't break checkout.
+        var branchId = await StoreQueryShared.SellingBranchAsync(settingsProvider, dbContext, cancellationToken);
 
         var variantIds = request.Items.Select(i => i.ProductVariantId).Distinct().ToList();
 
