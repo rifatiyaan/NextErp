@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Interfaces;
 using NextErp.Domain.Common;
 using NextErp.Domain.Entities;
-using NextErp.Infrastructure.Entities;
 using NextErp.Infrastructure.Seeds;
 
 namespace NextErp.Infrastructure

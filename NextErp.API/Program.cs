@@ -126,6 +126,17 @@ builder.Services.AddRateLimiter(options =>
                 PermitLimit = 5,
                 Window = TimeSpan.FromMinutes(1),
             }));
+    // Per-IP throttle for the login surface: the blunt layer that stops
+    // rapid-fire guessing from a single source regardless of target account.
+    // Complements (does not replace) the per-account Identity lockout.
+    options.AddPolicy("auth", httpContext =>
+        System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "anon",
+            _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+            }));
 });
 
 // =======================================================
@@ -152,6 +163,15 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
     options.Password.RequireUppercase = true;
     options.Password.RequireLowercase = false;
     options.Password.RequireNonAlphanumeric = false;
+
+    // Per-account brute-force protection: 5 wrong passwords locks the account
+    // for 15 minutes. This is the DB-backed layer (AspNetUsers.AccessFailedCount
+    // / LockoutEnd) and catches a distributed attack on one account even when
+    // it is spread across many IPs. AllowedForNewUsers=true so seeded/registered
+    // accounts opt in by default (otherwise CheckPasswordSignInAsync never locks).
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.AllowedForNewUsers = true;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
@@ -178,6 +198,24 @@ builder.Services.AddAuthentication(options =>
             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
         NameClaimType = ClaimTypes.Name,
         RoleClaimType = ClaimTypes.Role
+    };
+
+    // The SPA sends the JWT as an httpOnly cookie (it can't attach an
+    // Authorization header for a cookie it can't read). Fall back to the cookie
+    // when there's no Bearer header — this keeps Swagger's "Authorize" (header)
+    // working too.
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            if (string.IsNullOrEmpty(context.Token))
+            {
+                var fromCookie = context.Request.Cookies[NextErp.API.Security.AuthCookieNames.Access];
+                if (!string.IsNullOrEmpty(fromCookie))
+                    context.Token = fromCookie;
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -289,7 +327,11 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(corsOrigins)
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              // Required so the browser will send/receive the auth cookies on
+              // cross-origin calls. Only valid with explicit origins (never *),
+              // which the startup guard above already enforces.
+              .AllowCredentials();
     });
 });
 
@@ -339,6 +381,11 @@ app.UseRateLimiter();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Double-submit CSRF guard for cookie-authenticated, state-changing requests.
+// Reads cookies directly, so its position relative to auth doesn't matter — it
+// only needs to run before the endpoint.
+app.UseMiddleware<NextErp.API.Security.CsrfProtectionMiddleware>();
 
 // =======================================================
 // 🔹 ROUTES

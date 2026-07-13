@@ -16,6 +16,7 @@ namespace NextErp.Application.Interfaces
         DbSet<SystemSettings> SystemSettings { get; set; }
         DbSet<ModuleSetting> ModuleSettings { get; set; }
         DbSet<Notification> Notifications { get; set; }
+        DbSet<RefreshToken> RefreshTokens { get; set; }
 
         // Inventory Module DbSets
         DbSet<Stock> Stocks { get; set; }
