@@ -31,10 +31,11 @@ public class StoreController(IMediator mediator) : ControllerBase
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 24,
         [FromQuery] decimal? minPrice = null,
-        [FromQuery] decimal? maxPrice = null)
+        [FromQuery] decimal? maxPrice = null,
+        [FromQuery] string? sort = null)
     {
         var page = await mediator.Send(new GetStorePagedProductsQuery(
-            categoryId, searchText, pageIndex, pageSize, minPrice, maxPrice));
+            categoryId, searchText, pageIndex, pageSize, minPrice, maxPrice, sort));
         return Ok(new { total = page.Total, data = page.Data });
     }
 
@@ -60,6 +61,18 @@ public class StoreController(IMediator mediator) : ControllerBase
         var orderNumber = await mediator.Send(new CreateOnlineOrderCommand(
             request.CustomerName, request.Phone, request.Address, request.Note, request.Items));
         return Ok(new { orderNumber });
+    }
+
+    // Public order tracking. Enumeration protection is the required phone match
+    // (an attacker must guess a valid number AND its phone), not the rate limit —
+    // so this idempotent GET uses the generous class-level "store" budget
+    // (120/min/IP) rather than the 5/min "store-orders" bucket it would otherwise
+    // share with checkout, which broke legitimate users behind a shared/CGNAT IP.
+    [HttpGet("orders/{number}")]
+    public async Task<IActionResult> OrderStatus(string number, [FromQuery] string? phone = null)
+    {
+        var status = await mediator.Send(new GetStoreOrderStatusQuery(number, phone ?? ""));
+        return status is null ? NotFound() : Ok(status);
     }
 
     [HttpGet("products/{id:int}/reviews")]

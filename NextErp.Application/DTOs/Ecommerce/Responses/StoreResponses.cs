@@ -1,7 +1,7 @@
 namespace NextErp.Application.DTOs.Ecommerce;
 
 public sealed record StoreHeroSlide(string ImageUrl, string? Headline, string? Subtext, string? Href);
-public sealed record StoreConfigResponse(bool StorefrontEnabled, string StoreName, string Tagline, string HeroHeadline, string HeroImageUrl, string MarqueeText, string CodNote, decimal DeliveryFee, List<StoreHeroSlide> HeroSlides, string CurrencyCode, string CurrencyLocale);
+public sealed record StoreConfigResponse(bool StorefrontEnabled, string StoreName, string Tagline, string HeroHeadline, string HeroImageUrl, string MarqueeText, string CodNote, decimal DeliveryFee, List<StoreHeroSlide> HeroSlides, string CurrencyCode, string CurrencyLocale, string AccentColor);
 public sealed record StoreCategoryResponse(int Id, string Title, int? ParentId, int ProductCount, string? ImageUrl);
 public sealed record StoreProductRow(int Id, string Title, decimal Price, string? ImageUrl, string? SecondImageUrl, bool InStock, decimal? LowStockQuantity, bool HasVariations);
 public sealed record StorePagedProductsResponse(int Total, List<StoreProductRow> Data);
@@ -11,3 +11,9 @@ public sealed record StoreProductDetailResponse(int Id, string Title, decimal Pr
 
 public sealed record StoreReviewRow(int Id, string AuthorName, int Rating, string Text, DateTime CreatedAt);
 public sealed record StoreReviewsResponse(double Average, int Count, List<StoreReviewRow> Items);
+
+// Public order tracking — returned only when order number AND phone match.
+public sealed record StoreOrderStatusItem(string ProductTitle, string Sku, decimal UnitPrice, decimal Quantity, decimal LineTotal);
+public sealed record StoreOrderStatusResponse(
+    string OrderNumber, string Status, DateTime CreatedAt, DateTime? ConfirmedAt,
+    decimal DeliveryFee, decimal ItemsTotal, decimal GrandTotal, List<StoreOrderStatusItem> Items);

@@ -16,6 +16,20 @@ public enum StoreCurrency
     SAR,
 }
 
+// Curated storefront accent palettes. Each maps to a single accent hex in
+// GetStoreConfigHandler; the storefront derives the soft tint from it via
+// color-mix, and every accent-driven surface (buttons, links, focus rings,
+// active category) follows. Neutrals stay fixed so the base always looks good.
+public enum StoreAccentTheme
+{
+    Blue,
+    Emerald,
+    Violet,
+    Rose,
+    Amber,
+    Slate,
+}
+
 [SettingsModule("Ecommerce", "Ecommerce / Storefront")]
 public sealed class EcommerceSettings
 {
@@ -48,6 +62,16 @@ public sealed class EcommerceSettings
 
     [Setting(description: "Currency all storefront prices are shown in.", displayName: "Store currency")]
     public StoreCurrency Currency { get; set; } = StoreCurrency.NOK;
+
+    [Setting(
+        description: "Storefront accent colour theme — drives buttons, links, highlights and focus rings.",
+        displayName: "Accent theme")]
+    public StoreAccentTheme AccentTheme { get; set; } = StoreAccentTheme.Blue;
+
+    [Setting(
+        description: "Optional custom accent colour as a hex code (e.g. #2563eb). When set, it overrides the accent theme above. Invalid values are ignored.",
+        displayName: "Custom accent (hex)")]
+    public string CustomAccentColor { get; set; } = "";
 
     [Setting(
         description: "Advanced: sell from one specific branch (below). Off = the store auto-uses your default branch, so a single-branch shop needs no setup.",

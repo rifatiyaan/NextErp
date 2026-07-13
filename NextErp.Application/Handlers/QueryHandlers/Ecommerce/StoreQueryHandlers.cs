@@ -121,7 +121,39 @@ public class GetStoreConfigHandler(ISettingsProvider settings)
         return new StoreConfigResponse(
             s.StorefrontEnabled, s.StoreName, s.Tagline, s.HeroHeadline,
             s.HeroImageUrl, s.MarqueeText, s.CodNote, s.DeliveryFee,
-            StoreQueryShared.ParseSlides(s.HeroSlidesJson), code, locale);
+            StoreQueryShared.ParseSlides(s.HeroSlidesJson), code, locale,
+            ResolveAccent(s));
+    }
+
+    // Effective accent: a valid custom hex wins, else the preset theme, else the
+    // default. The result is strictly normalised to #rrggbb before it reaches
+    // the client (it becomes a CSS custom property in an inline style attribute),
+    // so a malformed/hostile value can never inject CSS — it just falls back.
+    private static string ResolveAccent(EcommerceSettings s)
+    {
+        var custom = s.CustomAccentColor?.Trim();
+        if (!string.IsNullOrEmpty(custom) && TryNormalizeHex(custom, out var hex))
+            return hex;
+        return s.AccentTheme switch
+        {
+            StoreAccentTheme.Emerald => "#059669",
+            StoreAccentTheme.Violet => "#7c3aed",
+            StoreAccentTheme.Rose => "#e11d48",
+            StoreAccentTheme.Amber => "#d97706",
+            StoreAccentTheme.Slate => "#475569",
+            _ => "#2563eb",
+        };
+    }
+
+    private static bool TryNormalizeHex(string value, out string normalized)
+    {
+        normalized = "";
+        var h = value.StartsWith('#') ? value[1..] : value;
+        if (h.Length != 6) return false;
+        foreach (var c in h)
+            if (!Uri.IsHexDigit(c)) return false;
+        normalized = "#" + h.ToLowerInvariant();
+        return true;
     }
 
     // ISO 4217 code + a formatting locale per store currency.
@@ -196,8 +228,17 @@ public class GetStorePagedProductsHandler(IApplicationDbContext dbContext, ISett
 
         var total = await query.CountAsync(cancellationToken);
 
-        var pageProducts = await query
-            .OrderBy(p => p.Title)
+        // Sort by the requested key; Id is the stable tiebreaker so pagination
+        // never repeats or drops a row when several share a price/title.
+        var ordered = request.SortBy switch
+        {
+            "price_asc" => query.OrderBy(p => p.Price).ThenBy(p => p.Id),
+            "price_desc" => query.OrderByDescending(p => p.Price).ThenBy(p => p.Id),
+            "newest" => query.OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id),
+            _ => query.OrderBy(p => p.Title).ThenBy(p => p.Id),
+        };
+
+        var pageProducts = await ordered
             .Skip((pageIndex - 1) * pageSize)
             .Take(pageSize)
             .Select(p => new
@@ -314,5 +355,38 @@ public class GetStorePriceRangeHandler(IApplicationDbContext dbContext, ISetting
         return bounds is null
             ? new StorePriceRangeResponse(0m, 0m)
             : new StorePriceRangeResponse(bounds.Min, bounds.Max);
+    }
+}
+
+public class GetStoreOrderStatusHandler(IApplicationDbContext dbContext)
+    : IRequestHandler<GetStoreOrderStatusQuery, StoreOrderStatusResponse?>
+{
+    public async Task<StoreOrderStatusResponse?> Handle(GetStoreOrderStatusQuery request, CancellationToken cancellationToken = default)
+    {
+        var number = request.OrderNumber?.Trim();
+        var phone = request.Phone?.Trim();
+        if (string.IsNullOrEmpty(number) || string.IsNullOrEmpty(phone))
+            return null;
+
+        // Anonymous request (no branch/tenant claim) → bypass the global filters,
+        // same as every other store read. Both number AND phone must match; a
+        // mismatch returns null (identical to "not found") so an attacker cannot
+        // enumerate orders by number alone.
+        var order = await dbContext.OnlineOrders
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.OrderNumber == number && o.Phone == phone, cancellationToken);
+        if (order is null)
+            return null;
+
+        var items = order.Items
+            .Select(i => new StoreOrderStatusItem(i.ProductTitle, i.Sku, i.UnitPrice, i.Quantity, i.LineTotal))
+            .ToList();
+        var itemsTotal = items.Sum(i => i.LineTotal);
+
+        return new StoreOrderStatusResponse(
+            order.OrderNumber, order.Status.ToString(), order.CreatedAt, order.ConfirmedAt,
+            order.DeliveryFee, itemsTotal, itemsTotal + order.DeliveryFee, items);
     }
 }
