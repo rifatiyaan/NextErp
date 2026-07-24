@@ -84,5 +84,20 @@ public class SystemSettingsController(IMediator mediator, IImageService imageSer
         var count = await mediator.Send(new UpdateEcommerceHeroSlidesCommand(slides ?? new List<StoreHeroSlide>()), ct);
         return Ok(new { count });
     }
+
+    // Homepage section layout (the storefront "template engine" config). The
+    // section schema lives on the frontend; we store/return the raw JSON array.
+    [HttpGet("ecommerce/home-layout")]
+    public async Task<ActionResult<object>> GetHomeLayout(CancellationToken ct = default)
+        => Ok(new { layout = await mediator.Send(new GetHomeLayoutQuery(), ct) });
+
+    [HttpPut("ecommerce/home-layout")]
+    public async Task<ActionResult<object>> UpdateHomeLayout([FromBody] UpdateHomeLayoutRequest body, CancellationToken ct = default)
+    {
+        var count = await mediator.Send(new UpdateHomeLayoutCommand(body?.Layout ?? ""), ct);
+        return Ok(new { count });
+    }
+
+    public record UpdateHomeLayoutRequest(string Layout);
 }
 

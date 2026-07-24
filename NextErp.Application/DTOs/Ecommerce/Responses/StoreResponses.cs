@@ -1,7 +1,7 @@
 namespace NextErp.Application.DTOs.Ecommerce;
 
 public sealed record StoreHeroSlide(string ImageUrl, string? Headline, string? Subtext, string? Href);
-public sealed record StoreConfigResponse(bool StorefrontEnabled, string StoreName, string Tagline, string HeroHeadline, string HeroImageUrl, string MarqueeText, string CodNote, decimal DeliveryFee, List<StoreHeroSlide> HeroSlides, string CurrencyCode, string CurrencyLocale, StoreThemeColors Theme);
+public sealed record StoreConfigResponse(bool StorefrontEnabled, string StoreName, string Tagline, string HeroHeadline, string HeroImageUrl, string MarqueeText, string CodNote, decimal DeliveryFee, List<StoreHeroSlide> HeroSlides, string CurrencyCode, string CurrencyLocale, StoreThemeColors Theme, string HomeLayout);
 
 // Full resolved storefront palette (all #rrggbb). Injected as CSS custom
 // properties on the store scope; every store surface is token-driven so a whole

@@ -34,4 +34,9 @@ namespace NextErp.Application.Commands.Ecommerce
     // Admin: replace the home hero slides. Returns the number of slides saved.
     [RequiresPermission("Settings.System.Manage")]
     public record UpdateEcommerceHeroSlidesCommand(List<StoreHeroSlide> Slides) : IRequest<int>;
+
+    // Admin: replace the homepage section layout (raw JSON array). Returns the
+    // number of sections stored.
+    [RequiresPermission("Settings.System.Manage")]
+    public record UpdateHomeLayoutCommand(string LayoutJson) : IRequest<int>;
 }

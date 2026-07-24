@@ -123,7 +123,7 @@ public class GetStoreConfigHandler(ISettingsProvider settings)
             s.StorefrontEnabled, s.StoreName, s.Tagline, s.HeroHeadline,
             s.HeroImageUrl, s.MarqueeText, s.CodNote, s.DeliveryFee,
             StoreQueryShared.ParseSlides(s.HeroSlidesJson), code, locale,
-            StoreThemeResolver.Resolve(s.Palette));
+            StoreThemeResolver.Resolve(s.Palette), s.HomeLayoutJson);
     }
 
     // ISO 4217 code + a formatting locale per store currency.

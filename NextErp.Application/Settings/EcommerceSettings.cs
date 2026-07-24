@@ -87,4 +87,10 @@ public sealed class EcommerceSettings
     // is storage-only (no [Setting]). Holds a JSON array of
     // { imageUrl, headline?, subtext?, href? }.
     public string HeroSlidesJson { get; set; } = "";
+
+    // Homepage section layout (the storefront "template engine" config). Managed
+    // by the ecommerce settings homepage builder — storage-only (no [Setting]).
+    // Holds a JSON array of { id, type, enabled, ...settings }; empty = the
+    // storefront's built-in default layout.
+    public string HomeLayoutJson { get; set; } = "";
 }

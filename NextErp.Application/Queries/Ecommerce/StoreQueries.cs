@@ -17,4 +17,7 @@ namespace NextErp.Application.Queries.Ecommerce
 
     // Admin: current home hero slides (authorized via the controller).
     public record GetEcommerceHeroSlidesQuery() : IRequest<List<StoreHeroSlide>>;
+
+    // Admin: current homepage section layout JSON (authorized via the controller).
+    public record GetHomeLayoutQuery() : IRequest<string>;
 }
