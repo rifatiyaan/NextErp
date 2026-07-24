@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NextErp.Application.Common.Settings;
 using NextErp.Application.DTOs.Ecommerce;
+using NextErp.Application.Ecommerce;
 using NextErp.Application.Interfaces;
 using NextErp.Application.Queries.Ecommerce;
 using NextErp.Application.Settings;
@@ -122,38 +123,7 @@ public class GetStoreConfigHandler(ISettingsProvider settings)
             s.StorefrontEnabled, s.StoreName, s.Tagline, s.HeroHeadline,
             s.HeroImageUrl, s.MarqueeText, s.CodNote, s.DeliveryFee,
             StoreQueryShared.ParseSlides(s.HeroSlidesJson), code, locale,
-            ResolveAccent(s));
-    }
-
-    // Effective accent: a valid custom hex wins, else the preset theme, else the
-    // default. The result is strictly normalised to #rrggbb before it reaches
-    // the client (it becomes a CSS custom property in an inline style attribute),
-    // so a malformed/hostile value can never inject CSS — it just falls back.
-    private static string ResolveAccent(EcommerceSettings s)
-    {
-        var custom = s.CustomAccentColor?.Trim();
-        if (!string.IsNullOrEmpty(custom) && TryNormalizeHex(custom, out var hex))
-            return hex;
-        return s.AccentTheme switch
-        {
-            StoreAccentTheme.Emerald => "#059669",
-            StoreAccentTheme.Violet => "#7c3aed",
-            StoreAccentTheme.Rose => "#e11d48",
-            StoreAccentTheme.Amber => "#d97706",
-            StoreAccentTheme.Slate => "#475569",
-            _ => "#2563eb",
-        };
-    }
-
-    private static bool TryNormalizeHex(string value, out string normalized)
-    {
-        normalized = "";
-        var h = value.StartsWith('#') ? value[1..] : value;
-        if (h.Length != 6) return false;
-        foreach (var c in h)
-            if (!Uri.IsHexDigit(c)) return false;
-        normalized = "#" + h.ToLowerInvariant();
-        return true;
+            StoreThemeResolver.Resolve(s.Palette));
     }
 
     // ISO 4217 code + a formatting locale per store currency.

@@ -16,18 +16,21 @@ public enum StoreCurrency
     SAR,
 }
 
-// Curated storefront accent palettes. Each maps to a single accent hex in
-// GetStoreConfigHandler; the storefront derives the soft tint from it via
-// color-mix, and every accent-driven surface (buttons, links, focus rings,
-// active category) follows. Neutrals stay fixed so the base always looks good.
-public enum StoreAccentTheme
+// Curated full storefront palettes. Each maps (in StoreThemeResolver) to a
+// complete, coherent set of colours — background, surface, text, borders and
+// accent — including a dark option. The whole storefront is token-driven, so
+// switching this swaps the entire look.
+public enum StorePalette
 {
-    Blue,
-    Emerald,
-    Violet,
-    Rose,
-    Amber,
+    Light,
     Slate,
+    WarmSand,
+    Midnight,
+    Forest,
+    Rose,
+    Ocean,
+    Graphite,
+    Berry,
 }
 
 [SettingsModule("Ecommerce", "Ecommerce / Storefront")]
@@ -64,14 +67,9 @@ public sealed class EcommerceSettings
     public StoreCurrency Currency { get; set; } = StoreCurrency.NOK;
 
     [Setting(
-        description: "Storefront accent colour theme — drives buttons, links, highlights and focus rings.",
-        displayName: "Accent theme")]
-    public StoreAccentTheme AccentTheme { get; set; } = StoreAccentTheme.Blue;
-
-    [Setting(
-        description: "Optional custom accent colour as a hex code (e.g. #2563eb). When set, it overrides the accent theme above. Invalid values are ignored.",
-        displayName: "Custom accent (hex)")]
-    public string CustomAccentColor { get; set; } = "";
+        description: "Storefront colour palette — a full coherent theme (background, surface, text, accent), including dark options. Choose from the curated set.",
+        displayName: "Store palette")]
+    public StorePalette Palette { get; set; } = StorePalette.Light;
 
     [Setting(
         description: "Advanced: sell from one specific branch (below). Off = the store auto-uses your default branch, so a single-branch shop needs no setup.",
