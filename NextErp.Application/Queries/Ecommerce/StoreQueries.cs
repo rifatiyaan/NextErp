@@ -12,6 +12,7 @@ namespace NextErp.Application.Queries.Ecommerce
     public record GetStoreProductByIdQuery(int Id) : IRequest<StoreProductDetailResponse?>;
     public record GetStorePriceRangeQuery(int? CategoryId = null) : IRequest<StorePriceRangeResponse>;
     public record GetProductReviewsQuery(int ProductId) : IRequest<StoreReviewsResponse>;
+    public record GetRecentReviewsQuery(int Take) : IRequest<List<StoreRecentReviewRow>>;
     // Public order tracking: returns null unless BOTH the number and phone match.
     public record GetStoreOrderStatusQuery(string OrderNumber, string Phone) : IRequest<StoreOrderStatusResponse?>;
 

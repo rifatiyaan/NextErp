@@ -79,6 +79,10 @@ public class StoreController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Reviews(int id) =>
         Ok(await mediator.Send(new GetProductReviewsQuery(id)));
 
+    [HttpGet("reviews/recent")]
+    public async Task<IActionResult> RecentReviews([FromQuery] int take = 9) =>
+        Ok(await mediator.Send(new GetRecentReviewsQuery(Math.Clamp(take, 1, 30))));
+
     [HttpPost("products/{id:int}/reviews")]
     [EnableRateLimiting("store-orders")]
     public async Task<IActionResult> CreateReview(int id, [FromBody] StoreReviewCreateRequest request)

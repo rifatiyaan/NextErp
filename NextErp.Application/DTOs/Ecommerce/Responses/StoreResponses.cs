@@ -16,6 +16,7 @@ public sealed record StoreProductDetailResponse(int Id, string Title, decimal Pr
 
 public sealed record StoreReviewRow(int Id, string AuthorName, int Rating, string Text, DateTime CreatedAt);
 public sealed record StoreReviewsResponse(double Average, int Count, List<StoreReviewRow> Items);
+public sealed record StoreRecentReviewRow(int Id, string AuthorName, int Rating, string Text, DateTime CreatedAt, int ProductId, string ProductTitle);
 
 // Public order tracking — returned only when order number AND phone match.
 public sealed record StoreOrderStatusItem(string ProductTitle, string Sku, decimal UnitPrice, decimal Quantity, decimal LineTotal);
