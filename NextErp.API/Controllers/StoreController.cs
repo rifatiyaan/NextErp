@@ -32,10 +32,18 @@ public class StoreController(IMediator mediator) : ControllerBase
         [FromQuery] int pageSize = 24,
         [FromQuery] decimal? minPrice = null,
         [FromQuery] decimal? maxPrice = null,
-        [FromQuery] string? sort = null)
+        [FromQuery] string? sort = null,
+        [FromQuery] string? categoryIds = null)
     {
+        var ids = string.IsNullOrWhiteSpace(categoryIds)
+            ? null
+            : categoryIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(s => int.TryParse(s, out _))
+                .Select(int.Parse)
+                .ToList();
+
         var page = await mediator.Send(new GetStorePagedProductsQuery(
-            categoryId, searchText, pageIndex, pageSize, minPrice, maxPrice, sort));
+            categoryId, searchText, pageIndex, pageSize, minPrice, maxPrice, sort, ids));
         return Ok(new { total = page.Total, data = page.Data });
     }
 

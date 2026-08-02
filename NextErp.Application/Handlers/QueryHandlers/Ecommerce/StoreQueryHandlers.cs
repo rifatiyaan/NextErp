@@ -47,7 +47,7 @@ internal static class StoreQueryShared
     // pinned to the selling branch. Optionally narrowed to one category. Shared
     // by the paged listing and the price-range facet so both see the same set.
     public static IQueryable<Domain.Entities.Product> PublishedProducts(
-        IApplicationDbContext dbContext, Guid branchId, int? categoryId)
+        IApplicationDbContext dbContext, Guid branchId, int? categoryId, IReadOnlyList<int>? categoryIds = null)
     {
         var query = dbContext.Products
             .IgnoreQueryFilters()
@@ -55,7 +55,10 @@ internal static class StoreQueryShared
             .Where(p => p.IsActive && p.IsPublishedOnline && p.BranchId == branchId
                         && p.Category.IsActive && p.Category.IsPublishedOnline);
 
-        if (categoryId is int id)
+        // Multi-select (categoryIds) takes precedence over the single categoryId.
+        if (categoryIds is { Count: > 0 })
+            query = query.Where(p => categoryIds.Contains(p.CategoryId));
+        else if (categoryId is int id)
             query = query.Where(p => p.CategoryId == id);
 
         return query;
@@ -187,7 +190,7 @@ public class GetStorePagedProductsHandler(IApplicationDbContext dbContext, ISett
         var pageIndex = Math.Max(1, request.PageIndex);
         var pageSize = Math.Clamp(request.PageSize, 1, 60);
 
-        var query = StoreQueryShared.PublishedProducts(dbContext, branchId, request.CategoryId);
+        var query = StoreQueryShared.PublishedProducts(dbContext, branchId, request.CategoryId, request.CategoryIds);
 
         if (!string.IsNullOrWhiteSpace(request.SearchText))
             query = query.Where(p => p.Title.Contains(request.SearchText));

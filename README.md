@@ -29,6 +29,23 @@ NextErp is a **modular, clean architecture-based enterprise resource planning (E
 - CRUD with self-referencing for hierarchies.
 - Metadata JSON for product counting and dynamic info.
 
+### Sales & Inventory
+- Sale pricing preview (discounts, bonus items) and stock adjustments.
+- Branch-scoped stock with multi-branch data isolation.
+
+### Ecommerce / Storefront
+- Public, anonymous store API (branch- and publication-scoped) powering the Next.js storefront.
+- Catalog: paged/sorted listing with search, price-range facet, and single- or multi-category filtering.
+- Product detail with variants and images.
+- Cash-on-delivery order placement + public order tracking (order number + phone).
+- Product reviews (submit + list) plus a recent-reviews feed for the homepage.
+- Declarative store settings (storefront on/off, currency, delivery fee, hero slides, homepage layout JSON, palette theme) via a settings module.
+- Rate limiting, a `StorefrontEnabled` gate, and honeypot protection on public write endpoints.
+
+### Multi-tenancy & Identity
+- Tenant + branch scoping via EF Core global query filters (`[BranchScoped]`).
+- ASP.NET Identity with JWT authentication for the admin app.
+
 ### API Features
 - RESTful endpoints with **Swagger documentation**.
 - **CQRS Pattern** using MediatR for clean separation of commands and queries.
@@ -95,10 +112,12 @@ NextErp is a **modular, clean architecture-based enterprise resource planning (E
 - **Mapping**: AutoMapper
 - **Database**: SQL Server (LocalDB or SQL Express)  
 - **Authentication**: ASP.NET Identity (JWT)
-- **Logging**: Serilog (File-based)  
-- **API Documentation**: Swagger / Swashbuckle  
+- **Logging**: Serilog
+- **API Documentation**: Swagger / Swashbuckle
 - **API Gateway**: YARP (Yet Another Reverse Proxy)
-- **Frontend**: Razor Pages (Admin Area) with Bootstrap 5 (AdminLTE removed for simplicity)
+- **Rate limiting**: ASP.NET Core rate limiter (storefront buckets)
+- **Testing**: xUnit (`NextErp.Application.Tests`)
+- **Frontend**: Next.js 16 / React 19 — separate repo: [NextErp_React](https://github.com/rifatiyaan/NextErp_React)
 
 ---
 
@@ -128,6 +147,19 @@ NextErp is a **modular, clean architecture-based enterprise resource planning (E
 ### Controllers
 - Thin controllers that delegate work to MediatR.
 - Return standard HTTP responses (200 OK, 201 Created, 400 Bad Request, 404 Not Found).
+
+---
+
+## Storefront / Ecommerce API
+
+Anonymous, rate-limited endpoints under `api/store` (behind a `StorefrontEnabled` gate) serve the public storefront. All reads are pinned to the selling branch and to published, active products/categories:
+
+- `GET config` · `GET categories` · `GET products` (paging, search, price range, `categoryIds` multi-filter) · `GET price-range`
+- `GET products/{id}` (detail with variants + images)
+- `POST orders` (cash on delivery, honeypot-protected) · `GET orders/{number}?phone=` (tracking)
+- `GET products/{id}/reviews` · `POST products/{id}/reviews` · `GET reviews/recent`
+
+Storefront configuration (currency, delivery fee, hero slides, homepage layout, palette, publication) is stored through a declarative settings module (`ISettingsProvider` + `EcommerceSettings`) and edited from the admin app.
 
 ---
 
@@ -194,11 +226,20 @@ Access Swagger at `https://localhost:7245/swagger` (Direct API) or via Gateway i
 ## Usage
 
 - **API**: Use Swagger UI to test endpoints.
-- **Admin Panel**: Access `/Admin` for the web interface (if configured).
+- **Admin & storefront**: served by the Next.js frontend ([NextErp_React](https://github.com/rifatiyaan/NextErp_React)), pointed at this API via `NEXT_PUBLIC_API_BASE_URL`.
+
+## Testing
+
+Application-layer handlers are covered by xUnit tests:
+
+```bash
+dotnet test NextErp.Application.Tests
+```
 
 ## Future Improvements
 
-- [ ] Implement comprehensive Unit Tests (xUnit/NUnit).
+- [x] Application unit tests (xUnit) — `NextErp.Application.Tests`.
+- [ ] Broaden coverage with integration / API tests.
 - [ ] Add Redis caching for high-performance reads.
 - [ ] Implement real-time notifications using SignalR.
 - [ ] Containerization with Docker.
